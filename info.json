@@ -2,8 +2,8 @@
   "name": "{{MOD_NAME}}",
   "version": "{{VERSION}}",
   "title": "Yet Another Resource Monitor Fork",
-  "author": "Octav 'narc' Sandulescu, based on the original by drs and L0771",
+  "author": "Octav 'narc' Sandulescu, based on work by drs, jorgenRe, and L0771",
   "homepage": "https://github.com/narc0tiq/Resource-Monitor-Mod",
-  "dependencies": ["base >= 0.12.0"],
-  "description": "This mod helps you to keep track of your mining-sites"
+  "dependencies": ["base >= 0.12.7"],
+  "description": "This mod helps you to keep track of your mining sites."
 }
