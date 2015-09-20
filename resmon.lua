@@ -29,14 +29,9 @@ function resmon.init_player(player_index)
     local player_data = global.player_data[player_index]
     if not player_data then player_data = {} end
 
-    local settings = player_data.settings
-    if not settings then settings = {} end
-
-    if settings.warn_depleted == nil then settings.warn_depleted = true end
-    if settings.warn_ten_percent == nil then settings.warn_ten_percent = true end
-
-    if not settings.gui_update_ticks then settings.gui_update_ticks = 60 end
-    player_data.settings = settings
+    if player_data.expandoed == nil then player_data.expandoed = false end
+    if not player_data.warn_percent then player_data.warn_percent = 10 end
+    if not player_data.gui_update_ticks then player_data.gui_update_ticks = 60 end
 
     if not player_data.overlays then player_data.overlays = {} end
 
@@ -50,10 +45,23 @@ function resmon.init_force(force)
     local force_data = global.force_data[force.name]
     if not force_data then force_data = {} end
 
-    if not force_data.ore_sites then force_data.ore_sites = {} end
+    if not force_data.ore_sites then
+        force_data.ore_sites = {}
+    else
+        resmon.migrate_ore_sites(force_data)
+    end
     if not force_data.oil_sites then force_data.oil_sites = {} end
 
     global.force_data[force.name] = force_data
+end
+
+
+function resmon.migrate_ore_sites(force_data)
+    for name, site in pairs(force_data.ore_sites) do
+        if not site.remaining_ratio then
+            site.remaining_ratio = site.amount / site.initial_amount
+        end
+    end
 end
 
 
@@ -278,6 +286,7 @@ function resmon.finalize_site(player_index)
     site.finalizing = true
     site.finalizing_since = game.tick
     site.initial_amount = site.amount
+    site.remaining_ratio = 1
 
     site.center = find_center(site.extents)
 
@@ -318,6 +327,7 @@ function resmon.count_deposits(site, update_cycle)
     end
 
     site.amount = new_amount
+    site.remaining_ratio = site.amount / site.initial_amount
 
     for i = #site.entities, 1, -1 do
         if to_be_forgotten[i] then
@@ -327,7 +337,24 @@ function resmon.count_deposits(site, update_cycle)
 end
 
 
+local function ascending_by_ratio(sites)
+    local ordered_sites = {}
+    for _, site in pairs(sites) do
+        table.insert(ordered_sites, site)
+    end
+    table.sort(ordered_sites, function(left, right) return left.remaining_ratio < right.remaining_ratio end)
+
+    local i = 0
+    local n = #ordered_sites
+    return function()
+        i = i + 1
+        if i <= n then return ordered_sites[i] end
+    end
+end
+
+
 function resmon.update_ui(player)
+    local player_data = global.player_data[player.index]
     local force_data = global.force_data[player.force.name]
 
     local root = player.gui.left.YARM_root
@@ -349,22 +376,48 @@ function resmon.update_ui(player)
     if root.sites and root.sites.valid then
         root.sites.destroy()
     end
-    local sites_gui = root.add{type="table", colspan=7, name="sites", style="YARM_site_table"}
+    local sites_gui = root.add{type="table", colspan=5, name="sites", style="YARM_site_table"}
 
     if force_data and force_data.ore_sites then
-        for index, site in pairs(force_data.ore_sites) do
-            sites_gui.add{type="label", name="YARM_label_site_"..tostring(index),
-                          caption={"", site.name, "  "}}
-            sites_gui.add{type="label", name="YARM_label_amount_"..tostring(index),
-                          caption=format_number(site.amount)}
-            sites_gui.add{type="label", name="YARM_label_ore_name_"..tostring(index),
-                          caption={"", "  ", site.ore_name, "  "}}
-            sites_gui.add{type="button", name="YARM_rename_site_"..tostring(index), style="YARM_rename_site"}
-            sites_gui.add{type="button", name="YARM_overlay_site_"..tostring(index), style="YARM_overlay_site"}
-            sites_gui.add{type="button", name="YARM_goto_site_"..tostring(index), style="YARM_goto_site"}
-            sites_gui.add{type="button", name="YARM_delete_site_"..tostring(index), style="YARM_delete_site"}
+        for site in ascending_by_ratio(force_data.ore_sites) do
+            if not player_data.expandoed and (site.remaining_ratio * 100) > player_data.warn_percent then
+                break
+            end
+
+            local color = resmon.site_color(site, player)
+
+            sites_gui.add{type="label", name="YARM_label_site_"..site.name,
+                          caption=site.name}.style.font_color = color
+            sites_gui.add{type="label", name="YARM_label_percent_"..site.name,
+                          caption=string.format("%.1f%%", site.remaining_ratio * 100)}.style.font_color = color
+            sites_gui.add{type="label", name="YARM_label_amount_"..site.name,
+                          caption=format_number(site.amount)}.style.font_color = color
+            sites_gui.add{type="label", name="YARM_label_ore_name_"..site.name,
+                          caption=site.ore_name}.style.font_color = color
+
+            local site_buttons = sites_gui.add{type="flow", name="YARM_site_buttons_"..site.name,
+                                               direction="horizontal", style="YARM_buttons"}
+            site_buttons.add{type="button", name="YARM_rename_site_"..site.name, style="YARM_rename_site"}
+            site_buttons.add{type="button", name="YARM_overlay_site_"..site.name, style="YARM_overlay_site"}
+            site_buttons.add{type="button", name="YARM_goto_site_"..site.name, style="YARM_goto_site"}
+            site_buttons.add{type="button", name="YARM_delete_site_"..site.name, style="YARM_delete_site"}
         end
     end
+end
+
+
+function resmon.site_color(site, player)
+    local warn_ratio = global.player_data[player.index].warn_percent / 100
+
+    local color = {
+        r=warn_ratio / site.remaining_ratio,
+        g=site.remaining_ratio / warn_ratio,
+        b=0
+    }
+    if color.r > 1 then color.r = 1 end
+    if color.g > 1 then color.g = 1 end
+
+    return color
 end
 
 
@@ -401,8 +454,17 @@ end
 
 function resmon.on_click.YARM_expando(event)
     local player = game.get_player(event.player_index)
+    local player_data = global.player_data[event.player_index]
 
-    player.gui.left.YARM_root.buttons.YARM_expando.style = "YARM_expando_long"
+    player_data.expandoed = not player_data.expandoed
+
+    if player_data.expandoed then
+        player.gui.left.YARM_root.buttons.YARM_expando.style = "YARM_expando_long"
+    else
+        player.gui.left.YARM_root.buttons.YARM_expando.style = "YARM_expando_short"
+    end
+
+    resmon.update_ui(player)
 end
 
 
@@ -425,7 +487,7 @@ function resmon.update_players(event)
             end
         end
 
-        if event.tick % player_data.settings.gui_update_ticks == 15 + index then
+        if event.tick % player_data.gui_update_ticks == 15 + index then
             resmon.update_ui(player)
         end
     end
