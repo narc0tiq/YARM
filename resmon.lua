@@ -61,6 +61,7 @@ function resmon.migrate_ore_sites(force_data)
         if not site.remaining_ratio then
             site.remaining_ratio = site.amount / site.initial_amount
         end
+        if not site.ore_per_tick then site.ore_per_tick = 0 end
     end
 end
 
@@ -286,6 +287,7 @@ function resmon.finalize_site(player_index)
     site.finalizing = true
     site.finalizing_since = game.tick
     site.initial_amount = site.amount
+    site.ore_per_tick = 0
     site.remaining_ratio = 1
 
     site.center = find_center(site.extents)
@@ -326,7 +328,15 @@ function resmon.count_deposits(site, update_cycle)
         end
     end
 
+    if site.last_ore_check then
+        local delta_ticks = game.tick - site.last_ore_check
+        local delta_ore = new_amount - site.amount
+
+        site.ore_per_tick = delta_ore / delta_ticks
+    end
+
     site.amount = new_amount
+    site.last_ore_check = game.tick
     site.remaining_ratio = site.amount / site.initial_amount
 
     for i = #site.entities, 1, -1 do
@@ -376,7 +386,7 @@ function resmon.update_ui(player)
     if root.sites and root.sites.valid then
         root.sites.destroy()
     end
-    local sites_gui = root.add{type="table", colspan=5, name="sites", style="YARM_site_table"}
+    local sites_gui = root.add{type="table", colspan=7, name="sites", style="YARM_site_table"}
 
     if force_data and force_data.ore_sites then
         for site in ascending_by_ratio(force_data.ore_sites) do
@@ -385,15 +395,32 @@ function resmon.update_ui(player)
             end
 
             local color = resmon.site_color(site, player)
+            local el = nil
 
-            sites_gui.add{type="label", name="YARM_label_site_"..site.name,
-                          caption=site.name}.style.font_color = color
-            sites_gui.add{type="label", name="YARM_label_percent_"..site.name,
-                          caption=string.format("%.1f%%", site.remaining_ratio * 100)}.style.font_color = color
-            sites_gui.add{type="label", name="YARM_label_amount_"..site.name,
-                          caption=format_number(site.amount)}.style.font_color = color
-            sites_gui.add{type="label", name="YARM_label_ore_name_"..site.name,
-                          caption=site.ore_name}.style.font_color = color
+            el = sites_gui.add{type="label", name="YARM_label_site_"..site.name,
+                               caption=site.name}
+            el.style.font_color = color
+
+            el = sites_gui.add{type="label", name="YARM_label_percent_"..site.name,
+                               caption=string.format("%.1f%%", site.remaining_ratio * 100)}
+            el.style.font_color = color
+
+            el = sites_gui.add{type="label", name="YARM_label_amount_"..site.name,
+                               caption=format_number(site.amount)}
+            el.style.font_color = color
+
+            el = sites_gui.add{type="label", name="YARM_label_ore_name_"..site.name,
+                               caption=site.ore_name}
+            el.style.font_color = color
+
+            el = sites_gui.add{type="label", name="YARM_label_ore_per_minute_"..site.name,
+                               caption={"YARM-ore-per-minute", site.ore_per_tick * 3600}}
+            el.style.font_color = color
+
+            el = sites_gui.add{type="label", name="YARM_label_etd_"..site.name,
+                               caption={"YARM-time-to-deplete", resmon.time_to_deplete(site)}}
+            el.style.font_color = color
+
 
             local site_buttons = sites_gui.add{type="flow", name="YARM_site_buttons_"..site.name,
                                                direction="horizontal", style="YARM_buttons"}
@@ -402,6 +429,24 @@ function resmon.update_ui(player)
             site_buttons.add{type="button", name="YARM_goto_site_"..site.name, style="YARM_goto_site"}
             site_buttons.add{type="button", name="YARM_delete_site_"..site.name, style="YARM_delete_site"}
         end
+    end
+end
+
+
+function resmon.time_to_deplete(site)
+    if site.ore_per_tick == 0 then return {"YARM-etd-never"} end
+
+    local ticks = site.amount / (-site.ore_per_tick)
+
+    local minutes = math.floor(ticks / 3600)
+    local hours = math.floor(minutes / 60)
+
+    if hours > 0 then
+        return {"", {"YARM-etd-hour-fragment", hours}, " ", {"YARM-etd-minute-fragment", minutes % 60}}
+    elseif minutes > 0 then
+        return {"", {"YARM-etd-minute-fragment", minutes}}
+    else
+        return {"YARM-etd-under-1m"}
     end
 end
 
