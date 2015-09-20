@@ -204,6 +204,15 @@ data.raw["gui-style"].default.YARM_rename_site = {
     clicked_graphical_set = button_graphics(32, 112),
 }
 
+data.raw["gui-style"].default.YARM_delete_site_confirm = {
+    type = "button_style",
+    parent = "YARM_button_with_icon",
+
+    default_graphical_set = button_graphics( 0, 128),
+    hovered_graphical_set = button_graphics(16, 128),
+    clicked_graphical_set = button_graphics(32, 128),
+}
+
 data.raw["gui-style"].default.YARM_site_table = {
     type = "table_style",
     horizontal_spacing = 3,

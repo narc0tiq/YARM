@@ -394,6 +394,10 @@ function resmon.update_ui(player)
                 break
             end
 
+            if site.deleting_since and site.deleting_since + 600 < game.tick then
+                site.deleting_since = nil
+            end
+
             local color = resmon.site_color(site, player)
             local el = nil
 
@@ -424,10 +428,25 @@ function resmon.update_ui(player)
 
             local site_buttons = sites_gui.add{type="flow", name="YARM_site_buttons_"..site.name,
                                                direction="horizontal", style="YARM_buttons"}
-            site_buttons.add{type="button", name="YARM_rename_site_"..site.name, style="YARM_rename_site"}
-            site_buttons.add{type="button", name="YARM_overlay_site_"..site.name, style="YARM_overlay_site"}
-            site_buttons.add{type="button", name="YARM_goto_site_"..site.name, style="YARM_goto_site"}
-            site_buttons.add{type="button", name="YARM_delete_site_"..site.name, style="YARM_delete_site"}
+
+            if site.deleting_since then
+                site_buttons.add{type="button",
+                                 name="YARM_delete_site_"..site.name,
+                                 style="YARM_delete_site_confirm"}
+            else
+                site_buttons.add{type="button",
+                                 name="YARM_rename_site_"..site.name,
+                                 style="YARM_rename_site"}
+                site_buttons.add{type="button",
+                                 name="YARM_overlay_site_"..site.name,
+                                 style="YARM_overlay_site"}
+                site_buttons.add{type="button",
+                                 name="YARM_goto_site_"..site.name,
+                                 style="YARM_goto_site"}
+                site_buttons.add{type="button",
+                                 name="YARM_delete_site_"..site.name,
+                                 style="YARM_delete_site"}
+            end
         end
     end
 end
@@ -470,7 +489,14 @@ function resmon.on_click.remove_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_delete_site_"))
 
     local player = game.get_player(event.player_index)
-    global.force_data[player.force.name].ore_sites[site_name] = nil
+    local force_data = global.force_data[player.force.name]
+    local site = force_data.ore_sites[site_name]
+
+    if site.deleting_since then
+        force_data.ore_sites[site_name] = nil
+    else
+        site.deleting_since = event.tick
+    end
 
     for _, p in pairs(player.force.players) do
         resmon.update_ui(p)
