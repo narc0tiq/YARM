@@ -17,8 +17,14 @@ The source of **YARM** is Copyright 2015 Octav "narc" Sandulescu. It
 is licensed under the [MIT license][mit], available in this package in the file
 [LICENSE.md](LICENSE.md).
 
-[mit]: http://opensource.org/licenses/mit-license.html
+Some of the graphics (the eye icon and the gear icon) are licensed
+[CC-BY-SA Unported 3.0][CC-BY-SA-3],
+and based on the creations of
+[User:MGalloway (WMF)](https://commons.wikimedia.org/wiki/User:MGalloway_%28WMF%29).
 
+
+[mit]: http://opensource.org/licenses/mit-license.html
+[CC-BY-SA-3]: https://creativecommons.org/licenses/by-sa/3.0/deed.en
 
 ## Statistics ##
 
