@@ -529,14 +529,26 @@ function resmon.on_click.goto_site(event)
     local force_data = global.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
 
+    -- Don't bodyswap too often, Factorio hates it when you do that.
+    if player_data.last_bodyswap and player_data.last_bodyswap + 10 > event.tick then return end
+    player_data.last_bodyswap = event.tick
+
     if player_data.viewing_site == site_name then
         -- return
         player.character = player_data.real_character
+        player_data.real_character = nil
         player_data.remote_viewer = nil
         player_data.viewing_site = nil
     else
         -- remember our real char...
-        if not player_data.real_character then player_data.real_character = player.character end
+        if not player_data.real_character then
+            -- actually, abort if the "real" character isn't a player
+            -- this might happen if you use something like The Fat Controller or Command Control
+            -- and you do NOT want to get stuck not being able to return from those
+            if player.character.name ~= "player" then return end
+
+            player_data.real_character = player.character
+        end
         player_data.viewing_site = site_name
 
         -- and make us a viewer and put us in it

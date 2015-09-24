@@ -1,5 +1,6 @@
 require "defines"
 require "resmon"
+require "remote"
 
 
 -- if this ever happens, I'll be enormously surprised
@@ -535,77 +536,3 @@ function formatAmount(amount)
     return result
 end
 
-
-remote.add_interface("resource-monitor-mod",
-{
-    addResource = function(newCategory, type)
-        if type == "solid" then
-            for _, category in ipairs (global[player.index].resourceSolidList) do
-                if category == newCategory then
-                    return false
-                end
-            end
-            table.insert(global[player.index].resourceSolidList, newCategory)
-            return true
-        elseif type == "liquid" then
-            for _, category in ipairs (global[player.index].resourceLiquidList) do
-                if category == newCategory then
-                    return false
-                end
-            end
-            table.insert(global[player.index].resourceLiquidList, newCategory)
-            return true
-        else
-            return false
-        end
-    end,
-
-    resetGUI = function(playername)
-        if playername == nil then
-            for _,player in ipairs(game.players) do
-                global[player.index].flags.MonitorVisible = 0
-                global[player.index].flags.AdderVisible = 0
-                global[player.index].flags.SettingsVisible = 0
-
-                if player.gui.left.monitorFrame ~= nil then
-                    player.gui.left.monitorFrame.destroy()
-                end
-
-                if player.gui.left.rootAddingFrame ~= nil then
-                    player.gui.left.rootAddingFrame.destroy()
-                end
-
-                if player.gui.left.rootOilAddingFrame ~= nil then
-                    player.gui.left.rootOilAddingFrame.destroy()
-                end
-
-                if player.gui.left.rootSettingsFrame ~= nil then
-                    player.gui.left.rootSettingsFrame.destroy()
-                end
-            end
-        else
-        local player = game.get_player(name)
-            if player ~= nil then
-                global[player.index].flags.MonitorVisible = 0
-                global[player.index].flags.AdderVisible = 0
-                global[player.index].flags.SettingsVisible = 0
-
-                if player.gui.left.monitorFrame ~= nil then
-                    player.gui.left.monitorFrame.destroy()
-                end
-
-                if player.gui.left.rootAddingFrame ~= nil then
-                    player.gui.left.rootAddingFrame.destroy()
-                end
-
-                if player.gui.left.rootOilAddingFrame ~= nil then
-                    player.gui.left.rootOilAddingFrame.destroy()
-                end
-
-                if player.gui.left.rootSettingsFrame ~= nil then
-                    player.gui.left.rootSettingsFrame.destroy()
-                end
-            end
-        end
-    end
-})
