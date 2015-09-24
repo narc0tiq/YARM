@@ -11,6 +11,15 @@ your mining sites and warns you when they're starting to run low.
 members of the #factorio IRC on espernet.
 
 
+## In-dev versions ##
+
+In-development versions of YARM can be found at
+<http://dev.narc.ro/factorio/mod-packages/> -- they may contain bugs or
+incomplete functionality, but if you just can't wait, there they are.
+
+Github issues should only be reported on official releases, not in-dev packages.
+
+
 ## License ##
 
 The source of **YARM** is Copyright 2015 Octav "narc" Sandulescu. It
@@ -28,7 +37,7 @@ and based on the creations of
 
 ## Statistics ##
 
-16 alternative name suggestions were offered for the "YA" part of the name "YARM", among them:
+18 alternative name suggestions were offered for the "YA" part of the name "YARM", among them:
 
 - Yet Another Resource Monitor (narc)
 - Your Awesome Resource Monitor (Keyboardhack)
@@ -46,4 +55,6 @@ and based on the creations of
 - Yad Avraham Resource Monitor (JoCKeR-iL)
 - Yatssi Atssi Resource Monitor (JoCKeR-iL)
 - Yahoo! Answers Resource Monitor (HanziQ)
+- Yes! Amen! Resource Monitor! (Tivec)
+- Yallah Ahmed Resource Monitor (Tivec)
 
