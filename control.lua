@@ -13,13 +13,21 @@ function msg_all(message)
 end
 
 
+local loaded = false
+
 game.on_init(function()
+    if loaded then return end
+    loaded = true
+
     local _, err = pcall(resmon.init_globals)
     if err then msg_all({"YARM-err-generic", err}) end
 end)
 
 
 game.on_load(function()
+    if loaded then return end
+    loaded = true
+
     local _, err = pcall(resmon.init_globals)
     if err then msg_all({"YARM-err-generic", err}) end
 end)

@@ -8,6 +8,16 @@ resmon = {
 require "config"
 
 
+function string.starts_with(haystack, needle)
+    return string.sub(haystack, 1, string.len(needle)) == needle
+end
+
+
+function string.ends_with(haystack, needle)
+    return string.sub(haystack, -string.len(needle)) == needle
+end
+
+
 function resmon.init_globals()
     for index,_ in pairs(game.players) do
         resmon.init_player(index)
@@ -58,10 +68,10 @@ end
 
 function resmon.migrate_ore_sites(force_data)
     for name, site in pairs(force_data.ore_sites) do
-        if not site.remaining_ratio then
-            site.remaining_ratio = site.amount / site.initial_amount
+        if not site.remaining_permille then
+            site.remaining_permille = math.floor(site.amount * 1000 / site.initial_amount)
         end
-        if not site.ore_per_tick then site.ore_per_tick = 0 end
+        if not site.ore_per_minute then site.ore_per_minute = 0 end
     end
 end
 
@@ -287,8 +297,8 @@ function resmon.finalize_site(player_index)
     site.finalizing = true
     site.finalizing_since = game.tick
     site.initial_amount = site.amount
-    site.ore_per_tick = 0
-    site.remaining_ratio = 1
+    site.ore_per_minute = 0
+    site.remaining_permille = 1000
 
     site.center = find_center(site.extents)
 
@@ -332,12 +342,12 @@ function resmon.count_deposits(site, update_cycle)
         local delta_ticks = game.tick - site.last_ore_check
         local delta_ore = new_amount - site.amount
 
-        site.ore_per_tick = delta_ore / delta_ticks
+        site.ore_per_minute = math.floor(delta_ore * 3600 / delta_ticks)
     end
 
     site.amount = new_amount
     site.last_ore_check = game.tick
-    site.remaining_ratio = site.amount / site.initial_amount
+    site.remaining_permille = math.floor(site.amount * 1000 / site.initial_amount)
 
     for i = #site.entities, 1, -1 do
         if to_be_forgotten[i] then
@@ -347,12 +357,23 @@ function resmon.count_deposits(site, update_cycle)
 end
 
 
+local function site_comparator(left, right)
+    if left.remaining_permille ~= right.remaining_permille then
+        return left.remaining_permille < right.remaining_permille
+    elseif left.added_at ~= right.added_at then
+        return left.added_at < right.added_at
+    else
+        return left.name < right.name
+    end
+end
+
+
 local function ascending_by_ratio(sites)
     local ordered_sites = {}
     for _, site in pairs(sites) do
         table.insert(ordered_sites, site)
     end
-    table.sort(ordered_sites, function(left, right) return left.remaining_ratio < right.remaining_ratio end)
+    table.sort(ordered_sites, site_comparator)
 
     local i = 0
     local n = #ordered_sites
@@ -390,7 +411,7 @@ function resmon.update_ui(player)
 
     if force_data and force_data.ore_sites then
         for site in ascending_by_ratio(force_data.ore_sites) do
-            if not player_data.expandoed and (site.remaining_ratio * 100) > player_data.warn_percent then
+            if not player_data.expandoed and (site.remaining_permille / 10) > player_data.warn_percent then
                 break
             end
 
@@ -406,7 +427,7 @@ function resmon.update_ui(player)
             el.style.font_color = color
 
             el = sites_gui.add{type="label", name="YARM_label_percent_"..site.name,
-                               caption=string.format("%.1f%%", site.remaining_ratio * 100)}
+                               caption=string.format("%.1f%%", site.remaining_permille / 10)}
             el.style.font_color = color
 
             el = sites_gui.add{type="label", name="YARM_label_amount_"..site.name,
@@ -418,7 +439,7 @@ function resmon.update_ui(player)
             el.style.font_color = color
 
             el = sites_gui.add{type="label", name="YARM_label_ore_per_minute_"..site.name,
-                               caption={"YARM-ore-per-minute", site.ore_per_tick * 3600}}
+                               caption={"YARM-ore-per-minute", site.ore_per_minute}}
             el.style.font_color = color
 
             el = sites_gui.add{type="label", name="YARM_label_etd_"..site.name,
@@ -433,13 +454,11 @@ function resmon.update_ui(player)
                 site_buttons.add{type="button",
                                  name="YARM_delete_site_"..site.name,
                                  style="YARM_delete_site_confirm"}
+            elseif player_data.viewing_site == site.name then
+                site_buttons.add{type="button",
+                                 name="YARM_goto_site_"..site.name,
+                                 style="YARM_delete_site_confirm"}
             else
-                site_buttons.add{type="button",
-                                 name="YARM_rename_site_"..site.name,
-                                 style="YARM_rename_site"}
-                site_buttons.add{type="button",
-                                 name="YARM_overlay_site_"..site.name,
-                                 style="YARM_overlay_site"}
                 site_buttons.add{type="button",
                                  name="YARM_goto_site_"..site.name,
                                  style="YARM_goto_site"}
@@ -453,11 +472,9 @@ end
 
 
 function resmon.time_to_deplete(site)
-    if site.ore_per_tick == 0 then return {"YARM-etd-never"} end
+    if site.ore_per_minute == 0 then return {"YARM-etd-never"} end
 
-    local ticks = site.amount / (-site.ore_per_tick)
-
-    local minutes = math.floor(ticks / 3600)
+    local minutes = math.floor(site.amount / (-site.ore_per_minute))
     local hours = math.floor(minutes / 60)
 
     if hours > 0 then
@@ -471,15 +488,15 @@ end
 
 
 function resmon.site_color(site, player)
-    local warn_ratio = global.player_data[player.index].warn_percent / 100
+    local warn_permille = global.player_data[player.index].warn_percent  * 10
 
     local color = {
-        r=warn_ratio / site.remaining_ratio,
-        g=site.remaining_ratio / warn_ratio,
+        r=math.floor(warn_permille * 255 / site.remaining_permille),
+        g=math.floor(site.remaining_permille * 255 / warn_permille),
         b=0
     }
-    if color.r > 1 then color.r = 1 end
-    if color.g > 1 then color.g = 1 end
+    if color.r > 255 then color.r = 255 end
+    if color.g > 255 then color.g = 255 end
 
     return color
 end
@@ -504,13 +521,37 @@ function resmon.on_click.remove_site(event)
 end
 
 
-function string.starts_with(haystack, needle)
-    return string.sub(haystack, 1, string.len(needle)) == needle
-end
+function resmon.on_click.goto_site(event)
+    local site_name = string.sub(event.element.name, 1 + string.len("YARM_goto_site_"))
 
+    local player = game.get_player(event.player_index)
+    local player_data = global.player_data[event.player_index]
+    local force_data = global.force_data[player.force.name]
+    local site = force_data.ore_sites[site_name]
 
-function string.ends_with(haystack, needle)
-    return string.sub(haystack, -string.len(needle)) == needle
+    if player_data.viewing_site == site_name then
+        -- return
+        player.character = player_data.real_character
+        player_data.remote_viewer = nil
+        player_data.viewing_site = nil
+    else
+        -- remember our real char...
+        if not player_data.real_character then player_data.real_character = player.character end
+        player_data.viewing_site = site_name
+
+        -- and make us a viewer and put us in it
+        local viewer = player.surface.create_entity{name="yarm-remote-viewer", position=site.center, force=player.force}
+        player.character = viewer
+
+        if player_data.remote_viewer then
+            player_data.remote_viewer.destroy()
+        end
+        player_data.remote_viewer = viewer
+    end
+
+    for _, p in pairs(player.force.players) do
+        resmon.update_ui(p)
+    end
 end
 
 
@@ -519,6 +560,8 @@ function resmon.on_gui_click(event)
         resmon.on_click[event.element.name](event)
     elseif string.starts_with(event.element.name, "YARM_delete_site_") then
         resmon.on_click.remove_site(event)
+    elseif string.starts_with(event.element.name, "YARM_goto_site_") then
+        resmon.on_click.goto_site(event)
     end
 end
 
