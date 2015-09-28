@@ -429,7 +429,6 @@ function resmon.update_ui(player)
                                  style="YARM_buttons"}
 
         buttons.add{type="button", name="YARM_expando", style="YARM_expando_short"}
-        buttons.add{type="button", name="YARM_settings", style="YARM_settings"}
     end
 
     if root.sites and root.sites.valid then
