@@ -3,6 +3,7 @@ require "util"
 
 resmon = {
     on_click = {},
+    endless_resources = {},
 }
 
 require "config"
@@ -100,20 +101,17 @@ function resmon.on_built_entity(event)
     end
     event.created_entity.destroy()
 
-    --if player_data.settings.MonitorVisible == 0 then
-        --resmon.show_monitor_gui(player)
-    --end
-
     local resource = find_resource_at(surface, pos)
     if not resource then
         resmon.clear_current_site(event.player_index)
         return
     end
 
-    if resource.prototype.resource_category == 'basic-solid' then
-        resmon.add_solid(event.player_index, resource)
-    elseif resource.prototype.resource_category == 'basic-fluid' then
-        resmon.add_fluid(event.player_index, resource)
+    local rescat = resource.prototype.resource_category
+    if rescat == 'basic-solid' or rescat == 'basic-fluid' then
+        resmon.add_resource(event.player_index, resource)
+    else
+        player.print{"YARM-unknown-resource-category", rescat}
     end
 end
 
@@ -130,7 +128,7 @@ function resmon.clear_current_site(player_index)
 end
 
 
-function resmon.add_solid(player_index, entity)
+function resmon.add_resource(player_index, entity)
     local player = game.get_player(player_index)
     local player_data = global.player_data[player_index]
 
@@ -162,6 +160,10 @@ function resmon.add_solid(player_index, entity)
             next_to_scan = {},
             scanning = false,
         }
+
+        if resmon.is_endless_resource(entity.name, entity.prototype) then
+            player_data.current_site.minimum_resource_amount = entity.prototype.minimum_resource_amount
+        end
     end
 
     resmon.add_single_entity(player_index, entity)
@@ -303,6 +305,8 @@ function resmon.finalize_site(player_index)
     site.center = find_center(site.extents)
 
     site.name = string.format("%s %d", get_octant_name(site.center), util.distance({x=0, y=0}, site.center))
+
+    resmon.count_deposits(site, site.added_at % resmon.ticks_between_checks)
 end
 
 
@@ -318,6 +322,23 @@ function resmon.submit_site(player_index)
 
 
     player.print{"YARM-site-submitted", site.name, format_number(site.amount), site.ore_name}
+end
+
+
+function resmon.is_endless_resource(ent_name, proto)
+    if resmon.endless_resources[ent_name] ~= nil then
+        return resmon.endless_resources[ent_name]
+    end
+
+    if not proto then return false end
+
+    if proto.minimum_resource_amount < 1 then
+        resmon.endless_resources[ent_name] = false
+    else
+        resmon.endless_resources[ent_name] = true
+    end
+
+    return resmon.endless_resources[ent_name]
 end
 
 
@@ -347,7 +368,14 @@ function resmon.count_deposits(site, update_cycle)
 
     site.amount = new_amount
     site.last_ore_check = game.tick
+
     site.remaining_permille = math.floor(site.amount * 1000 / site.initial_amount)
+    if resmon.is_endless_resource(site.ore_type) then
+        -- calculate remaining permille as:
+        -- how much of the minimum amount does the site have in excess to the site minimum amount?
+        local site_minimum = #site.entities * site.minimum_resource_amount
+        site.remaining_permille = math.floor(site.amount * 1000 / site_minimum) - 1000
+    end
 
     for i = #site.entities, 1, -1 do
         if to_be_forgotten[i] then
