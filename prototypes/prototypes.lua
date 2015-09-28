@@ -266,6 +266,24 @@ default_gui.YARM_delete_site_confirm = {
     clicked_graphical_set = button_graphics(32, 128),
 }
 
+default_gui.YARM_goto_site_cancel = {
+    type = "button_style",
+    parent = "YARM_button_with_icon",
+
+    default_graphical_set = button_graphics( 0, 144),
+    hovered_graphical_set = button_graphics(16, 144),
+    clicked_graphical_set = button_graphics(32, 144),
+}
+
+default_gui.YARM_rename_site_cancel = {
+    type = "button_style",
+    parent = "YARM_button_with_icon",
+
+    default_graphical_set = button_graphics( 0, 160),
+    hovered_graphical_set = button_graphics(16, 160),
+    clicked_graphical_set = button_graphics(32, 160),
+}
+
 default_gui.YARM_site_table = {
     type = "table_style",
     horizontal_spacing = 3,

@@ -61,7 +61,6 @@ function resmon.init_force(force)
     else
         resmon.migrate_ore_sites(force_data)
     end
-    if not force_data.oil_sites then force_data.oil_sites = {} end
 
     global.force_data[force.name] = force_data
 end
@@ -351,8 +350,10 @@ function resmon.count_deposits(site, update_cycle)
         return
     end
 
+    local site_prototype = nil
     for index, ent in pairs(site.entities) do
         if ent.valid then
+            if not site_prototype then site_prototype = ent.prototype end
             new_amount = new_amount + ent.amount
         else
             to_be_forgotten[index] = true
@@ -370,7 +371,7 @@ function resmon.count_deposits(site, update_cycle)
     site.last_ore_check = game.tick
 
     site.remaining_permille = math.floor(site.amount * 1000 / site.initial_amount)
-    if resmon.is_endless_resource(site.ore_type) then
+    if resmon.is_endless_resource(site.ore_type, site_prototype) then
         -- calculate remaining permille as:
         -- how much of the minimum amount does the site have in excess to the site minimum amount?
         local site_minimum = #site.entities * site.minimum_resource_amount
@@ -484,7 +485,16 @@ function resmon.update_ui(player)
             elseif player_data.viewing_site == site.name then
                 site_buttons.add{type="button",
                                  name="YARM_goto_site_"..site.name,
-                                 style="YARM_delete_site_confirm"}
+                                 style="YARM_goto_site_cancel"}
+                if player_data.renaming_site == site.name then
+                    site_buttons.add{type="button",
+                                    name="YARM_rename_site_"..site.name,
+                                    style="YARM_rename_site_cancel"}
+                else
+                    site_buttons.add{type="button",
+                                    name="YARM_rename_site_"..site.name,
+                                    style="YARM_rename_site"}
+                end
             else
                 site_buttons.add{type="button",
                                  name="YARM_goto_site_"..site.name,
@@ -526,6 +536,65 @@ function resmon.site_color(site, player)
     if color.g > 255 then color.g = 255 end
 
     return color
+end
+
+
+function resmon.on_click.YARM_rename_confirm(event)
+    local player = game.get_player(event.player_index)
+    local player_data = global.player_data[event.player_index]
+    local force_data = global.force_data[player.force.name]
+
+    local old_name = player_data.renaming_site
+    local new_name = player.gui.center.YARM_site_rename.new_name.text
+
+    local site = force_data.ore_sites[old_name]
+    force_data.ore_sites[old_name] = nil
+    force_data.ore_sites[new_name] = site
+    site.name = new_name
+
+    player_data.viewing_site = new_name
+    player_data.renaming_site = nil
+    player.gui.center.YARM_site_rename.destroy()
+
+    for _, p in pairs(player.force.players) do
+        resmon.update_ui(p)
+    end
+end
+
+
+function resmon.on_click.YARM_rename_cancel(event)
+    local player = game.get_player(event.player_index)
+    local player_data = global.player_data[event.player_index]
+
+    player_data.renaming_site = nil
+    player.gui.center.YARM_site_rename.destroy()
+end
+
+
+function resmon.on_click.rename_site(event)
+    local site_name = string.sub(event.element.name, 1 + string.len("YARM_rename_site_"))
+
+    local player = game.get_player(event.player_index)
+    local player_data = global.player_data[event.player_index]
+
+    if player.gui.center.YARM_site_rename then
+        resmon.on_click.YARM_rename_cancel(event)
+        return
+    end
+
+    player_data.renaming_site = site_name
+    local root = player.gui.center.add{type="frame",
+                                       name="YARM_site_rename",
+                                       caption={"YARM-site-rename-title"},
+                                       direction="horizontal"}
+
+    root.add{type="textfield", name="new_name"}.text = site_name
+    root.add{type="button", name="YARM_rename_confirm", caption={"YARM-site-rename-confirm"}}
+    root.add{type="button", name="YARM_rename_cancel", caption={"YARM-site-rename-cancel"}}
+
+    for _, p in pairs(player.force.players) do
+        resmon.update_ui(p)
+    end
 end
 
 
@@ -599,6 +668,8 @@ function resmon.on_gui_click(event)
         resmon.on_click[event.element.name](event)
     elseif string.starts_with(event.element.name, "YARM_delete_site_") then
         resmon.on_click.remove_site(event)
+    elseif string.starts_with(event.element.name, "YARM_rename_site_") then
+        resmon.on_click.rename_site(event)
     elseif string.starts_with(event.element.name, "YARM_goto_site_") then
         resmon.on_click.goto_site(event)
     end
