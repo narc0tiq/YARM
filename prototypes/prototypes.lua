@@ -158,10 +158,10 @@ local function button_graphics(xpos, ypos)
     return {
         type = "monolith",
 
-        top_monolith_border = 1,
-        right_monolith_border = 1,
-        bottom_monolith_border = 1,
-        left_monolith_border = 1,
+        top_monolith_border = 0,
+        right_monolith_border = 0,
+        bottom_monolith_border = 0,
+        left_monolith_border = 0,
 
         monolith_image = {
             filename = "__{{MOD_NAME}}__/graphics/gui.png",
@@ -185,8 +185,8 @@ default_gui.YARM_button_with_icon = {
     bottom_padding = 1,
     left_padding = 1,
 
-    width = 16,
-    height = 16,
+    width = 17,
+    height = 17,
 
     default_graphical_set = button_graphics( 0,  0),
     hovered_graphical_set = button_graphics(16,  0),
