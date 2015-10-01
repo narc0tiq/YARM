@@ -331,10 +331,10 @@ function resmon.is_endless_resource(ent_name, proto)
 
     if not proto then return false end
 
-    if proto.minimum_resource_amount < 1 then
-        resmon.endless_resources[ent_name] = false
-    else
+    if proto.infinite_resource then
         resmon.endless_resources[ent_name] = true
+    else
+        resmon.endless_resources[ent_name] = false
     end
 
     return resmon.endless_resources[ent_name]
