@@ -532,8 +532,11 @@ function resmon.site_color(site, player)
         g=math.floor(site.remaining_permille * 255 / warn_permille),
         b=0
     }
-    if color.r > 255 then color.r = 255 end
-    if color.g > 255 then color.g = 255 end
+    if color.r > 255 then color.r = 255
+    elseif color.r < 2 then color.r = 2 end
+
+    if color.g > 255 then color.g = 255
+    elseif color.g < 2 then color.g = 2 end
 
     return color
 end
