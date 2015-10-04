@@ -633,27 +633,38 @@ function resmon.on_click.goto_site(event)
     player_data.last_bodyswap = event.tick
 
     if player_data.viewing_site == site_name then
-        -- return
+        -- returning to our home body
+        if player_data.real_character == nil or not player_data.real_character.valid then
+            player.print({"YARM-warn-no-return-possible"})
+            return
+        end
+
         player.character = player_data.real_character
+        player_data.remote_viewer.destroy()
+
         player_data.real_character = nil
         player_data.remote_viewer = nil
         player_data.viewing_site = nil
     else
-        -- remember our real char...
-        if not player_data.real_character then
-            -- actually, abort if the "real" character isn't a player
-            -- this might happen if you use something like The Fat Controller or Command Control
+        -- stepping out to a remote viewer: first, be sure you remember your old body
+        if not player_data.real_character or not player_data.real_character.valid then
+            -- Abort if the "real" character isn't a player!
+            -- NB: this might happen if you use something like The Fat Controller or Command Control
             -- and you do NOT want to get stuck not being able to return from those
-            if player.character.name ~= "player" then return end
+            if player.character.name ~= "player" then
+                player.print({"YARM-warn-not-in-real-body"})
+                return
+            end
 
             player_data.real_character = player.character
         end
         player_data.viewing_site = site_name
 
-        -- and make us a viewer and put us in it
+        -- make us a viewer and put us in it
         local viewer = player.surface.create_entity{name="yarm-remote-viewer", position=site.center, force=player.force}
         player.character = viewer
 
+        -- don't leave an old one behind
         if player_data.remote_viewer then
             player_data.remote_viewer.destroy()
         end
