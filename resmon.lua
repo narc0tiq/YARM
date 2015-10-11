@@ -42,7 +42,7 @@ function resmon.init_player(player_index)
 
     if player_data.expandoed == nil then player_data.expandoed = false end
     if not player_data.warn_percent then player_data.warn_percent = 10 end
-    if not player_data.gui_update_ticks then player_data.gui_update_ticks = 60 end
+    if not player_data.gui_update_ticks or player_data.gui_update_ticks == 60 then player_data.gui_update_ticks = 300 end
 
     if not player_data.overlays then player_data.overlays = {} end
 
