@@ -9,6 +9,8 @@ your mining sites and warns you when they're starting to run low.
 [the 0.12 unofficial update](http://www.factorioforums.com/forum/viewtopic.php?f=120&t=13809).
 * Excellent suggestions for new behaviour from @cpw, @KaneHart, and several
 members of the #factorio IRC on espernet.
+* Continuous Integration by CircleCI:
+[![Circle CI](https://circleci.com/gh/narc0tiq/YARM.svg?style=svg)](https://circleci.com/gh/narc0tiq/YARM)
 
 
 ## In-dev versions ##
