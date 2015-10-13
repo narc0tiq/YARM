@@ -7,6 +7,9 @@ dependencies:
 
 
 test:
+    pre:
+        - read BASE_VERSION < SHORT_VERSION && echo ${BASE_VERSION}.${CIRCLE_BUILD_NUM} > VERSION
+        - rm SHORT_VERSION
     override:
         - make package
 
