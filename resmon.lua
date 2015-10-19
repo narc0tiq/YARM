@@ -77,7 +77,12 @@ end
 
 
 local function find_resource_at(surface, position)
-    local stuff = surface.find_entities_filtered{area={position, position}, type='resource'}
+    -- The position we get is centered in its tile (e.g., {8.5, 17.5}).
+    -- Sometimes, the resource does not cover the center, so search the full tile.
+    local top_left = {x = position.x - 0.5, y = position.y - 0.5}
+    local bottom_right = {x = position.x + 0.5, y = position.y + 0.5}
+
+    local stuff = surface.find_entities_filtered{area={top_left, bottom_right}, type='resource'}
     if #stuff < 1 then return nil end
 
     return stuff[1] -- there should never be another resource at the exact same coordinates
@@ -166,8 +171,7 @@ function resmon.add_resource(player_index, entity)
     end
 
     resmon.add_single_entity(player_index, entity)
-    -- note: resmon.on_tick_find_more_solids() will continue the operation from here and
-    -- launch the adding GUI when it finishes.
+    -- note: resmon.scan_current_site() (via on_tick) will continue the operation from here
 end
 
 
