@@ -150,7 +150,7 @@ function resmon.add_resource(player_index, entity)
             surface = entity.surface,
             force = player.force,
             ore_type = entity.name,
-            ore_name = game.get_localised_entity_name(entity.name),
+            ore_name = entity.prototype.localised_name,
             entities = {},
             initial_amount = 0,
             amount = 0,
