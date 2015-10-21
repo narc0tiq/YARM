@@ -13,15 +13,6 @@ members of the #factorio IRC on espernet.
 [![Circle CI](https://circleci.com/gh/narc0tiq/YARM.svg?style=svg)](https://circleci.com/gh/narc0tiq/YARM)
 
 
-## In-dev versions ##
-
-In-development versions of YARM can be found at
-<http://dev.narc.ro/factorio/mod-packages/> -- they may contain bugs or
-incomplete functionality, but if you just can't wait, there they are.
-
-Github issues should only be reported on official releases, not in-dev packages.
-
-
 ## License ##
 
 The source of **YARM** is Copyright 2015 Octav "narc" Sandulescu. It
