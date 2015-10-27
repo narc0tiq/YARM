@@ -12,5 +12,24 @@ function interface.reset_player(player_name_or_index)
     player_data.remote_viewer = nil
 end
 
+function interface.hide_expando(player_name_or_index)
+    local player = game.get_player(player_name_or_index)
+    if global.player_data[player.index].expandoed then
+        resmon.on_click.YARM_expando({player_index=player.index})
+        return true
+    end
+    
+    return false
+end
+
+function interface.show_expando(player_name_or_index)
+    local player = game.get_player(player_name_or_index)
+    if not global.player_data[player.index].expandoed then
+        resmon.on_click.YARM_expando({player_index=player.index})
+        return false
+    end
+    
+    return true
+end
 
 remote.add_interface("YARM", interface)
