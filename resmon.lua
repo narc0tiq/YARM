@@ -379,7 +379,7 @@ function resmon.count_deposits(site, update_cycle)
         -- calculate remaining permille as:
         -- how much of the minimum amount does the site have in excess to the site minimum amount?
         local site_minimum = #site.entities * site.minimum_resource_amount
-        site.remaining_permille = math.floor(site.amount * 1000 / site_minimum) - 1000
+        site.remaining_permille = math.floor(site.amount * 1000 / site_minimum) - 1000 + resmon.endless_resource_base
     end
 
     for i = #site.entities, 1, -1 do
