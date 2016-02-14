@@ -45,7 +45,7 @@ function array_pair.iterator(list)
     end
 
     function iterator.has_next()
-        return iterator.current_index > 1
+        return iterator.current_index >= 1
     end
     return iterator
 end
