@@ -274,12 +274,14 @@ function resmon.scan_current_site(player_index)
 
     local to_scan = math.min(3, #site.next_to_scan)
     for i = 1, to_scan do
-        local entity = table.remove(site.next_to_scan)
+        local entity = table.remove(site.next_to_scan, 1)
+        local entity_position = entity.position
+        local surface = entity.surface
 
         -- Look in every direction around this entity...
         for _, dir in pairs(defines.direction) do
             -- ...and if there's a resource, add it
-            local found = find_resource_at(entity.surface, shift_position(entity.position, dir))
+            local found = find_resource_at(surface, shift_position(entity_position, dir))
             if found and found.name == site.ore_type then
                 resmon.add_single_entity(player_index, found)
             end

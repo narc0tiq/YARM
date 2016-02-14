@@ -12,6 +12,7 @@ members of the #factorio IRC on espernet.
 * Continuous Integration by CircleCI:
 [![Circle CI](https://circleci.com/gh/narc0tiq/YARM.svg?style=svg)](https://circleci.com/gh/narc0tiq/YARM)
 * The Russian translation by RikkiLook
+* Major performance enhancements by @Afforess
 
 
 ## License ##

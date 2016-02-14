@@ -40,12 +40,12 @@ function array_pair.iterator(list)
     end
 
     function iterator.remove()
-        local idx = iterator.current_index
+        local idx = iterator.current_index + 1
         return {x = table.remove(iterator.list.table_a, idx), y = table.remove(iterator.list.table_b, idx)}
     end
 
     function iterator.has_next()
-        return iterator.current_index > 1
+        return iterator.current_index >= 1
     end
     return iterator
 end
