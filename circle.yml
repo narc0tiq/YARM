@@ -7,9 +7,6 @@ dependencies:
 
 
 test:
-    pre:
-        - read BASE_VERSION < SHORT_VERSION && echo ${BASE_VERSION}.${CIRCLE_BUILD_NUM} > VERSION
-        - rm SHORT_VERSION
     override:
         - make package
 
@@ -19,4 +16,3 @@ deployment:
         branch: master
         commands:
             - mv pkg/*.zip $CIRCLE_ARTIFACTS
-
