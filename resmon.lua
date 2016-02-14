@@ -1,5 +1,6 @@
 require "defines"
 require "util"
+require "libs/array_pair"
 
 resmon = {
     on_click = {},
@@ -60,9 +61,27 @@ function resmon.init_force(force)
         force_data.ore_sites = {}
     else
         resmon.migrate_ore_sites(force_data)
+        resmon.migrate_ore_entities(force_data)
     end
 
     global.force_data[force.name] = force_data
+end
+
+function resmon.migrate_ore_entities(force_data)
+    for name, site in pairs(force_data.ore_sites) do
+        if site.known_positions then
+            site.known_positions = nil
+        end
+        if site.entities then
+            site.entity_positions = array_pair.new()
+            for _, ent in pairs(site.entities) do
+                if ent.valid then
+                    array_pair.insert(site.entity_positions, ent.position)
+                end
+            end
+            site.entities = nil
+        end
+    end
 end
 
 
@@ -151,7 +170,7 @@ function resmon.add_resource(player_index, entity)
             force = player.force,
             ore_type = entity.name,
             ore_name = entity.prototype.localised_name,
-            entities = {},
+            entity_positions = array_pair.new(),
             initial_amount = 0,
             amount = 0,
             extents = {
@@ -160,9 +179,7 @@ function resmon.add_resource(player_index, entity)
                 top = entity.position.y,
                 bottom = entity.position.y,
             },
-            known_positions = {},
             next_to_scan = {},
-            scanning = false,
         }
 
         if resmon.is_endless_resource(entity.name, entity.prototype) then
@@ -178,19 +195,21 @@ end
 function resmon.add_single_entity(player_index, entity)
     local player_data = global.player_data[player_index]
     local site = player_data.current_site
+    local entity_pos = entity.position
 
     -- Don't re-add the same entity multiple times
-    local where = util.positiontostr(entity.position)
-    if site.known_positions[where] then return end
+    local iter = array_pair.iterator(site.entity_positions)
+    while(iter.has_next()) do
+        local pos = iter.next()
+        if dist_squared(entity_pos, pos) < 1 then
+            return
+        end
+    end
 
-    -- There must be at least one more scanning step (around the entity
-    -- we're adding right now).
-    site.scanning = true
     if site.finalizing then site.finalizing = false end
 
     -- Memorize this entity
-    site.known_positions[where] = true
-    table.insert(site.entities, entity)
+    array_pair.insert(site.entity_positions, entity_pos)
     table.insert(site.next_to_scan, entity)
     site.amount = site.amount + entity.amount
 
@@ -207,9 +226,14 @@ function resmon.add_single_entity(player_index, entity)
     end
 
     -- Give visible feedback, too
-    resmon.put_marker_at(entity.surface, entity.position, player_data)
+    resmon.put_marker_at(entity.surface, entity_pos, player_data)
 end
 
+function dist_squared(pos_a, pos_b)
+    local axbx = pos_a.x - pos_b.x
+    local ayby = pos_a.y - pos_b.y
+    return axbx * axbx + ayby * ayby
+end
 
 function resmon.put_marker_at(surface, pos, player_data)
     local overlay = surface.create_entity{name="rm_overlay",
@@ -247,13 +271,10 @@ end
 function resmon.scan_current_site(player_index)
     local site = global.player_data[player_index].current_site
 
-    local scan_this_tick = site.next_to_scan
-    site.next_to_scan = {}
+    local to_scan = math.min(3, #site.next_to_scan)
+    for i = 1, to_scan do
+        local entity = table.remove(site.next_to_scan)
 
-    site.scanning = false -- if we add an entity, this will get set back to true
-
-    while #scan_this_tick > 0 do
-        local entity = table.remove(scan_this_tick)
         -- Look in every direction around this entity...
         for _, dir in pairs(defines.direction) do
             -- ...and if there's a resource, add it
@@ -354,13 +375,15 @@ function resmon.count_deposits(site, update_cycle)
         return
     end
 
-    local site_prototype = nil
-    for index, ent in pairs(site.entities) do
-        if ent.valid then
-            if not site_prototype then site_prototype = ent.prototype end
+    local entity_prototype = game.entity_prototypes[site.ore_type]
+    local iter = array_pair.iterator(site.entity_positions)
+    while(iter.has_next()) do
+        local pos = iter.next()
+        local ent = site.surface.find_entity(site.ore_type, pos)
+        if ent and ent.valid then
             new_amount = new_amount + ent.amount
         else
-            to_be_forgotten[index] = true
+            iter.remove()
         end
     end
 
@@ -375,20 +398,13 @@ function resmon.count_deposits(site, update_cycle)
     site.last_ore_check = game.tick
 
     site.remaining_permille = math.floor(site.amount * 1000 / site.initial_amount)
-    if resmon.is_endless_resource(site.ore_type, site_prototype) then
+    if resmon.is_endless_resource(site.ore_type, entity_prototype) then
         -- calculate remaining permille as:
         -- how much of the minimum amount does the site have in excess to the site minimum amount?
-        local site_minimum = #site.entities * site.minimum_resource_amount
+        local site_minimum = array_pair.size(site.entity_positions) * site.minimum_resource_amount
         site.remaining_permille = math.floor(site.amount * 1000 / site_minimum) - 1000 + resmon.endless_resource_base
     end
-
-    for i = #site.entities, 1, -1 do
-        if to_be_forgotten[i] then
-            table.remove(site.entities, i)
-        end
-    end
 end
-
 
 local function site_comparator(left, right)
     if left.remaining_permille ~= right.remaining_permille then
@@ -720,7 +736,7 @@ function resmon.update_players(event)
         if player_data.current_site then
             local site = player_data.current_site
 
-            if site.scanning then
+            if #site.next_to_scan > 0 then
                 resmon.scan_current_site(index)
             elseif not site.finalizing then
                 resmon.finalize_site(index)
@@ -747,7 +763,6 @@ function resmon.update_forces(event)
         end
     end
 end
-
 
 function resmon.on_tick(event)
     resmon.update_players(event)
