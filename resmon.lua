@@ -732,7 +732,10 @@ end
 function resmon.update_players(event)
     for index, player in ipairs(game.players) do
         local player_data = global.player_data[index]
-        if not player.connected and player_data.current_site then
+
+        if not player_data then
+            resmon.init_player(index)
+        elseif not player.connected and player_data.current_site then
             resmon.clear_current_site(index)
         end
 
@@ -759,7 +762,10 @@ function resmon.update_forces(event)
     local update_cycle = event.tick % resmon.ticks_between_checks
     for _, force in pairs(game.forces) do
         local force_data = global.force_data[force.name]
-        if force_data and force_data.ore_sites then
+
+        if not force_data then
+            resmon.init_force(force)
+        elseif force_data and force_data.ore_sites then
             for _, site in pairs(force_data.ore_sites) do
                 resmon.count_deposits(site, update_cycle)
             end
