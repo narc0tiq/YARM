@@ -671,10 +671,10 @@ function resmon.on_click.goto_site(event)
     else
         -- stepping out to a remote viewer: first, be sure you remember your old body
         if not player_data.real_character or not player_data.real_character.valid then
-            -- Abort if the "real" character isn't a player!
+            -- Abort if the "real" character doesn't exist (e.g., god mode) or isn't a player!
             -- NB: this might happen if you use something like The Fat Controller or Command Control
             -- and you do NOT want to get stuck not being able to return from those
-            if player.character.name ~= "player" then
+            if player.character == nil or player.character.name ~= "player" then
                 player.print({"YARM-warn-not-in-real-body"})
                 return
             end
