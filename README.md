@@ -13,6 +13,7 @@ members of the #factorio IRC on espernet.
 [![Circle CI](https://circleci.com/gh/narc0tiq/YARM.svg?style=svg)](https://circleci.com/gh/narc0tiq/YARM)
 * The Russian translation by RikkiLook
 * Major performance enhancements by @Afforess
+* The Hebrew translation by JoCKeR-IL
 
 
 ## License ##
@@ -52,4 +53,5 @@ and based on the creations of
 - Yahoo! Answers Resource Monitor (HanziQ)
 - Yes! Amen! Resource Monitor! (Tivec)
 - Yallah Ahmed Resource Monitor (Tivec)
+- You Are (the) Resource Monitor (narc)
 
