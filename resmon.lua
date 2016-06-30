@@ -1,4 +1,3 @@
-require "defines"
 require "util"
 require "libs/array_pair"
 
