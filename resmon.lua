@@ -32,7 +32,7 @@ end
 
 
 function resmon.init_player(player_index)
-    local player = game.get_player[player_index]
+    local player = game.players[player_index]
     resmon.init_force(player.force)
 
     if not global.player_data then global.player_data = {} end
@@ -139,7 +139,7 @@ end
 
 
 function resmon.clear_current_site(player_index)
-    local player = game.get_player[player_index]
+    local player = game.players[player_index]
     local player_data = global.player_data[player_index]
 
     player_data.current_site = nil
@@ -151,7 +151,7 @@ end
 
 
 function resmon.add_resource(player_index, entity)
-    local player = game.get_player[player_index]
+    local player = game.players[player_index]
     local player_data = global.player_data[player_index]
 
     if player_data.current_site and player_data.current_site.ore_type ~= entity.name then
@@ -318,7 +318,7 @@ end
 
 
 function resmon.finalize_site(player_index)
-    local player = game.get_player[player_index]
+    local player = game.players[player_index]
     local player_data = global.player_data[player_index]
 
     local site = player_data.current_site
@@ -337,7 +337,7 @@ end
 
 
 function resmon.submit_site(player_index)
-    local player = game.get_player[player_index]
+    local player = game.players[player_index]
     local player_data = global.player_data[player_index]
     local force_data = global.force_data[player.force.name]
 
