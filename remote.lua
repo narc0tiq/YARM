@@ -3,7 +3,7 @@ require "resmon"
 local interface = {}
 
 function interface.reset_player(player_name_or_index)
-    local player = game.get_player(player_name_or_index)
+    local player = game.players[player_name_or_index]
     local player_data = global.player_data[player.index]
 
     player.character = player.selected
@@ -13,7 +13,7 @@ function interface.reset_player(player_name_or_index)
 end
 
 function interface.hide_expando(player_name_or_index)
-    local player = game.get_player(player_name_or_index)
+    local player = game.players[player_name_or_index]
     if global.player_data[player.index].expandoed then
         resmon.on_click.YARM_expando({player_index=player.index})
         return true
@@ -23,7 +23,7 @@ function interface.hide_expando(player_name_or_index)
 end
 
 function interface.show_expando(player_name_or_index)
-    local player = game.get_player(player_name_or_index)
+    local player = game.players[player_name_or_index]
     if not global.player_data[player.index].expandoed then
         resmon.on_click.YARM_expando({player_index=player.index})
         return false

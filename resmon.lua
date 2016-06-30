@@ -32,7 +32,7 @@ end
 
 
 function resmon.init_player(player_index)
-    local player = game.get_player(player_index)
+    local player = game.get_player[player_index]
     resmon.init_force(player.force)
 
     if not global.player_data then global.player_data = {} end
@@ -110,7 +110,7 @@ end
 function resmon.on_built_entity(event)
     if event.created_entity.name ~= 'resource-monitor' then return end
 
-    local player = game.get_player(event.player_index)
+    local player = game.players[event.player_index]
     local player_data = global.player_data[event.player_index]
     local pos = event.created_entity.position
     local surface = event.created_entity.surface
@@ -139,7 +139,7 @@ end
 
 
 function resmon.clear_current_site(player_index)
-    local player = game.get_player(player_index)
+    local player = game.get_player[player_index]
     local player_data = global.player_data[player_index]
 
     player_data.current_site = nil
@@ -151,7 +151,7 @@ end
 
 
 function resmon.add_resource(player_index, entity)
-    local player = game.get_player(player_index)
+    local player = game.get_player[player_index]
     local player_data = global.player_data[player_index]
 
     if player_data.current_site and player_data.current_site.ore_type ~= entity.name then
@@ -318,7 +318,7 @@ end
 
 
 function resmon.finalize_site(player_index)
-    local player = game.get_player(player_index)
+    local player = game.get_player[player_index]
     local player_data = global.player_data[player_index]
 
     local site = player_data.current_site
@@ -337,7 +337,7 @@ end
 
 
 function resmon.submit_site(player_index)
-    local player = game.get_player(player_index)
+    local player = game.get_player[player_index]
     local player_data = global.player_data[player_index]
     local force_data = global.force_data[player.force.name]
 
@@ -565,7 +565,7 @@ end
 
 
 function resmon.on_click.YARM_rename_confirm(event)
-    local player = game.get_player(event.player_index)
+    local player = game.players[event.player_index]
     local player_data = global.player_data[event.player_index]
     local force_data = global.force_data[player.force.name]
 
@@ -588,7 +588,7 @@ end
 
 
 function resmon.on_click.YARM_rename_cancel(event)
-    local player = game.get_player(event.player_index)
+    local player = game.players[event.player_index]
     local player_data = global.player_data[event.player_index]
 
     player_data.renaming_site = nil
@@ -599,7 +599,7 @@ end
 function resmon.on_click.rename_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_rename_site_"))
 
-    local player = game.get_player(event.player_index)
+    local player = game.players[event.player_index]
     local player_data = global.player_data[event.player_index]
 
     if player.gui.center.YARM_site_rename then
@@ -626,7 +626,7 @@ end
 function resmon.on_click.remove_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_delete_site_"))
 
-    local player = game.get_player(event.player_index)
+    local player = game.players[event.player_index]
     local force_data = global.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
 
@@ -645,7 +645,7 @@ end
 function resmon.on_click.goto_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_goto_site_"))
 
-    local player = game.get_player(event.player_index)
+    local player = game.players[event.player_index]
     local player_data = global.player_data[event.player_index]
     local force_data = global.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
@@ -713,7 +713,7 @@ end
 
 
 function resmon.on_click.YARM_expando(event)
-    local player = game.get_player(event.player_index)
+    local player = game.players[event.player_index]
     local player_data = global.player_data[event.player_index]
 
     player_data.expandoed = not player_data.expandoed
