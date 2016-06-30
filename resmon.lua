@@ -673,7 +673,7 @@ function resmon.on_click.goto_site(event)
             -- Abort if the "real" character isn't a player!
             -- NB: this might happen if you use something like The Fat Controller or Command Control
             -- and you do NOT want to get stuck not being able to return from those
-            if player.character.name ~= "player" then
+            if not player.character or player.character.name ~= "player" then
                 player.print({"YARM-warn-not-in-real-body"})
                 return
             end
