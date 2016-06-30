@@ -729,7 +729,7 @@ end
 
 
 function resmon.update_players(event)
-    for index, player in ipairs(game.players) do
+    for index, player in pairs(game.players) do
         local player_data = global.player_data[index]
 
         if not player_data then
