@@ -15,6 +15,7 @@ members of the #factorio IRC on espernet.
 * Major performance enhancements by @Afforess
 * The Hebrew translation by JoCKeR-IL
 * Updating assistance by @Bisa
+* Graphics by Meppi on the Factorio forums: <https://forums.factorio.com/viewtopic.php?p=146209#p146209>
 
 
 ## License ##

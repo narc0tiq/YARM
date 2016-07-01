@@ -47,7 +47,8 @@ data:extend(
     {
         type = "technology",
         name = "resource-monitoring",
-        icon = "__{{MOD_NAME}}__/graphics/resource-monitor.png",
+        icon = "__{{MOD_NAME}}__/graphics/yarm-tech.png",
+        icon_size = 128,
         effects = {
             {
                 type = "unlock-recipe",
