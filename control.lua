@@ -1,4 +1,3 @@
-require "defines"
 require "resmon"
 require "remote"
 

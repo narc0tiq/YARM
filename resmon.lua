@@ -1,4 +1,3 @@
-require "defines"
 require "util"
 require "libs/array_pair"
 
@@ -33,7 +32,7 @@ end
 
 
 function resmon.init_player(player_index)
-    local player = game.get_player(player_index)
+    local player = game.players[player_index]
     resmon.init_force(player.force)
 
     if not global.player_data then global.player_data = {} end
@@ -111,7 +110,7 @@ end
 function resmon.on_built_entity(event)
     if event.created_entity.name ~= 'resource-monitor' then return end
 
-    local player = game.get_player(event.player_index)
+    local player = game.players[event.player_index]
     local player_data = global.player_data[event.player_index]
     local pos = event.created_entity.position
     local surface = event.created_entity.surface
@@ -140,7 +139,7 @@ end
 
 
 function resmon.clear_current_site(player_index)
-    local player = game.get_player(player_index)
+    local player = game.players[player_index]
     local player_data = global.player_data[player_index]
 
     player_data.current_site = nil
@@ -152,7 +151,7 @@ end
 
 
 function resmon.add_resource(player_index, entity)
-    local player = game.get_player(player_index)
+    local player = game.players[player_index]
     local player_data = global.player_data[player_index]
 
     if player_data.current_site and player_data.current_site.ore_type ~= entity.name then
@@ -319,7 +318,7 @@ end
 
 
 function resmon.finalize_site(player_index)
-    local player = game.get_player(player_index)
+    local player = game.players[player_index]
     local player_data = global.player_data[player_index]
 
     local site = player_data.current_site
@@ -338,7 +337,7 @@ end
 
 
 function resmon.submit_site(player_index)
-    local player = game.get_player(player_index)
+    local player = game.players[player_index]
     local player_data = global.player_data[player_index]
     local force_data = global.force_data[player.force.name]
 
@@ -566,7 +565,7 @@ end
 
 
 function resmon.on_click.YARM_rename_confirm(event)
-    local player = game.get_player(event.player_index)
+    local player = game.players[event.player_index]
     local player_data = global.player_data[event.player_index]
     local force_data = global.force_data[player.force.name]
 
@@ -589,7 +588,7 @@ end
 
 
 function resmon.on_click.YARM_rename_cancel(event)
-    local player = game.get_player(event.player_index)
+    local player = game.players[event.player_index]
     local player_data = global.player_data[event.player_index]
 
     player_data.renaming_site = nil
@@ -600,7 +599,7 @@ end
 function resmon.on_click.rename_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_rename_site_"))
 
-    local player = game.get_player(event.player_index)
+    local player = game.players[event.player_index]
     local player_data = global.player_data[event.player_index]
 
     if player.gui.center.YARM_site_rename then
@@ -627,7 +626,7 @@ end
 function resmon.on_click.remove_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_delete_site_"))
 
-    local player = game.get_player(event.player_index)
+    local player = game.players[event.player_index]
     local force_data = global.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
 
@@ -646,7 +645,7 @@ end
 function resmon.on_click.goto_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_goto_site_"))
 
-    local player = game.get_player(event.player_index)
+    local player = game.players[event.player_index]
     local player_data = global.player_data[event.player_index]
     local force_data = global.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
@@ -671,10 +670,10 @@ function resmon.on_click.goto_site(event)
     else
         -- stepping out to a remote viewer: first, be sure you remember your old body
         if not player_data.real_character or not player_data.real_character.valid then
-            -- Abort if the "real" character isn't a player!
+            -- Abort if the "real" character is missing (e.g., god mode) or isn't a player!
             -- NB: this might happen if you use something like The Fat Controller or Command Control
             -- and you do NOT want to get stuck not being able to return from those
-            if player.character.name ~= "player" then
+            if not player.character or player.character.name ~= "player" then
                 player.print({"YARM-warn-not-in-real-body"})
                 return
             end
@@ -714,7 +713,7 @@ end
 
 
 function resmon.on_click.YARM_expando(event)
-    local player = game.get_player(event.player_index)
+    local player = game.players[event.player_index]
     local player_data = global.player_data[event.player_index]
 
     player_data.expandoed = not player_data.expandoed
@@ -730,7 +729,7 @@ end
 
 
 function resmon.update_players(event)
-    for index, player in ipairs(game.players) do
+    for index, player in pairs(game.players) do
         local player_data = global.player_data[index]
 
         if not player_data then
