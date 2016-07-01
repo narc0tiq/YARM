@@ -4,7 +4,7 @@
   "factorio_version": "0.13",
   "title": "Yet Another Resource Monitor Fork",
   "author": "Octav 'narc' Sandulescu, based on work by drs, jorgenRe, and L0771",
-  "homepage": "https://github.com/narc0tiq/Resource-Monitor-Mod",
+  "homepage": "https://github.com/narc0tiq/YARM",
   "dependencies": ["base >= 0.13.0"],
   "description": "This mod helps you to keep track of your mining sites."
 }
