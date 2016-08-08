@@ -129,12 +129,7 @@ function resmon.on_built_entity(event)
         return
     end
 
-    local rescat = resource.prototype.resource_category
-    if rescat == 'basic-solid' or rescat == 'basic-fluid' then
-        resmon.add_resource(event.player_index, resource)
-    else
-        player.print{"YARM-unknown-resource-category", rescat}
-    end
+    resmon.add_resource(event.player_index, resource)
 end
 
 
