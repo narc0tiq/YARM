@@ -129,6 +129,12 @@ function resmon.on_built_entity(event)
         return
     end
 
+    local rescat = resource.prototype.resource_category
+    if rescat and rescat == "sand" then
+        player.print{"YARM-err-sand-is-bad", rescat}
+        return
+    end
+
     resmon.add_resource(event.player_index, resource)
 end
 
