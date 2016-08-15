@@ -688,7 +688,7 @@ function resmon.on_click.goto_site(event)
         player.character = viewer
 
         -- don't leave an old one behind
-        if player_data.remote_viewer then
+        if player_data.remote_viewer and player_data.remote_viewer.valid then
             player_data.remote_viewer.destroy()
         end
         player_data.remote_viewer = viewer
