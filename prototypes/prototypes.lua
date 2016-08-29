@@ -91,6 +91,14 @@ data:extend(
             shift = {0.0, 0.0}
         }
     },
+    {
+        type = "resource-category",
+        name = "empty-resource-category",
+    },
+    {
+        type = "recipe-category",
+        name = "empty-recipe-category",
+    },
 })
 
 local empty_animation = {
@@ -122,8 +130,8 @@ local empty_anim_level = {
 
 local fake_player = table.deepcopy(data.raw.player.player)
 fake_player.name = "yarm-remote-viewer"
-fake_player.crafting_categories = {}
-fake_player.mining_categories = {}
+fake_player.crafting_categories = {"empty-recipe-category"}
+fake_player.mining_categories = {"empty-resource-category"}
 fake_player.max_health = 0
 fake_player.inventory_size = 0
 fake_player.build_distance = 0

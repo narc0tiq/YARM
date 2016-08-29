@@ -1,7 +1,7 @@
 {
   "name": "{{MOD_NAME}}",
   "version": "{{VERSION}}",
-  "factorio_version": "0.13",
+  "factorio_version": "0.14",
   "title": "Yet Another Resource Monitor Fork",
   "author": "Octav 'narc' Sandulescu, based on work by drs, jorgenRe, and L0771",
   "homepage": "https://github.com/narc0tiq/YARM",
