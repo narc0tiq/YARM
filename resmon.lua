@@ -405,8 +405,6 @@ end
 
 
 function resmon.tick_deposit_count(site)
-    local entity_prototype = game.entity_prototypes[site.ore_type]
-
     local key, pos
     key = site.iter_key
     for _ = 1, 100 do
@@ -444,6 +442,8 @@ function resmon.finish_deposit_count(site)
     site.last_ore_check = game.tick
 
     site.remaining_permille = math.floor(site.amount * 1000 / site.initial_amount)
+
+    local entity_prototype = game.entity_prototypes[site.ore_type]
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
         -- calculate remaining permille as:
         -- how much of the minimum amount does the site have in excess to the site minimum amount?
