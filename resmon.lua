@@ -91,11 +91,13 @@ function resmon.migrate_ore_entities(force_data)
         end
         if site.entity_positions then
             site.entity_table = {}
-            iter = array_pair.iterator(site.entity_positions)
+            site.entity_count = 0
+            local iter = array_pair.iterator(site.entity_positions)
             while iter.has_next() do
                 pos = iter.next()
-                key = position_to_string(pos)
-                site.entity_table[key] =  pos
+                local key = position_to_string(pos)
+                site.entity_table[key] = pos
+                site.entity_count = site.entity_count + 1
             end
             site.entity_positions = nil
         end
@@ -190,6 +192,7 @@ function resmon.add_resource(player_index, entity)
             ore_type = entity.name,
             ore_name = entity.prototype.localised_name,
             entity_table = {},
+            entity_count = 0,
             initial_amount = 0,
             amount = 0,
             extents = {
@@ -217,7 +220,7 @@ function resmon.add_single_entity(player_index, entity)
     local entity_pos = entity.position
 
     -- Don't re-add the same entity multiple times
-    key = position_to_string(entity_pos)
+    local key = position_to_string(entity_pos)
     if site.entity_table[key] then
         return
     end
@@ -226,6 +229,7 @@ function resmon.add_single_entity(player_index, entity)
 
     -- Memorize this entity
     site.entity_table[key] = entity_pos
+    site.entity_count = site.entity_count + 1
     table.insert(site.next_to_scan, entity)
     site.amount = site.amount + entity.amount
 
@@ -385,8 +389,6 @@ function resmon.is_endless_resource(ent_name, proto)
 end
 
 function resmon.count_deposits(site, update_cycle)
-    local to_be_forgotten = {}
-
     if site.iter_fn then
         resmon.tick_deposit_count(site)
         return
@@ -418,6 +420,7 @@ function resmon.tick_deposit_count(site)
             site.update_amount = site.update_amount + ent.amount
         else
             site.entity_table[key] = nil  -- It's permitted to delete from a table being iterated
+            site.entity_count = site.entity_count - 1
         end
     end
     site.iter_key = key
@@ -444,7 +447,7 @@ function resmon.finish_deposit_count(site)
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
         -- calculate remaining permille as:
         -- how much of the minimum amount does the site have in excess to the site minimum amount?
-        local site_minimum = #site.entity_table * site.minimum_resource_amount
+        local site_minimum = site.entity_count * site.minimum_resource_amount
         site.remaining_permille = math.floor(site.amount * 1000 / site_minimum) - 1000 + resmon.endless_resource_base
     end
 end
