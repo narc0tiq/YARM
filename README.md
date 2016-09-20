@@ -1,6 +1,60 @@
 This is a [Factorio](http://www.factorio.com/) mod. It lets you keep track of
 your mining sites and warns you when they're starting to run low.
 
+
+## How? ##
+
+Once the mod is installed, using it is relatively simple:
+
+* First, you must research the technology "Resource Monitoring". This enables
+you to...
+* Then, craft yourself a resource monitor. You should only ever need one, as it
+does not get consumed.
+* Walk over within build distance of an ore patch, take the resource monitor in
+your hand, and tap it on the ore (click as if to place it).
+    * If everything went well, you should now see a blue overlay showing up on
+    top of the ore you clicked, and growing as YARM finds its neighbours, and
+    their neighbours, until the entire ore patch has been scanned.
+    * After the scan, you have 10 seconds to tap another ore of the same kind,
+    which will be added to the same site. This is currently the only way to add
+    disconnected ore patches to a single site.
+    * Upon the expiry of those 10 seconds, the site will be created and a
+    message will be shown informing you of its name and the amount of ore found
+    in it.
+
+By default, YARM shows only sites that are about to expire (i.e., less than 10%
+of their initial amount remaining). Clicking the single button shown in the
+YARM interface switches it to "all sites" mode, where it will show every site
+you've recorded.
+
+Each site has some buttons associated with it:
+
+* The 'eye' button allows you to remote-view the site from wherever you are in
+the world. Click it again to return to your body.
+    * Note: it is possible (though unlikely) to get stuck in the remote viewer,
+    especially if entering it from a non-player entity (e.g., while using the
+    Fat Controller to view a train). This should normally be prevented, but if
+    somehow you end up in that state, you will need to find your character
+    entity, highlight it, and use the console command `/c remote.call("YARM",
+    "reset_player", game.player.name)`.
+* The 'X' button (only shown while not viewing the site) allows you to delete
+the site. When first clicked, it turns red; click it again within 10 seconds to
+confirm deletion, or leave it alone to cancel it.
+* The '|' button (only shown while remote viewing the site) allows you to
+rename the site. This can be useful to prevent auto-naming from overwriting one
+of your sites with another.
+
+
+Sites are bound to forces (i.e., teams), so any sites you add will be visible
+to your teammates.
+
+Endless resources (by default, oil, but mods exist for others) are supported;
+the percentage full is therein calculated based on how much more than the
+minimum amount is present in the ore entities. This is minimally informative,
+and time to depletion is probably going to be quite wrong, but it's the best we
+can do with what we have.
+
+
 ## Many thanks for ##
 
 * The major effort by drs9999 to create
