@@ -66,6 +66,15 @@ function resmon.init_force(force)
     global.force_data[force.name] = force_data
 end
 
+
+local function position_to_string(entity)
+    -- scale it up so (hopefully) any floating point component disappears,
+    -- then force it to be an integer with %d.  not using util.positiontostr
+    -- as it uses %g and keeps the floating point component.
+    return string.format("%d,%d", entity.x * 100, entity.y * 100)
+end
+
+
 function resmon.migrate_ore_entities(force_data)
     for name, site in pairs(force_data.ore_sites) do
         if site.known_positions then
@@ -79,6 +88,18 @@ function resmon.migrate_ore_entities(force_data)
                 end
             end
             site.entities = nil
+        end
+        if site.entity_positions then
+            site.entity_table = {}
+            site.entity_count = 0
+            local iter = array_pair.iterator(site.entity_positions)
+            while iter.has_next() do
+                pos = iter.next()
+                local key = position_to_string(pos)
+                site.entity_table[key] = pos
+                site.entity_count = site.entity_count + 1
+            end
+            site.entity_positions = nil
         end
     end
 end
@@ -170,7 +191,8 @@ function resmon.add_resource(player_index, entity)
             force = player.force,
             ore_type = entity.name,
             ore_name = entity.prototype.localised_name,
-            entity_positions = array_pair.new(),
+            entity_table = {},
+            entity_count = 0,
             initial_amount = 0,
             amount = 0,
             extents = {
@@ -198,18 +220,16 @@ function resmon.add_single_entity(player_index, entity)
     local entity_pos = entity.position
 
     -- Don't re-add the same entity multiple times
-    local iter = array_pair.iterator(site.entity_positions)
-    while(iter.has_next()) do
-        local pos = iter.next()
-        if dist_squared(entity_pos, pos) < 0.5 then
-            return
-        end
+    local key = position_to_string(entity_pos)
+    if site.entity_table[key] then
+        return
     end
 
     if site.finalizing then site.finalizing = false end
 
     -- Memorize this entity
-    array_pair.insert(site.entity_positions, entity_pos)
+    site.entity_table[key] = entity_pos
+    site.entity_count = site.entity_count + 1
     table.insert(site.next_to_scan, entity)
     site.amount = site.amount + entity.amount
 
@@ -229,13 +249,13 @@ function resmon.add_single_entity(player_index, entity)
     resmon.put_marker_at(entity.surface, entity_pos, player_data)
 end
 
-function dist_squared(pos_a, pos_b)
-    local axbx = pos_a.x - pos_b.x
-    local ayby = pos_a.y - pos_b.y
-    return axbx * axbx + ayby * ayby
-end
 
 function resmon.put_marker_at(surface, pos, player_data)
+    if math.floor(pos.x) % resmon.overlay_step ~= 0 or
+       math.floor(pos.y) % resmon.overlay_step ~= 0 then
+        return
+    end
+
     local overlay = surface.create_entity{name="rm_overlay",
                                           force=game.forces.neutral,
                                           position=pos}
@@ -272,7 +292,7 @@ end
 function resmon.scan_current_site(player_index)
     local site = global.player_data[player_index].current_site
 
-    local to_scan = math.min(3, #site.next_to_scan)
+    local to_scan = math.min(30, #site.next_to_scan)
     for i = 1, to_scan do
         local entity = table.remove(site.next_to_scan, 1)
         local entity_position = entity.position
@@ -368,43 +388,66 @@ function resmon.is_endless_resource(ent_name, proto)
     return resmon.endless_resources[ent_name]
 end
 
-
 function resmon.count_deposits(site, update_cycle)
-    local to_be_forgotten = {}
-    local new_amount = 0
+    if site.iter_fn then
+        resmon.tick_deposit_count(site)
+        return
+    end
 
     local site_update_cycle = site.added_at % resmon.ticks_between_checks
     if site_update_cycle ~= update_cycle then
         return
     end
 
+    site.iter_fn, site.iter_state, site.iter_key = pairs(site.entity_table)
+    site.update_amount = 0
+end
+
+
+function resmon.tick_deposit_count(site)
     local entity_prototype = game.entity_prototypes[site.ore_type]
-    local iter = array_pair.iterator(site.entity_positions)
-    while(iter.has_next()) do
-        local pos = iter.next()
+
+    local key, pos
+    key = site.iter_key
+    for _ = 1, 100 do
+        key, pos = site.iter_fn(site.iter_state, key)
+        if key == nil then
+            resmon.finish_deposit_count(site)
+            return
+        end
         local ent = site.surface.find_entity(site.ore_type, pos)
         if ent and ent.valid then
-            new_amount = new_amount + ent.amount
+            site.update_amount = site.update_amount + ent.amount
         else
-            iter.remove()
+            site.entity_table[key] = nil  -- It's permitted to delete from a table being iterated
+            site.entity_count = site.entity_count - 1
         end
     end
+    site.iter_key = key
+
+end
+
+
+function resmon.finish_deposit_count(site)
+    site.iter_key = nil
+    site.iter_fn = nil
+    site.iter_state = nil
 
     if site.last_ore_check then
         local delta_ticks = game.tick - site.last_ore_check
-        local delta_ore = new_amount - site.amount
+        local delta_ore = site.update_amount - site.amount
 
         site.ore_per_minute = math.floor(delta_ore * 3600 / delta_ticks)
     end
 
-    site.amount = new_amount
+    site.amount = site.update_amount
     site.last_ore_check = game.tick
 
     site.remaining_permille = math.floor(site.amount * 1000 / site.initial_amount)
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
         -- calculate remaining permille as:
         -- how much of the minimum amount does the site have in excess to the site minimum amount?
-        local site_minimum = array_pair.size(site.entity_positions) * site.minimum_resource_amount
+        local site_minimum = site.entity_count * site.minimum_resource_amount
         site.remaining_permille = math.floor(site.amount * 1000 / site_minimum) - 1000 + resmon.endless_resource_base
     end
 end
