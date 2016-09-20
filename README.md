@@ -18,6 +18,9 @@ your hand, and tap it on the ore (click as if to place it).
     * After the scan, you have 10 seconds to tap another ore of the same kind,
     which will be added to the same site. This is currently the only way to add
     disconnected ore patches to a single site.
+        * If you tap the ground instead, you will cancel the site.
+        * If you tap a different kind of ore instead, you will instantly create 
+        the site and start a new one on the other ore.
     * Upon the expiry of those 10 seconds, the site will be created and a
     message will be shown informing you of its name and the amount of ore found
     in it.
