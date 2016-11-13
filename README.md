@@ -43,10 +43,13 @@ the world. Click it again to return to your body.
 * The 'X' button (only shown while not viewing the site) allows you to delete
 the site. When first clicked, it turns red; click it again within 10 seconds to
 confirm deletion, or leave it alone to cancel it.
-* The '|' button (only shown while remote viewing the site) allows you to
+* The 'ab|' button (only shown while remote viewing the site) allows you to
 rename the site. This can be useful to prevent auto-naming from overwriting one
 of your sites with another.
-
+* The '+' button (only shown while not viewing the site) allows you to expand 
+an existing site. Usage: click the '+' for the site you want to expand, then 
+smack the YARM on the new ore site you want to add to the existing monitor. 
+Sites are not renamed by this process.
 
 Sites are bound to forces (i.e., teams), so any sites you add will be visible
 to your teammates.

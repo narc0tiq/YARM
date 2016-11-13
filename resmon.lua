@@ -351,8 +351,11 @@ function resmon.finalize_site(player_index)
 
     site.center = find_center(site.extents)
 
-    site.name = string.format("%s %d", get_octant_name(site.center), util.distance({x=0, y=0}, site.center))
-
+	-- don't rename a site we've expanded!
+    if not site.is_expansion_site then
+		site.name = string.format("%s %d", get_octant_name(site.center), util.distance({x=0, y=0}, site.center))
+	end
+	
     resmon.count_deposits(site, site.added_at % resmon.ticks_between_checks)
 end
 
@@ -568,6 +571,9 @@ function resmon.update_ui(player)
                 site_buttons.add{type="button",
                                  name="YARM_delete_site_"..site.name,
                                  style="YARM_delete_site"}
+                site_buttons.add{type="button",
+                                 name="YARM_expand_site_"..site.name,
+                                 style="YARM_expand_site"}
             end
         end
     end
@@ -742,6 +748,31 @@ function resmon.on_click.goto_site(event)
     end
 end
 
+function resmon.on_click.expand_site(event)
+    local site_name = string.sub(event.element.name, 1 + string.len("YARM_expand_site_"))
+
+    local player = game.players[event.player_index]
+    local player_data = global.player_data[event.player_index]
+    local force_data = global.force_data[player.force.name]
+    local site = force_data.ore_sites[site_name]
+
+	if player_data.current_site then
+        resmon.submit_site(event.player_index)
+	end
+	
+	player_data.current_site = site;
+	player_data.current_site.is_expansion_site = true;
+	player_data.current_site.added_at = game.tick,
+	
+	resmon.reconstruct_overlay_for_existing_site(player_data);
+end
+
+function resmon.reconstruct_overlay_for_existing_site(player_data)
+	for positionCount = 1, #player_data.current_site.entity_table do
+		entity = player_data.current_site.entity_table[positionCount];
+		resmon.put_marker_at(entity.surface, entity.position, player_data)
+	end
+end
 
 function resmon.on_gui_click(event)
     if resmon.on_click[event.element.name] then
@@ -752,6 +783,8 @@ function resmon.on_gui_click(event)
         resmon.on_click.rename_site(event)
     elseif string.starts_with(event.element.name, "YARM_goto_site_") then
         resmon.on_click.goto_site(event)
+    elseif string.starts_with(event.element.name, "YARM_expand_site_") then
+        resmon.on_click.expand_site(event)
     end
 end
 
