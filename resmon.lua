@@ -351,11 +351,11 @@ function resmon.finalize_site(player_index)
 
     site.center = find_center(site.extents)
 
-	-- don't rename a site we've expanded!
+    -- don't rename a site we've expanded!
     if not site.is_expansion_site then
-		site.name = string.format("%s %d", get_octant_name(site.center), util.distance({x=0, y=0}, site.center))
-	end
-	
+        site.name = string.format("%s %d", get_octant_name(site.center), util.distance({x=0, y=0}, site.center))
+    end
+    
     resmon.count_deposits(site, site.added_at % resmon.ticks_between_checks)
 end
 
@@ -756,22 +756,28 @@ function resmon.on_click.expand_site(event)
     local force_data = global.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
 
-	if player_data.current_site then
+    if player_data.current_site then
         resmon.submit_site(event.player_index)
-	end
-	
-	player_data.current_site = site;
-	player_data.current_site.is_expansion_site = true;
-	player_data.current_site.added_at = game.tick,
-	
-	resmon.reconstruct_overlay_for_existing_site(player_data);
+    end
+    
+    site.is_expansion_site = true;
+    site.added_at = game.tick;
+    player_data.current_site = site;
+    
+    resmon.reconstruct_overlay_for_existing_site(player_data, player);
+    resmon.finalize_site(event.player_index);
 end
 
 function resmon.reconstruct_overlay_for_existing_site(player_data)
-	for positionCount = 1, #player_data.current_site.entity_table do
-		entity = player_data.current_site.entity_table[positionCount];
-		resmon.put_marker_at(entity.surface, entity.position, player_data)
-	end
+    local site = player_data.current_site;
+    local oretable = site.entity_table;
+    for key,pos in pairs(oretable) do 
+        local ent = site.surface.find_entity(site.ore_type, pos)
+        if ent and ent.valid then
+            resmon.put_marker_at(ent.surface, pos, player_data)
+        end 
+    end
+
 end
 
 function resmon.on_gui_click(event)
