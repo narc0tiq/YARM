@@ -209,6 +209,14 @@ function resmon.add_resource(player_index, entity)
         end
     end
 
+    
+    if player_data.current_site.is_site_expanding then 
+        player_data.current_site.has_expanded = true; -- relevant for the console output
+        if not player_data.current_site.original_amount then 
+            player_data.current_site.original_amount = player_data.current_site.amount; 
+        end
+    end
+
     resmon.add_single_entity(player_index, entity)
     -- note: resmon.scan_current_site() (via on_tick) will continue the operation from here
 end
@@ -226,7 +234,7 @@ function resmon.add_single_entity(player_index, entity)
     end
 
     if site.finalizing then site.finalizing = false end
-
+    
     -- Memorize this entity
     site.entity_table[key] = entity_pos
     site.entity_count = site.entity_count + 1
@@ -351,8 +359,8 @@ function resmon.finalize_site(player_index)
 
     site.center = find_center(site.extents)
 
-    -- don't rename a site we've expanded!
-    if not site.is_expansion_site then
+    -- don't rename a site we've expanded! (if the site name changes it'll create a new site instead of replacing the existing one)
+    if not site.is_site_expanding then
         site.name = string.format("%s %d", get_octant_name(site.center), util.distance({x=0, y=0}, site.center))
     end
     
@@ -364,14 +372,26 @@ function resmon.submit_site(player_index)
     local player = game.players[player_index]
     local player_data = global.player_data[player_index]
     local force_data = global.force_data[player.force.name]
-
-    local site = player_data.current_site
-
+    local site = player_data.current_site;
+    
     force_data.ore_sites[site.name] = site
     resmon.clear_current_site(player_index)
+    if (site.is_site_expanding) then
+        if(site.has_expanded) then
+            local amount_added = site.amount - site.original_amount;
+            player.print{"YARM-site-expanded", site.name, format_number(site.amount), site.ore_name, format_number(amount_added)}
+        end
+        -- nb: deliberately not outputting anything in the case where the player cancelled (or timed out) a site expansion without expanding anything (to avoid console spam)
+    else
+        player.print{"YARM-site-submitted", site.name, format_number(site.amount), site.ore_name}
+    end
 
-
-    player.print{"YARM-site-submitted", site.name, format_number(site.amount), site.ore_name}
+    -- clear site expanding state so we can re-expand the same site again (and get sensible numbers!)
+    if(site.is_site_expanding) then
+        site.is_site_expanding = nil;
+        site.has_expanded = nil;
+        site.original_amount = nil;
+    end    
 end
 
 
@@ -571,9 +591,15 @@ function resmon.update_ui(player)
                 site_buttons.add{type="button",
                                  name="YARM_delete_site_"..site.name,
                                  style="YARM_delete_site"}
-                site_buttons.add{type="button",
-                                 name="YARM_expand_site_"..site.name,
-                                 style="YARM_expand_site"}
+                if site.is_site_expanding then
+                    site_buttons.add{type="button",
+                                     name="YARM_expand_site_"..site.name,
+                                     style="YARM_expand_site_cancel"}
+                else
+                    site_buttons.add{type="button",
+                                     name="YARM_expand_site_"..site.name,
+                                     style="YARM_expand_site"}
+                end
             end
         end
     end
@@ -748,6 +774,7 @@ function resmon.on_click.goto_site(event)
     end
 end
 
+-- one button handler for both the expand_site and expand_site_cancel buttons.
 function resmon.on_click.expand_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_expand_site_"))
 
@@ -756,15 +783,32 @@ function resmon.on_click.expand_site(event)
     local force_data = global.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
 
+    -- subtly different cases here. if the site is already expanding, then we cancel expanding (by submitting it) and return
+    -- (this is basically the expand_site_cancel button handler)
+    if site.is_site_expanding then
+        resmon.submit_site(event.player_index)
+        for _, p in pairs(player.force.players) do
+            resmon.update_ui(p)
+        end
+        return;
+    end
+    
+    -- whereas if we have a site already under the timer (to be created) and we try and expand a different site we want to:
+    --    - submit the site under the timer and 
+    -- then proceed with expanding the site we clicked the expand button for
     if player_data.current_site then
         resmon.submit_site(event.player_index)
     end
     
-    site.is_expansion_site = true;
+    site.is_site_expanding = true;
     site.added_at = game.tick;
     player_data.current_site = site;
+
+    for _, p in pairs(player.force.players) do
+        resmon.update_ui(p)
+    end
     
-    resmon.reconstruct_overlay_for_existing_site(player_data, player);
+    resmon.reconstruct_overlay_for_existing_site(player_data);
     resmon.finalize_site(event.player_index);
 end
 

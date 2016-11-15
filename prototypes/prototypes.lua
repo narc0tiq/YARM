@@ -302,6 +302,15 @@ default_gui.YARM_expand_site = {
     clicked_graphical_set = button_graphics(32, 176),
 }
 
+default_gui.YARM_expand_site_cancel = {
+    type = "button_style",
+    parent = "YARM_button_with_icon",
+
+    default_graphical_set = button_graphics( 0, 192),
+    hovered_graphical_set = button_graphics(16, 192),
+    clicked_graphical_set = button_graphics(32, 192),
+}
+
 default_gui.YARM_site_table = {
     type = "table_style",
     horizontal_spacing = 3,
