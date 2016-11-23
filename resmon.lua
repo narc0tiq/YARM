@@ -207,6 +207,9 @@ function resmon.add_resource(player_index, entity)
                 bottom = entity.position.y,
             },
             next_to_scan = {},
+            entities_to_be_overlaid = {},
+            next_to_overlay = {},
+
         }
 
         if resmon.is_endless_resource(entity.name, entity.prototype) then
@@ -239,7 +242,7 @@ function resmon.add_single_entity(player_index, entity)
     end
 
     if site.finalizing then site.finalizing = false end
-    
+
     -- Memorize this entity
     site.entity_table[key] = entity_pos
     site.entity_count = site.entity_count + 1
@@ -369,7 +372,7 @@ function resmon.finalize_site(player_index)
     if not site.is_site_expanding then
         site.name = string.format("%s %d", get_octant_name(site.center), util.distance({x=0, y=0}, site.center))
     end
-    
+
     resmon.count_deposits(site, site.added_at % resmon.ticks_between_checks)
 end
 
@@ -379,7 +382,7 @@ function resmon.submit_site(player_index)
     local player_data = global.player_data[player_index]
     local force_data = global.force_data[player.force.name]
     local site = player_data.current_site
-    
+
     force_data.ore_sites[site.name] = site
     resmon.clear_current_site(player_index)
     if (site.is_site_expanding) then
@@ -797,24 +800,97 @@ function resmon.on_click.expand_site(event)
     if are_we_cancelling_expand then return end
 
     site.is_site_expanding = true
-    site.finalizing = true
-    site.finalizing_since = game.tick
+    --site.finalizing = true
+    --site.finalizing_since = game.tick
     player_data.current_site = site
 
     resmon.update_force_members_ui(player)
-    
-    resmon.reconstruct_overlay_for_existing_site(player_data)
+    resmon.start_recreate_overlay_existing_site(event.player_index)
+	resmon.pull_YARM_item_to_cursor_if_possible(event.player_index)
 end
 
-function resmon.reconstruct_overlay_for_existing_site(player_data)
-    local site = player_data.current_site
-    local oretable = site.entity_table
-    for key,pos in pairs(oretable) do 
+function resmon.pull_YARM_item_to_cursor_if_possible(player_index)
+    local player = game.players[player_index]
+    
+    if (not player.cursor_stack.valid_for_read) and (player.get_item_count("resource-monitor") > 0) then
+        player.remove_item({name="resource-monitor", count=1})
+        player.cursor_stack.set_stack({name="resource-monitor", count=1})
+    end
+end
+
+
+function resmon.start_recreate_overlay_existing_site(player_index)
+    local site = global.player_data[player_index].current_site
+    site.is_overlay_being_created = true
+
+    -- forcible cleanup in case we got interrupted during a previous background overlay attempt
+    site.entities_to_be_overlaid = {}
+    site.entities_to_be_overlaid_count = 0
+    site.next_to_overlay = {}
+    site.next_to_overlay_count = 0
+    
+    for key,pos in pairs(site.entity_table) do 
         local ent = site.surface.find_entity(site.ore_type, pos)
         if ent and ent.valid then
-            resmon.put_marker_at(ent.surface, pos, player_data)
+            site.entities_to_be_overlaid[key] = pos
+            site.entities_to_be_overlaid_count = site.entities_to_be_overlaid_count + 1
         end 
     end
+end
+
+function resmon.process_overlay_for_existing_site(player_index)
+    local player_data = global.player_data[player_index]
+    local site = player_data.current_site
+        
+    if site.next_to_overlay_count == 0 then
+        if site.entities_to_be_overlaid_count == 0 then
+            resmon.end_overlay_creation_for_existing_site(player_index)
+            return
+        else
+            local ent_key, ent_pos = next(site.entities_to_be_overlaid)
+            site.next_to_overlay[ent_key] = ent_pos
+            site.next_to_overlay_count = site.next_to_overlay_count + 1
+        end
+    end
+    
+    local to_scan = math.min(30, site.next_to_overlay_count)
+    for i = 1, to_scan do
+        local ent_key, ent_pos = next(site.next_to_overlay)
+        
+        local entity = site.surface.find_entity(site.ore_type, ent_pos)
+        local entity_position = entity.position
+        local surface = entity.surface
+        local key = position_to_string(entity_position)
+        
+        -- put marker down
+        resmon.put_marker_at(surface, entity_position, player_data)
+        -- remove it from our to-do lists
+        site.entities_to_be_overlaid[key] = nil
+        site.entities_to_be_overlaid_count = site.entities_to_be_overlaid_count - 1
+        site.next_to_overlay[key] = nil
+        site.next_to_overlay_count = site.next_to_overlay_count - 1
+        
+        -- Look in every direction around this entity...
+        for _, dir in pairs(defines.direction) do
+            -- ...and if there's a resource that's not already overlaid, add it
+            local found = find_resource_at(surface, shift_position(entity_position, dir))
+            if found and found.name == site.ore_type then
+                local offsetkey = position_to_string(found.position)
+                if site.entities_to_be_overlaid[offsetkey] ~= nil and site.next_to_overlay[offsetkey] == nil then
+                    site.next_to_overlay[offsetkey] = found.position
+                    site.next_to_overlay_count = site.next_to_overlay_count + 1
+                end
+            end
+        end
+    end
+end
+
+function resmon.end_overlay_creation_for_existing_site(player_index)
+    local site = global.player_data[player_index].current_site
+    site.is_overlay_being_created = false
+    site.finalizing = true
+    site.finalizing_since = game.tick
+ 
 end
 
 function resmon.update_force_members_ui(player)
@@ -873,6 +949,10 @@ function resmon.update_players(event)
                 resmon.finalize_site(index)
             elseif site.finalizing_since + 600 == event.tick then
                 resmon.submit_site(index)
+            end
+            
+            if site.is_overlay_being_created then
+                resmon.process_overlay_for_existing_site(index)
             end
         end
 
