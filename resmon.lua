@@ -388,8 +388,9 @@ function resmon.submit_site(player_index)
     if (site.is_site_expanding) then
         if(site.has_expanded) then
             local amount_added = site.amount - site.original_amount
+            local sign = amount_added < 0 and '' or '+' -- format_number will handle the negative sign for us (if needed)
             player.print{"YARM-site-expanded", site.name, format_number(site.amount), site.ore_name, 
-                            format_number(amount_added)}
+                            sign..format_number(amount_added)}
         end
         --[[ NB: deliberately not outputting anything in the case where the player cancelled (or 
              timed out) a site expansion without expanding anything (to avoid console spam) ]]
