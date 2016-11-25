@@ -48,8 +48,11 @@ rename the site. This can be useful to prevent auto-naming from overwriting one
 of your sites with another.
 * The '+' button (only shown while not viewing the site) allows you to expand 
 an existing site. Usage: click the '+' for the site you want to expand, then 
-smack the YARM on the new ore site you want to add to the existing monitor. 
-Sites are not renamed by this process.
+smack the resource monitor on the new ore site you want to add to the existing 
+monitor. Sites are not renamed by this process. NB: to help you, the '+' button
+will also drag a resource monitor into your cursor, assuming you have a 
+resource monitor and an empty cursor. (Clicking the '+' button with a resource 
+monitor in-hand works just as you'd expect.)
 
 Sites are bound to forces (i.e., teams), so any sites you add will be visible
 to your teammates.
