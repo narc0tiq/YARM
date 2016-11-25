@@ -800,23 +800,23 @@ function resmon.on_click.expand_site(event)
     if are_we_cancelling_expand then return end
 
 	resmon.pull_YARM_item_to_cursor_if_possible(event.player_index)
-    if not player.cursor_stack.name == "resource-monitor" then return end
+    if player.cursor_stack.valid_for_read and player.cursor_stack.name == "resource-monitor" then 
+        site.is_site_expanding = true
+        player_data.current_site = site
 
-    site.is_site_expanding = true
-    player_data.current_site = site
-
-    resmon.update_force_members_ui(player)
-    resmon.start_recreate_overlay_existing_site(event.player_index)
+        resmon.update_force_members_ui(player)
+        resmon.start_recreate_overlay_existing_site(event.player_index)
+    end
 end
 
 function resmon.pull_YARM_item_to_cursor_if_possible(player_index)
     local player = game.players[player_index]
-    if player.cursor_stack.name == "resource-monitor" then -- happy days!
+    if player.cursor_stack.valid_for_read and player.cursor_stack.name == "resource-monitor" then -- happy days!
         return 
-    else if player.cursor_stack.valid_for_read then -- they've already got something else on their cursor
+    elseif player.cursor_stack.valid_for_read then -- they've already got something else on their cursor
         player.print{"YARM-warn-please-empty-cursor"}
         return
-    else if not (player.get_item_count("resource-monitor") > 0) then
+    elseif player.get_item_count("resource-monitor") == 0 then
         player.print{"YARM-warn-no-YARM-item"}
         return
     end
