@@ -146,7 +146,12 @@ function resmon.on_built_entity(event)
 
     local resource = find_resource_at(surface, pos)
     if not resource then
-        resmon.clear_current_site(event.player_index)
+        -- if we have an expanding site, submit it. else, just drop the current site
+        if player_data.current_site and player_data.current_site.is_site_expanding then
+            resmon.submit_site(event.player_index)
+        else
+            resmon.clear_current_site(event.player_index)
+        end
         return
     end
 
@@ -202,10 +207,21 @@ function resmon.add_resource(player_index, entity)
                 bottom = entity.position.y,
             },
             next_to_scan = {},
+            entities_to_be_overlaid = {},
+            next_to_overlay = {},
+
         }
 
         if resmon.is_endless_resource(entity.name, entity.prototype) then
             player_data.current_site.minimum_resource_amount = entity.prototype.minimum_resource_amount
+        end
+    end
+
+
+    if player_data.current_site.is_site_expanding then
+        player_data.current_site.has_expanded = true -- relevant for the console output
+        if not player_data.current_site.original_amount then
+            player_data.current_site.original_amount = player_data.current_site.amount
         end
     end
 
@@ -351,7 +367,11 @@ function resmon.finalize_site(player_index)
 
     site.center = find_center(site.extents)
 
-    site.name = string.format("%s %d", get_octant_name(site.center), util.distance({x=0, y=0}, site.center))
+    --[[ don't rename a site we've expanded! (if the site name changes it'll create a new site
+         instead of replacing the existing one) ]]
+    if not site.is_site_expanding then
+        site.name = string.format("%s %d", get_octant_name(site.center), util.distance({x=0, y=0}, site.center))
+    end
 
     resmon.count_deposits(site, site.added_at % resmon.ticks_between_checks)
 end
@@ -361,14 +381,30 @@ function resmon.submit_site(player_index)
     local player = game.players[player_index]
     local player_data = global.player_data[player_index]
     local force_data = global.force_data[player.force.name]
-
     local site = player_data.current_site
 
     force_data.ore_sites[site.name] = site
     resmon.clear_current_site(player_index)
+    if (site.is_site_expanding) then
+        if(site.has_expanded) then
+            local amount_added = site.amount - site.original_amount
+            local sign = amount_added < 0 and '' or '+' -- format_number will handle the negative sign for us (if needed)
+            player.print{"YARM-site-expanded", site.name, format_number(site.amount), site.ore_name,
+                            sign..format_number(amount_added)}
+        end
+        --[[ NB: deliberately not outputting anything in the case where the player cancelled (or
+             timed out) a site expansion without expanding anything (to avoid console spam) ]]
+    else
+        player.print{"YARM-site-submitted", site.name, format_number(site.amount), site.ore_name}
+    end
 
-
-    player.print{"YARM-site-submitted", site.name, format_number(site.amount), site.ore_name}
+    -- clear site expanding state so we can re-expand the same site again (and get sensible numbers!)
+    if(site.is_site_expanding) then
+        site.is_site_expanding = nil
+        site.has_expanded = nil
+        site.original_amount = nil
+    end
+    resmon.update_force_members_ui(player)
 end
 
 
@@ -568,6 +604,15 @@ function resmon.update_ui(player)
                 site_buttons.add{type="button",
                                  name="YARM_delete_site_"..site.name,
                                  style="YARM_delete_site"}
+                if site.is_site_expanding then
+                    site_buttons.add{type="button",
+                                     name="YARM_expand_site_"..site.name,
+                                     style="YARM_expand_site_cancel"}
+                else
+                    site_buttons.add{type="button",
+                                     name="YARM_expand_site_"..site.name,
+                                     style="YARM_expand_site"}
+                end
             end
         end
     end
@@ -625,9 +670,7 @@ function resmon.on_click.YARM_rename_confirm(event)
     player_data.renaming_site = nil
     player.gui.center.YARM_site_rename.destroy()
 
-    for _, p in pairs(player.force.players) do
-        resmon.update_ui(p)
-    end
+    resmon.update_force_members_ui(player)
 end
 
 
@@ -661,9 +704,7 @@ function resmon.on_click.rename_site(event)
     root.add{type="button", name="YARM_rename_confirm", caption={"YARM-site-rename-confirm"}}
     root.add{type="button", name="YARM_rename_cancel", caption={"YARM-site-rename-cancel"}}
 
-    for _, p in pairs(player.force.players) do
-        resmon.update_ui(p)
-    end
+    resmon.update_force_members_ui(player)
 end
 
 
@@ -680,9 +721,7 @@ function resmon.on_click.remove_site(event)
         site.deleting_since = event.tick
     end
 
-    for _, p in pairs(player.force.players) do
-        resmon.update_ui(p)
-    end
+    resmon.update_force_members_ui(player)
 end
 
 
@@ -714,9 +753,9 @@ function resmon.on_click.goto_site(event)
     else
         -- stepping out to a remote viewer: first, be sure you remember your old body
         if not player_data.real_character or not player_data.real_character.valid then
-            -- Abort if the "real" character is missing (e.g., god mode) or isn't a player!
-            -- NB: this might happen if you use something like The Fat Controller or Command Control
-            -- and you do NOT want to get stuck not being able to return from those
+            --[[ Abort if the "real" character is missing (e.g., god mode) or isn't a player!
+                 NB: this might happen if you use something like The Fat Controller or Command Control
+                 and you do NOT want to get stuck not being able to return from those ]]
             if not player.character or player.character.name ~= "player" then
                 player.print({"YARM-warn-not-in-real-body"})
                 return
@@ -737,11 +776,139 @@ function resmon.on_click.goto_site(event)
         player_data.remote_viewer = viewer
     end
 
+    resmon.update_force_members_ui(player)
+end
+
+-- one button handler for both the expand_site and expand_site_cancel buttons
+function resmon.on_click.expand_site(event)
+    local site_name = string.sub(event.element.name, 1 + string.len("YARM_expand_site_"))
+
+    local player = game.players[event.player_index]
+    local player_data = global.player_data[event.player_index]
+    local force_data = global.force_data[player.force.name]
+    local site = force_data.ore_sites[site_name]
+    local are_we_cancelling_expand = site.is_site_expanding
+
+    --[[ we want to submit the site if we're cancelling the expansion (mostly because submitting the
+         site cleans up the expansion-related variables on the site) or if we were adding a new site
+         and decide to expand an existing one
+    --]]
+    if are_we_cancelling_expand or player_data.current_site then
+        resmon.submit_site(event.player_index)
+    end
+
+    --[[ this is to handle cancelling an expansion (by clicking the red button) - submitting the site is
+         all we need to do in this case ]]
+    if are_we_cancelling_expand then
+        resmon.update_force_members_ui(player)
+        return
+    end
+
+    resmon.pull_YARM_item_to_cursor_if_possible(event.player_index)
+    if player.cursor_stack.valid_for_read and player.cursor_stack.name == "resource-monitor" then
+        site.is_site_expanding = true
+        player_data.current_site = site
+
+        resmon.update_force_members_ui(player)
+        resmon.start_recreate_overlay_existing_site(event.player_index)
+    end
+end
+
+function resmon.pull_YARM_item_to_cursor_if_possible(player_index)
+    local player = game.players[player_index]
+    if player.cursor_stack.valid_for_read and player.cursor_stack.name == "resource-monitor" then -- happy days!
+        return
+    elseif player.cursor_stack.valid_for_read then -- they've already got something else on their cursor
+        player.print{"YARM-warn-please-empty-cursor"}
+        return
+    elseif player.get_item_count("resource-monitor") == 0 then
+        player.print{"YARM-warn-no-YARM-item"}
+        return
+    end
+    player.remove_item({name="resource-monitor", count=1})
+    player.cursor_stack.set_stack({name="resource-monitor", count=1})
+end
+
+
+function resmon.start_recreate_overlay_existing_site(player_index)
+    local site = global.player_data[player_index].current_site
+    site.is_overlay_being_created = true
+
+    -- forcible cleanup in case we got interrupted during a previous background overlay attempt
+    site.entities_to_be_overlaid = {}
+    site.entities_to_be_overlaid_count = 0
+    site.next_to_overlay = {}
+    site.next_to_overlay_count = 0
+
+    for key,pos in pairs(site.entity_table) do
+        local ent = site.surface.find_entity(site.ore_type, pos)
+        if ent and ent.valid then
+            site.entities_to_be_overlaid[key] = pos
+            site.entities_to_be_overlaid_count = site.entities_to_be_overlaid_count + 1
+        end
+    end
+end
+
+function resmon.process_overlay_for_existing_site(player_index)
+    local player_data = global.player_data[player_index]
+    local site = player_data.current_site
+
+    if site.next_to_overlay_count == 0 then
+        if site.entities_to_be_overlaid_count == 0 then
+            resmon.end_overlay_creation_for_existing_site(player_index)
+            return
+        else
+            local ent_key, ent_pos = next(site.entities_to_be_overlaid)
+            site.next_to_overlay[ent_key] = ent_pos
+            site.next_to_overlay_count = site.next_to_overlay_count + 1
+        end
+    end
+
+    local to_scan = math.min(30, site.next_to_overlay_count)
+    for i = 1, to_scan do
+        local ent_key, ent_pos = next(site.next_to_overlay)
+
+        local entity = site.surface.find_entity(site.ore_type, ent_pos)
+        local entity_position = entity.position
+        local surface = entity.surface
+        local key = position_to_string(entity_position)
+
+        -- put marker down
+        resmon.put_marker_at(surface, entity_position, player_data)
+        -- remove it from our to-do lists
+        site.entities_to_be_overlaid[key] = nil
+        site.entities_to_be_overlaid_count = site.entities_to_be_overlaid_count - 1
+        site.next_to_overlay[key] = nil
+        site.next_to_overlay_count = site.next_to_overlay_count - 1
+
+        -- Look in every direction around this entity...
+        for _, dir in pairs(defines.direction) do
+            -- ...and if there's a resource that's not already overlaid, add it
+            local found = find_resource_at(surface, shift_position(entity_position, dir))
+            if found and found.name == site.ore_type then
+                local offsetkey = position_to_string(found.position)
+                if site.entities_to_be_overlaid[offsetkey] ~= nil and site.next_to_overlay[offsetkey] == nil then
+                    site.next_to_overlay[offsetkey] = found.position
+                    site.next_to_overlay_count = site.next_to_overlay_count + 1
+                end
+            end
+        end
+    end
+end
+
+function resmon.end_overlay_creation_for_existing_site(player_index)
+    local site = global.player_data[player_index].current_site
+    site.is_overlay_being_created = false
+    site.finalizing = true
+    site.finalizing_since = game.tick
+
+end
+
+function resmon.update_force_members_ui(player)
     for _, p in pairs(player.force.players) do
         resmon.update_ui(p)
     end
 end
-
 
 function resmon.on_gui_click(event)
     if resmon.on_click[event.element.name] then
@@ -752,6 +919,8 @@ function resmon.on_gui_click(event)
         resmon.on_click.rename_site(event)
     elseif string.starts_with(event.element.name, "YARM_goto_site_") then
         resmon.on_click.goto_site(event)
+    elseif string.starts_with(event.element.name, "YARM_expand_site_") then
+        resmon.on_click.expand_site(event)
     end
 end
 
@@ -791,6 +960,10 @@ function resmon.update_players(event)
                 resmon.finalize_site(index)
             elseif site.finalizing_since + 600 == event.tick then
                 resmon.submit_site(index)
+            end
+
+            if site.is_overlay_being_created then
+                resmon.process_overlay_for_existing_site(index)
             end
         end
 

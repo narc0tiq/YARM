@@ -19,7 +19,7 @@ your hand, and tap it on the ore (click as if to place it).
     which will be added to the same site. This is currently the only way to add
     disconnected ore patches to a single site.
         * If you tap the ground instead, you will cancel the site.
-        * If you tap a different kind of ore instead, you will instantly create 
+        * If you tap a different kind of ore instead, you will instantly create
         the site and start a new one on the other ore.
     * Upon the expiry of those 10 seconds, the site will be created and a
     message will be shown informing you of its name and the amount of ore found
@@ -43,10 +43,21 @@ the world. Click it again to return to your body.
 * The 'X' button (only shown while not viewing the site) allows you to delete
 the site. When first clicked, it turns red; click it again within 10 seconds to
 confirm deletion, or leave it alone to cancel it.
-* The '|' button (only shown while remote viewing the site) allows you to
+* The 'ab|' button (only shown while remote viewing the site) allows you to
 rename the site. This can be useful to prevent auto-naming from overwriting one
 of your sites with another.
-
+* The '+' button (only shown while not viewing the site) allows you to expand
+an existing site. Simply click the '+' for the site you want to expand, then
+smack the resource monitor on the new ore site you want to add to the existing
+monitor. Sites are not renamed by this process.
+    * NB: To prevent inconvenience, the '+' button will also drag a resource
+    monitor into your cursor, if you don't already have it there.
+    * Pressing the '+' while it's red (which indicates addition in progress)
+    will finish the adding process (and update the site, if it's changed).
+    * While expanding a site, a blue overlay (identical to the one used when
+    creating the site in the first place) will highlight the ores that comprise
+    the site currently. For performance reasons, the overlay appears gradually
+    rather than all at once.
 
 Sites are bound to forces (i.e., teams), so any sites you add will be visible
 to your teammates.
