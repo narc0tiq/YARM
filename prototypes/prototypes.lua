@@ -15,7 +15,7 @@ data:extend(
     {
         type = "container",
         name = "resource-monitor",
-        icon = "__{{MOD_NAME}}__/graphics/resource-monitor.png",
+        icon = "{{MOD_NAME}}/graphics/resource-monitor.png",
         flags = {"placeable-neutral", "player-creation"},
         minable = {mining_time = 1, result = "resource-monitor"},
         max_health = 100,
@@ -27,7 +27,7 @@ data:extend(
         inventory_size = 1,
         picture =
         {
-            filename = "__{{MOD_NAME}}__/graphics/resource-monitor.png",
+            filename = "{{MOD_NAME}}/graphics/resource-monitor.png",
             priority = "extra-high",
             width = 32,
             height = 32,

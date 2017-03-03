@@ -1,6 +1,10 @@
 require "util"
 require "libs/array_pair"
 
+prometheus = require("prometheus/tarantool-prometheus")
+count_resource_mined = prometheus.counter("factorio_resource_mined_total", "resources mined", {"force", "resource_name", "site_name"})
+gauge_resource_remaining = prometheus.gauge("factorio_resource_remaining", "resources left", {"force", "resource_name", "site_name"})
+
 resmon = {
     on_click = {},
     endless_resources = {},
@@ -485,7 +489,13 @@ function resmon.finish_deposit_count(site)
         -- how much of the minimum amount does the site have in excess to the site minimum amount?
         local site_minimum = site.entity_count * site.minimum_resource_amount
         site.remaining_permille = math.floor(site.amount * 1000 / site_minimum) - 1000 + resmon.endless_resource_base
+        gauge_resource_remaining:set(site.amount-site.minimum_resource_amount, {"player", site.ore_type, site.name})
+    else
+        gauge_resource_remaining:set(site.amount, {"player", site.ore_type, site.name})
     end
+
+    count_resource_mined:inc(site.remaining_permille, {"player", site.ore_type, site.name})
+
 end
 
 local function site_comparator(left, right)
@@ -992,4 +1002,17 @@ end
 function resmon.on_tick(event)
     resmon.update_players(event)
     resmon.update_forces(event)
+end
+
+local initdone=false
+function resmon.on_tick(event)
+    resmon.update_players(event)
+    resmon.update_forces(event)
+    if ( not initdone ) or ( event.tick % 600 == 0 ) then
+        writeMetrics()
+    end
+end
+
+function writeMetrics()
+  game.write_file("metrics/resmon.prom", prometheus.collect(), false)
 end
