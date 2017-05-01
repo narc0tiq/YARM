@@ -767,6 +767,7 @@ function resmon.on_click.goto_site(event)
 
         -- make us a viewer and put us in it
         local viewer = player.surface.create_entity{name="yarm-remote-viewer", position=site.center, force=player.force}
+        viewer.destructible = false
         player.character = viewer
 
         -- don't leave an old one behind

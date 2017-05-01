@@ -108,7 +108,7 @@ local empty_animation = {
     height = 0,
     direction_count = 18,
     frame_count = 1,
-    animation_speed = 0,
+    animation_speed = 1,
     shift = {0,0},
     axially_symmetrical = false,
 }
@@ -132,7 +132,7 @@ local fake_player = table.deepcopy(data.raw.player.player)
 fake_player.name = "yarm-remote-viewer"
 fake_player.crafting_categories = {"empty-recipe-category"}
 fake_player.mining_categories = {"empty-resource-category"}
-fake_player.max_health = 0
+fake_player.max_health = 100
 fake_player.inventory_size = 0
 fake_player.build_distance = 0
 fake_player.drop_item_distance = 0
