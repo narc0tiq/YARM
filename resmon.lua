@@ -759,6 +759,9 @@ function resmon.on_click.goto_site(event)
             if not player.character or player.character.name ~= "player" then
                 player.print({"YARM-warn-not-in-real-body"})
                 return
+            elseif player.vehicle then
+                player.print({"YARM-warn-in-vehicle"})
+                return
             end
 
             player_data.real_character = player.character
