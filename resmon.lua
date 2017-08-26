@@ -725,6 +725,26 @@ function resmon.on_click.remove_site(event)
 end
 
 
+-- returning to our home body
+function resmon.return_body(event)
+    local player = game.players[event.player_index]
+    local player_data = global.player_data[event.player_index]
+	
+	if player_data.viewing_site ~=  nil then		
+		if player_data.real_character == nil or not player_data.real_character.valid then
+			player.print({"YARM-warn-no-return-possible"})
+			return
+		end
+
+		player.character = player_data.real_character
+		player_data.remote_viewer.destroy()
+
+		player_data.real_character = nil
+		player_data.remote_viewer = nil
+		player_data.viewing_site = nil
+	end
+end
+
 function resmon.on_click.goto_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_goto_site_"))
 
@@ -739,17 +759,7 @@ function resmon.on_click.goto_site(event)
 
     if player_data.viewing_site == site_name then
         -- returning to our home body
-        if player_data.real_character == nil or not player_data.real_character.valid then
-            player.print({"YARM-warn-no-return-possible"})
-            return
-        end
-
-        player.character = player_data.real_character
-        player_data.remote_viewer.destroy()
-
-        player_data.real_character = nil
-        player_data.remote_viewer = nil
-        player_data.viewing_site = nil
+        resmon.return_body(event)
     else
         -- stepping out to a remote viewer: first, be sure you remember your old body
         if not player_data.real_character or not player_data.real_character.valid then
@@ -938,6 +948,8 @@ function resmon.on_click.YARM_expando(event)
     if player_data.expandoed then
         player.gui.left.YARM_root.buttons.YARM_expando.style = "YARM_expando_long"
     else
+		-- when collapsing list, leave viewing site, return to body
+		resmon.return_body(event)
         player.gui.left.YARM_root.buttons.YARM_expando.style = "YARM_expando_short"
     end
 

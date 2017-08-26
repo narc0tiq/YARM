@@ -1,6 +1,6 @@
 {
-  "name": "{{MOD_NAME}}",
-  "version": "{{VERSION}}",
+  "name": "YARM",
+  "version": "0.7.205",
   "factorio_version": "0.15",
   "title": "YARM - Resource Monitor",
   "author": "Octav 'narc' Sandulescu, based on work by drs, jorgenRe, and L0771",

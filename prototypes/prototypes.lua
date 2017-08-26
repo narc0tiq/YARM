@@ -3,7 +3,7 @@ data:extend(
     {
         type = "item",
         name = "resource-monitor",
-        icon = "__{{MOD_NAME}}__/graphics/resource-monitor.png",
+        icon = "__YARM__/graphics/resource-monitor.png",
         flags = {"goes-to-quickbar"},
         damage_radius = 5,
         subgroup = "tool",
@@ -15,7 +15,7 @@ data:extend(
     {
         type = "container",
         name = "resource-monitor",
-        icon = "__{{MOD_NAME}}__/graphics/resource-monitor.png",
+        icon = "__YARM__/graphics/resource-monitor.png",
         flags = {"placeable-neutral", "player-creation"},
         minable = {mining_time = 1, result = "resource-monitor"},
         max_health = 100,
@@ -27,7 +27,7 @@ data:extend(
         inventory_size = 1,
         picture =
         {
-            filename = "__{{MOD_NAME}}__/graphics/resource-monitor.png",
+            filename = "__YARM__/graphics/resource-monitor.png",
             priority = "extra-high",
             width = 32,
             height = 32,
@@ -47,7 +47,7 @@ data:extend(
     {
         type = "technology",
         name = "resource-monitoring",
-        icon = "__{{MOD_NAME}}__/graphics/yarm-tech.png",
+        icon = "__YARM__/graphics/yarm-tech.png",
         icon_size = 128,
         effects = {
             {
@@ -72,7 +72,7 @@ data:extend(
         type = "container",
         name = "rm_overlay",
         flags = {"placeable-neutral", "player-creation", "not-repairable"},
-        icon = "__{{MOD_NAME}}__/graphics/rm_Overlay.png",
+        icon = "__YARM__/graphics/rm_Overlay.png",
 
         max_health = 1,
         order = 'z[resource-monitor]',
@@ -84,7 +84,7 @@ data:extend(
         inventory_size = 1,
         picture =
         {
-            filename = "__{{MOD_NAME}}__/graphics/rm_Overlay.png",
+            filename = "__YARM__/graphics/rm_Overlay.png",
             priority = "extra-high",
             width = 32,
             height = 32,
@@ -102,7 +102,7 @@ data:extend(
 })
 
 local empty_animation = {
-    filename = "__{{MOD_NAME}}__/graphics/nil.png",
+    filename = "__YARM__/graphics/nil.png",
     priority = "medium",
     width = 0,
     height = 0,
@@ -173,7 +173,7 @@ local function button_graphics(xpos, ypos)
         left_monolith_border = 0,
 
         monolith_image = {
-            filename = "__{{MOD_NAME}}__/graphics/gui.png",
+            filename = "__YARM__/graphics/gui.png",
             priority = "extra-high-no-scale",
             width = 16,
             height = 16,
