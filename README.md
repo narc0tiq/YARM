@@ -104,7 +104,7 @@ and based on the creations of
 
 ## Statistics ##
 
-18 alternative name suggestions were offered for the "YA" part of the name "YARM", among them:
+19 alternative name suggestions were offered for the "YA" part of the name "YARM", among them:
 
 - Yet Another Resource Monitor (narc)
 - Your Awesome Resource Monitor (Keyboardhack)
@@ -125,4 +125,4 @@ and based on the creations of
 - Yes! Amen! Resource Monitor! (Tivec)
 - Yallah Ahmed Resource Monitor (Tivec)
 - You Are (the) Resource Monitor (narc)
-
+- YARRRResource Monitor (mk-fg)
