@@ -41,7 +41,6 @@ function resmon.init_player(player_index)
     if not player_data then player_data = {} end
 
     if player_data.expandoed == nil then player_data.expandoed = false end
-    if not player_data.warn_percent then player_data.warn_percent = 10 end
     if not player_data.gui_update_ticks or player_data.gui_update_ticks == 60 then player_data.gui_update_ticks = 300 end
 
     if not player_data.overlays then player_data.overlays = {} end
@@ -541,7 +540,7 @@ function resmon.update_ui(player)
 
     if force_data and force_data.ore_sites then
         for site in ascending_by_ratio(force_data.ore_sites) do
-            if not player_data.expandoed and (site.remaining_permille / 10) > player_data.warn_percent then
+            if not player_data.expandoed and (site.remaining_permille / 10) > game.players[player.index].mod_settings["YARM-warn-percent"].value then
                 break
             end
 
@@ -636,7 +635,7 @@ end
 
 
 function resmon.site_color(site, player)
-    local warn_permille = global.player_data[player.index].warn_percent  * 10
+    local warn_permille = 100
 
     local color = {
         r=math.floor(warn_permille * 255 / site.remaining_permille),
