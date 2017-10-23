@@ -6,9 +6,6 @@ resmon = {
     endless_resources = {},
 }
 
-require "config"
-
-
 function string.starts_with(haystack, needle)
     return string.sub(haystack, 1, string.len(needle)) == needle
 end
@@ -266,8 +263,8 @@ end
 
 
 function resmon.put_marker_at(surface, pos, player_data)
-    if math.floor(pos.x) % resmon.overlay_step ~= 0 or
-       math.floor(pos.y) % resmon.overlay_step ~= 0 then
+    if math.floor(pos.x) % settings.global["YARM-overlay-step"].value ~= 0 or
+       math.floor(pos.y) % settings.global["YARM-overlay-step"].value ~= 0 then
         return
     end
 
@@ -372,7 +369,7 @@ function resmon.finalize_site(player_index)
         site.name = string.format("%s %d", get_octant_name(site.center), util.distance({x=0, y=0}, site.center))
     end
 
-    resmon.count_deposits(site, site.added_at % resmon.ticks_between_checks)
+    resmon.count_deposits(site, site.added_at % settings.global["YARM-ticks-between-checks"].value)
 end
 
 
@@ -429,7 +426,7 @@ function resmon.count_deposits(site, update_cycle)
         return
     end
 
-    local site_update_cycle = site.added_at % resmon.ticks_between_checks
+    local site_update_cycle = site.added_at % settings.global["YARM-ticks-between-checks"].value
     if site_update_cycle ~= update_cycle then
         return
     end
@@ -483,7 +480,7 @@ function resmon.finish_deposit_count(site)
         -- calculate remaining permille as:
         -- how much of the minimum amount does the site have in excess to the site minimum amount?
         local site_minimum = site.entity_count * site.minimum_resource_amount
-        site.remaining_permille = math.floor(site.amount * 1000 / site_minimum) - 1000 + resmon.endless_resource_base
+        site.remaining_permille = math.floor(site.amount * 1000 / site_minimum) - 1000 + (settings.global["YARM-endless-resource-base"].value * 10)
     end
 end
 
@@ -978,7 +975,7 @@ end
 
 
 function resmon.update_forces(event)
-    local update_cycle = event.tick % resmon.ticks_between_checks
+    local update_cycle = event.tick % settings.global["YARM-ticks-between-checks"].value
     for _, force in pairs(game.forces) do
         local force_data = global.force_data[force.name]
 
