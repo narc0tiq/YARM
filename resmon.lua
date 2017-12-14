@@ -520,12 +520,12 @@ function resmon.update_ui(player)
         root = player.gui.left.add{type="frame",
                                    name="YARM_root",
                                    direction="horizontal",
-                                   style="outer_frame_style"}
+                                   style="outer_frame"}
 
         local buttons = root.add{type="flow",
                                  name="buttons",
                                  direction="vertical",
-                                 style="YARM_buttons"}
+                                 style="YARM_buttons_v"}
 
         buttons.add{type="button", name="YARM_expando", style="YARM_expando_short"}
     end
@@ -533,7 +533,7 @@ function resmon.update_ui(player)
     if root.sites and root.sites.valid then
         root.sites.destroy()
     end
-    local sites_gui = root.add{type="table", colspan=7, name="sites", style="YARM_site_table"}
+    local sites_gui = root.add{type="table", column_count=7, name="sites", style="YARM_site_table"}
 
     if force_data and force_data.ore_sites then
         for site in ascending_by_ratio(force_data.ore_sites) do
@@ -574,7 +574,7 @@ function resmon.update_ui(player)
 
 
             local site_buttons = sites_gui.add{type="flow", name="YARM_site_buttons_"..site.name,
-                                               direction="horizontal", style="YARM_buttons"}
+                                               direction="horizontal", style="YARM_buttons_h"}
 
             if site.deleting_since then
                 site_buttons.add{type="button",

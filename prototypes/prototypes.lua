@@ -4,6 +4,7 @@ data:extend(
         type = "item",
         name = "resource-monitor",
         icon = "__{{MOD_NAME}}__/graphics/resource-monitor.png",
+        icon_size = 32,
         flags = {"goes-to-quickbar"},
         damage_radius = 5,
         subgroup = "tool",
@@ -16,6 +17,7 @@ data:extend(
         type = "container",
         name = "resource-monitor",
         icon = "__{{MOD_NAME}}__/graphics/resource-monitor.png",
+        icon_size = 32,
         flags = {"placeable-neutral", "player-creation"},
         minable = {mining_time = 1, result = "resource-monitor"},
         max_health = 100,
@@ -73,6 +75,7 @@ data:extend(
         name = "rm_overlay",
         flags = {"placeable-neutral", "player-creation", "not-repairable"},
         icon = "__{{MOD_NAME}}__/graphics/rm_Overlay.png",
+        icon_size = 32,
 
         max_health = 1,
         order = 'z[resource-monitor]',
@@ -157,7 +160,7 @@ local default_gui = data.raw["gui-style"].default
 
 local red_label = {
     type = "label_style",
-    parent = "label_style",
+    parent = "label",
     font_color = {r=1, g=0.2, b=0.2}
 }
 default_gui.YARM_err_label = red_label
@@ -185,7 +188,7 @@ end
 
 default_gui.YARM_button_with_icon = {
     type = "button_style",
-    parent = "slot_button_style",
+    parent = "slot_button",
 
     scalable = true,
 
@@ -317,12 +320,19 @@ default_gui.YARM_site_table = {
     vertical_spacing = 1,
 }
 
-default_gui.YARM_buttons = {
-    type = "flow_style",
-    parent = "description_flow_style",
+
+default_gui.YARM_buttons_h = {
+    type = "horizontal_flow_style",
+    parent = "horizontal_flow",
     horizontal_spacing = 1,
     vertical_spacing = 5,
     top_padding = 4,
 }
 
-
+default_gui.YARM_buttons_v = {
+    type = "vertical_flow_style",
+    parent = "vertical_flow",
+    horizontal_spacing = 1,
+    vertical_spacing = 5,
+    top_padding = 4,
+}
