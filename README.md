@@ -86,6 +86,7 @@ members of the #factorio IRC on espernet.
 * Graphics by Meppi on the Factorio forums: <https://forums.factorio.com/viewtopic.php?p=146209#p146209>
 * German translation by luma88
 * Configuration assistance by @Martok88
+* Italian translation by futuroattore86
 
 
 ## License ##
