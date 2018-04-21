@@ -79,14 +79,15 @@ can do with what we have.
 members of the #factorio IRC on espernet.
 * Continuous Integration by CircleCI:
 [![Circle CI](https://circleci.com/gh/narc0tiq/YARM.svg?style=svg)](https://circleci.com/gh/narc0tiq/YARM)
-* The Russian translation by RikkiLook
-* Major performance enhancements by @Afforess
-* The Hebrew translation by JoCKeR-IL
-* Updating assistance by @Bisa
 * Graphics by Meppi on the Factorio forums: <https://forums.factorio.com/viewtopic.php?p=146209#p146209>
+* Major performance enhancements by @Afforess
+* Updating assistance by @Bisa
+* The Russian translation by RikkiLook
+* The Hebrew translation by JoCKeR-IL
 * German translation by luma88
 * Configuration assistance by @Martok88
 * Italian translation by futuroattore86
+* Chinese translation by @71e6fd52 and @muink
 
 
 ## License ##
