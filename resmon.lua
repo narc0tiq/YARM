@@ -976,17 +976,27 @@ end
 
 function resmon.update_forces(event)
     local update_cycle = event.tick % settings.global["YARM-ticks-between-checks"].value
+    local to_emit = {}
+
     for _, force in pairs(game.forces) do
         local force_data = global.force_data[force.name]
+        to_emit[force.name] = {}
 
         if not force_data then
             resmon.init_force(force)
         elseif force_data and force_data.ore_sites then
-            for _, site in pairs(force_data.ore_sites) do
+            for site_name, site in pairs(force_data.ore_sites) do
                 resmon.count_deposits(site, update_cycle)
+                to_emit[force.name][site_name] = {
+                  amount             = site.amount,
+                  ore_per_minute     = site.ore_per_minute,
+                  remaining_permille = site.remaining_permille
+                }
             end
         end
     end
+
+    script.raise_event(on_updated, to_emit)
 end
 
 function resmon.on_tick(event)
