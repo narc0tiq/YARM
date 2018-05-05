@@ -48,4 +48,4 @@ script.on_event(defines.events.on_gui_click, function(event)
     if err then msg_all({"YARM-err-specific", "on_gui_click", err}) end
 end)
 
-on_updated = script.generate_event_name()
+on_site_updated = script.generate_event_name()

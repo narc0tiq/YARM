@@ -32,8 +32,8 @@ function interface.show_expando(player_name_or_index)
     return true
 end
 
-function interface.get_on_updated_event_id()
-  return on_updated
+function interface.get_on_site_updated_event_id()
+  return on_site_updated
 end
 
 remote.add_interface("YARM", interface)

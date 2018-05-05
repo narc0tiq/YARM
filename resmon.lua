@@ -420,9 +420,9 @@ function resmon.is_endless_resource(ent_name, proto)
     return resmon.endless_resources[ent_name]
 end
 
-function resmon.count_deposits(site, update_cycle)
+function resmon.count_deposits(force, site, update_cycle)
     if site.iter_fn then
-        resmon.tick_deposit_count(site)
+        resmon.tick_deposit_count(force, site)
         return
     end
 
@@ -436,13 +436,13 @@ function resmon.count_deposits(site, update_cycle)
 end
 
 
-function resmon.tick_deposit_count(site)
+function resmon.tick_deposit_count(force, site)
     local key, pos
     key = site.iter_key
     for _ = 1, 100 do
         key, pos = site.iter_fn(site.iter_state, key)
         if key == nil then
-            resmon.finish_deposit_count(site)
+            resmon.finish_deposit_count(force, site)
             return
         end
         local ent = site.surface.find_entity(site.ore_type, pos)
@@ -457,8 +457,7 @@ function resmon.tick_deposit_count(site)
 
 end
 
-
-function resmon.finish_deposit_count(site)
+function resmon.finish_deposit_count(force, site)
     site.iter_key = nil
     site.iter_fn = nil
     site.iter_state = nil
@@ -482,6 +481,14 @@ function resmon.finish_deposit_count(site)
         local site_minimum = site.entity_count * site.minimum_resource_amount
         site.remaining_permille = math.floor(site.amount * 1000 / site_minimum) - 1000 + (settings.global["YARM-endless-resource-base"].value * 10)
     end
+
+    script.raise_event(on_site_updated, {
+      force_name         = force.name,
+      site_name          = site.name,
+      amount             = site.amount,
+      ore_per_minute     = site.ore_per_minute,
+      remaining_permille = site.remaining_permille
+    })
 end
 
 local function site_comparator(left, right)
@@ -976,27 +983,18 @@ end
 
 function resmon.update_forces(event)
     local update_cycle = event.tick % settings.global["YARM-ticks-between-checks"].value
-    local to_emit = {}
 
     for _, force in pairs(game.forces) do
         local force_data = global.force_data[force.name]
-        to_emit[force.name] = {}
 
         if not force_data then
             resmon.init_force(force)
         elseif force_data and force_data.ore_sites then
             for site_name, site in pairs(force_data.ore_sites) do
-                resmon.count_deposits(site, update_cycle)
-                to_emit[force.name][site_name] = {
-                  amount             = site.amount,
-                  ore_per_minute     = site.ore_per_minute,
-                  remaining_permille = site.remaining_permille
-                }
+                resmon.count_deposits(force, site, update_cycle)
             end
         end
     end
-
-    script.raise_event(on_updated, to_emit)
 end
 
 function resmon.on_tick(event)
