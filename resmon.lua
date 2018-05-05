@@ -487,7 +487,8 @@ function resmon.finish_deposit_count(force, site)
       site_name          = site.name,
       amount             = site.amount,
       ore_per_minute     = site.ore_per_minute,
-      remaining_permille = site.remaining_permille
+      remaining_permille = site.remaining_permille,
+      ore_type           = site.ore_type,
     })
 end
 
