@@ -420,9 +420,9 @@ function resmon.is_endless_resource(ent_name, proto)
     return resmon.endless_resources[ent_name]
 end
 
-function resmon.count_deposits(force, site, update_cycle)
+function resmon.count_deposits(site, update_cycle)
     if site.iter_fn then
-        resmon.tick_deposit_count(force, site)
+        resmon.tick_deposit_count(site)
         return
     end
 
@@ -436,13 +436,13 @@ function resmon.count_deposits(force, site, update_cycle)
 end
 
 
-function resmon.tick_deposit_count(force, site)
+function resmon.tick_deposit_count(site)
     local key, pos
     key = site.iter_key
     for _ = 1, 100 do
         key, pos = site.iter_fn(site.iter_state, key)
         if key == nil then
-            resmon.finish_deposit_count(force, site)
+            resmon.finish_deposit_count(site)
             return
         end
         local ent = site.surface.find_entity(site.ore_type, pos)
@@ -457,7 +457,7 @@ function resmon.tick_deposit_count(force, site)
 
 end
 
-function resmon.finish_deposit_count(force, site)
+function resmon.finish_deposit_count(site)
     site.iter_key = nil
     site.iter_fn = nil
     site.iter_state = nil
@@ -483,7 +483,7 @@ function resmon.finish_deposit_count(force, site)
     end
 
     script.raise_event(on_site_updated, {
-      force_name         = force.name,
+      force_name         = site.force.name,
       site_name          = site.name,
       amount             = site.amount,
       ore_per_minute     = site.ore_per_minute,
@@ -992,7 +992,7 @@ function resmon.update_forces(event)
             resmon.init_force(force)
         elseif force_data and force_data.ore_sites then
             for site_name, site in pairs(force_data.ore_sites) do
-                resmon.count_deposits(force, site, update_cycle)
+                resmon.count_deposits(site, update_cycle)
             end
         end
     end
