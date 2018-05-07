@@ -457,6 +457,7 @@ function resmon.tick_deposit_count(site)
 
 end
 
+
 function resmon.finish_deposit_count(site)
     site.iter_key = nil
     site.iter_fn = nil
@@ -984,14 +985,13 @@ end
 
 function resmon.update_forces(event)
     local update_cycle = event.tick % settings.global["YARM-ticks-between-checks"].value
-
     for _, force in pairs(game.forces) do
         local force_data = global.force_data[force.name]
 
         if not force_data then
             resmon.init_force(force)
         elseif force_data and force_data.ore_sites then
-            for site_name, site in pairs(force_data.ore_sites) do
+            for _, site in pairs(force_data.ore_sites) do
                 resmon.count_deposits(site, update_cycle)
             end
         end
