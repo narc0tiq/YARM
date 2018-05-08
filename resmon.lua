@@ -482,6 +482,15 @@ function resmon.finish_deposit_count(site)
         local site_minimum = site.entity_count * site.minimum_resource_amount
         site.remaining_permille = math.floor(site.amount * 1000 / site_minimum) - 1000 + (settings.global["YARM-endless-resource-base"].value * 10)
     end
+
+    script.raise_event(on_site_updated, {
+      force_name         = site.force.name,
+      site_name          = site.name,
+      amount             = site.amount,
+      ore_per_minute     = site.ore_per_minute,
+      remaining_permille = site.remaining_permille,
+      ore_type           = site.ore_type,
+    })
 end
 
 local function site_comparator(left, right)

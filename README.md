@@ -82,12 +82,33 @@ members of the #factorio IRC on espernet.
 * Graphics by Meppi on the Factorio forums: <https://forums.factorio.com/viewtopic.php?p=146209#p146209>
 * Major performance enhancements by @Afforess
 * Updating assistance by @Bisa
+* External interface additions by @Choumiko and @afex
 * The Russian translation by RikkiLook
 * The Hebrew translation by JoCKeR-IL
 * German translation by luma88
 * Configuration assistance by @Martok88
 * Italian translation by futuroattore86
 * Chinese translation by @71e6fd52 and @muink
+
+
+## Remote interface ##
+
+YARM's remote interface is grown as needed; there are only a few functions currently:
+
+- `remote.call("YARM", "reset_player", player_name_or_index)`: sets the target player's character to be whatever the player has selected (if it's of a compatible type, of course) and clears out internal data relative to the player.
+- `remote.call("YARM", "show_expando", player_name_or_index)` and the equivalent `"hide_expando"`: provides programmatic hooks to toggle the expando. Both return a boolean true if YARM was expandoed before the remote call, and false if it was not. This is an opportunity to return the expando to its previous setting after use.
+- `remote.call("YARM", "get_on_site_updated_event_id")`: returns the identifier for the `on_site_updated` event, detailed below. You should probably call this every time mods are initialized, as it is set in the main `control.lua` runtime.
+
+Additionally, there is one event:
+
+- `on_site_updated` is periodically raised whenever a site's ore count and stats are brought up to date. The event contains:
+    - `force_name`, the name of the force owning this site
+    - `site_name`, the name of the site that just finished updating; site names are unique within a force
+    - `amount`, the number of ore units remaining in the site
+    - `ore_per_minute`, the number of ore units mined in a minute on this site, based on the number mined since the last update
+    - `remaining_permille`, the ratio of ore remaining versus the initial amount from when the site was created
+        - permille is analogous to percent, but multiplied by 1000 instead of 100; its symbol is ‰
+    - `ore_type`, the entity.name of the resource entities tracked in this site (e.g., `crude-oil` or `iron-ore`)
 
 
 ## License ##

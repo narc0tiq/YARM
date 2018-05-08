@@ -18,7 +18,7 @@ function interface.hide_expando(player_name_or_index)
         resmon.on_click.YARM_expando({player_index=player.index})
         return true
     end
-    
+
     return false
 end
 
@@ -28,8 +28,12 @@ function interface.show_expando(player_name_or_index)
         resmon.on_click.YARM_expando({player_index=player.index})
         return false
     end
-    
+
     return true
+end
+
+function interface.get_on_site_updated_event_id()
+    return on_site_updated
 end
 
 remote.add_interface("YARM", interface)

@@ -47,3 +47,5 @@ script.on_event(defines.events.on_gui_click, function(event)
     local _, err = pcall(resmon.on_gui_click, event)
     if err then msg_all({"YARM-err-specific", "on_gui_click", err}) end
 end)
+
+on_site_updated = script.generate_event_name()
