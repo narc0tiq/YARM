@@ -48,7 +48,7 @@ jobs:
 #        - ~/.gradle
 #        - ~/.cache/bower
 
-    - run: make package
+    - run: make package clean
 
     - store_artifacts:
         path: pkg/
