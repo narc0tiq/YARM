@@ -665,6 +665,9 @@ function resmon.on_click.YARM_rename_confirm(event)
 
     local old_name = player_data.renaming_site
     local new_name = player.gui.center.YARM_site_rename.new_name.text
+    
+    if string.len(new_name) > 50 then player.print('That name is too long, site names can be a maximum of 50 characters.') return end
+    --Sets the maximum site name to 50 Characters & prints an error to chat if over the limit
 
     local site = force_data.ore_sites[old_name]
     force_data.ore_sites[old_name] = nil
