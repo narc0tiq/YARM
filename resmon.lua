@@ -1,6 +1,10 @@
 require "util"
 require "libs/array_pair"
 
+-- Sanity: site names aren't allowed to be longer than this, to prevent them
+-- kicking the buttons off the right edge of the screen
+local MAX_SITE_NAME_LENGTH = 50
+
 resmon = {
     on_click = {},
     endless_resources = {},
@@ -665,6 +669,11 @@ function resmon.on_click.YARM_rename_confirm(event)
 
     local old_name = player_data.renaming_site
     local new_name = player.gui.center.YARM_site_rename.new_name.text
+
+    if string.len(new_name) > MAX_SITE_NAME_LENGTH then
+        player.print{'YARM-err-site-name-too-long', MAX_SITE_NAME_LENGTH}
+        return
+    end
 
     local site = force_data.ore_sites[old_name]
     force_data.ore_sites[old_name] = nil
