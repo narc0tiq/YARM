@@ -45,7 +45,7 @@ the site. When first clicked, it turns red; click it again within 10 seconds to
 confirm deletion, or leave it alone to cancel it.
 * The 'ab|' button (only shown while remote viewing the site) allows you to
 rename the site. This can be useful to prevent auto-naming from overwriting one
-of your sites with another.
+of your sites with another. Names may not be longer than 50 characters!
 * The '+' button (only shown while not viewing the site) allows you to expand
 an existing site. Simply click the '+' for the site you want to expand, then
 smack the resource monitor on the new ore site you want to add to the existing
