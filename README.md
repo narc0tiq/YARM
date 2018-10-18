@@ -89,6 +89,7 @@ members of the #factorio IRC on espernet.
 * Configuration assistance by @Martok88
 * Italian translation by futuroattore86
 * Chinese translation by @71e6fd52 and @muink
+* Japanese translation by @shelaf
 
 
 ## Remote interface ##
