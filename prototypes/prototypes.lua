@@ -58,15 +58,14 @@ data:extend(
             }
         },
         prerequisites = {
-            "logistics-2"
+            "electronics"
         },
         unit = {
-            count = 100,
+            count = 10,
             ingredients = {
                 {"automation-science-pack", 1},
-                {"logistic-science-pack", 1}
             },
-            time = 30
+            time = 15
         }
     },
 
