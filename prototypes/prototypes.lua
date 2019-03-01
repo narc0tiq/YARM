@@ -5,7 +5,7 @@ data:extend(
         name = "resource-monitor",
         icon = "__{{MOD_NAME}}__/graphics/resource-monitor.png",
         icon_size = 32,
-        flags = {"goes-to-quickbar"},
+        flags = {},
         damage_radius = 5,
         subgroup = "tool",
         order = "b[resource-monitor]",
@@ -63,8 +63,8 @@ data:extend(
         unit = {
             count = 100,
             ingredients = {
-                {"science-pack-1", 1},
-                {"science-pack-2", 1}
+                {"automation-science-pack", 1},
+                {"logistic-science-pack", 1}
             },
             time = 30
         }
@@ -107,8 +107,8 @@ data:extend(
 local empty_animation = {
     filename = "__{{MOD_NAME}}__/graphics/nil.png",
     priority = "medium",
-    width = 0,
-    height = 0,
+    width = 1,
+    height = 1,
     direction_count = 18,
     frame_count = 1,
     animation_speed = 1,
@@ -165,26 +165,22 @@ local red_label = {
 }
 default_gui.YARM_err_label = red_label
 
-
 local function button_graphics(xpos, ypos)
     return {
-        type = "monolith",
-
-        top_monolith_border = 0,
-        right_monolith_border = 0,
-        bottom_monolith_border = 0,
-        left_monolith_border = 0,
-
-        monolith_image = {
-            filename = "__{{MOD_NAME}}__/graphics/gui.png",
-            priority = "extra-high-no-scale",
-            width = 16,
-            height = 16,
-            x = xpos,
-            y = ypos,
-        },
+        filename = "__{{MOD_NAME}}__/graphics/gui.png",
+        priority = "extra-high-no-scale",
+        width = 16,
+        height = 16,
+        x = xpos,
+        y = ypos,
     }
 end
+
+default_gui.YARM_outer_frame_no_border = {
+    type = "frame_style",
+    parent = "outer_frame",
+    graphical_set = {}
+}
 
 default_gui.YARM_button_with_icon = {
     type = "button_style",

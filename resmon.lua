@@ -533,7 +533,7 @@ function resmon.update_ui(player)
         root = player.gui.left.add{type="frame",
                                    name="YARM_root",
                                    direction="horizontal",
-                                   style="outer_frame"}
+                                   style="YARM_outer_frame_no_border"}
 
         local buttons = root.add{type="flow",
                                  name="buttons",
