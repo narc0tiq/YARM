@@ -165,7 +165,6 @@ local red_label = {
 }
 default_gui.YARM_err_label = red_label
 
-
 local function button_graphics(xpos, ypos)
     return {
         filename = "__{{MOD_NAME}}__/graphics/gui.png",
@@ -176,6 +175,12 @@ local function button_graphics(xpos, ypos)
         y = ypos,
     }
 end
+
+default_gui.YARM_outer_frame_no_border = {
+    type = "frame_style",
+    parent = "outer_frame",
+    graphical_set = {}
+}
 
 default_gui.YARM_button_with_icon = {
     type = "button_style",
