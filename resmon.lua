@@ -1,5 +1,6 @@
 require "util"
 require "libs/array_pair"
+require "mod-gui"
 
 -- Sanity: site names aren't allowed to be longer than this, to prevent them
 -- kicking the buttons off the right edge of the screen
@@ -528,9 +529,10 @@ function resmon.update_ui(player)
     local player_data = global.player_data[player.index]
     local force_data = global.force_data[player.force.name]
 
-    local root = player.gui.left.YARM_root
+    local frame_flow = mod_gui.get_frame_flow(player)
+    local root = frame_flow.YARM_root
     if not root then
-        root = player.gui.left.add{type="frame",
+        root = frame_flow.add{type="frame",
                                    name="YARM_root",
                                    direction="horizontal",
                                    style="YARM_outer_frame_no_border"}
