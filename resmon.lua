@@ -133,24 +133,12 @@ local function find_resource_at(surface, position)
 end
 
 
-function resmon.on_built_entity(event)
-    if event.created_entity.name ~= 'resource-monitor' then return end
+function resmon.on_player_selected_area(event)
+    if event.item ~= 'yarm-selector-tool' then return end
 
-    local player = game.players[event.player_index]
     local player_data = global.player_data[event.player_index]
-    local pos = event.created_entity.position
-    local surface = event.created_entity.surface
 
-    -- Don't actually place the resource monitor entity
-    if not player.cursor_stack.valid_for_read then
-        player.cursor_stack.set_stack{name="resource-monitor", count=1}
-    elseif player.cursor_stack.name == "resource-monitor" then
-        player.cursor_stack.count = player.cursor_stack.count + 1
-    end
-    event.created_entity.destroy()
-
-    local resource = find_resource_at(surface, pos)
-    if not resource then
+    if #event.entities < 1 then
         -- if we have an expanding site, submit it. else, just drop the current site
         if player_data.current_site and player_data.current_site.is_site_expanding then
             resmon.submit_site(event.player_index)
@@ -160,13 +148,11 @@ function resmon.on_built_entity(event)
         return
     end
 
-    local rescat = resource.prototype.resource_category
-    if rescat and rescat == "sand" then
-        player.print{"YARM-err-sand-is-bad", rescat}
-        return
+    for _, entity in pairs(event.entities) do
+        if entity.prototype.type == 'resource' then
+            resmon.add_resource(event.player_index, entity)
+        end
     end
-
-    resmon.add_resource(event.player_index, resource)
 end
 
 
@@ -803,6 +789,7 @@ function resmon.on_click.goto_site(event)
     resmon.update_force_members_ui(player)
 end
 
+
 -- one button handler for both the expand_site and expand_site_cancel buttons
 function resmon.on_click.expand_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_expand_site_"))
@@ -829,7 +816,7 @@ function resmon.on_click.expand_site(event)
     end
 
     resmon.pull_YARM_item_to_cursor_if_possible(event.player_index)
-    if player.cursor_stack.valid_for_read and player.cursor_stack.name == "resource-monitor" then
+    if player.cursor_stack.valid_for_read and player.cursor_stack.name == "yarm-selector-tool" then
         site.is_site_expanding = true
         player_data.current_site = site
 
@@ -838,19 +825,16 @@ function resmon.on_click.expand_site(event)
     end
 end
 
+
 function resmon.pull_YARM_item_to_cursor_if_possible(player_index)
     local player = game.players[player_index]
-    if player.cursor_stack.valid_for_read and player.cursor_stack.name == "resource-monitor" then -- happy days!
-        return
-    elseif player.cursor_stack.valid_for_read then -- they've already got something else on their cursor
-        player.print{"YARM-warn-please-empty-cursor"}
-        return
-    elseif player.get_item_count("resource-monitor") == 0 then
-        player.print{"YARM-warn-no-YARM-item"}
-        return
+    if player.cursor_stack.valid_for_read then -- already have something?
+        if player.cursor_stack.name == "yarm-selector-tool" then return end
+
+        player.clean_cursor() -- and it's not a selector tool, so Q it away
     end
-    player.remove_item({name="resource-monitor", count=1})
-    player.cursor_stack.set_stack({name="resource-monitor", count=1})
+
+    player.cursor_stack.set_stack{name="yarm-selector-tool"}
 end
 
 

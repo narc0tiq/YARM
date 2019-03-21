@@ -1,72 +1,35 @@
 data:extend(
 {
     {
-        type = "item",
-        name = "resource-monitor",
-        icon = "__{{MOD_NAME}}__/graphics/resource-monitor.png",
-        icon_size = 32,
-        flags = {},
-        damage_radius = 5,
-        subgroup = "tool",
-        order = "b[resource-monitor]",
-        place_result = "resource-monitor",
-        stack_size = 1
-    },
-
-    {
-        type = "container",
-        name = "resource-monitor",
-        icon = "__{{MOD_NAME}}__/graphics/resource-monitor.png",
-        icon_size = 32,
-        flags = {"placeable-neutral", "player-creation"},
-        minable = {mining_time = 1, result = "resource-monitor"},
-        max_health = 100,
-        corpse = "small-remnants",
-        resistances ={{type = "fire",percent = 80}},
-        collision_box = {{-0.35, -0.35}, {0.35, 0.35}},
-        collision_mask = {"floor-layer"},
-        selection_box = {{-0.5, -0.5}, {0.5, 0.5}},
-        inventory_size = 1,
-        picture =
-        {
+        type = "shortcut",
+        name = "yarm-selector",
+        action = "create-blueprint-item",
+        item_to_create = "yarm-selector-tool",
+        icon = {
             filename = "__{{MOD_NAME}}__/graphics/resource-monitor.png",
-            priority = "extra-high",
-            width = 32,
-            height = 32,
-            shift = {0.0, 0.0}
-        }
+            priority = "extra-high-no-scale",
+            size = 32,
+            scale = 1,
+            flags = {"icon"},
+        },
     },
 
     {
-        type = "recipe",
-        name = "resource-monitor",
-        ingredients = {{"electronic-circuit",10},{"copper-cable",20}},
-        result = "resource-monitor",
-        result_count = 1,
-        enabled = "false"
-    },
-
-    {
-        type = "technology",
-        name = "resource-monitoring",
-        icon = "__{{MOD_NAME}}__/graphics/yarm-tech.png",
-        icon_size = 128,
-        effects = {
-            {
-                type = "unlock-recipe",
-                recipe = "resource-monitor"
-            }
-        },
-        prerequisites = {
-            "electronics"
-        },
-        unit = {
-            count = 10,
-            ingredients = {
-                {"automation-science-pack", 1},
-            },
-            time = 15
-        }
+        type = "selection-tool",
+        name = "yarm-selector-tool",
+        icon = "__{{MOD_NAME}}__/graphics/resource-monitor.png",
+        icon_size = 32,
+        flags = {"only-in-cursor"},
+        stack_size = 1,
+        stackable = false,
+        selection_color = { g = 1 },
+        selection_mode = "any-entity",
+        alt_selection_color = { g = 1, b = 1 },
+        alt_selection_mode = {"nothing"},
+        selection_cursor_box_type = "copy",
+        alt_selection_cursor_box_type = "copy",
+        entity_filter_mode = "whitelist",
+        entity_type_filters = {"resource"},
     },
 
     {
