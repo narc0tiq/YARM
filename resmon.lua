@@ -33,6 +33,25 @@ function resmon.on_player_created(event)
 end
 
 
+-- migration v0.8.0: remove remote viewers and put players back into the right entity if available
+local function migrate_remove_remote_viewer(player, player_data)
+    local real_char = player_data.real_character
+    if not real_char or not real_char.valid then
+        player.print{"YARM-warn-no-return-possible"}
+        return
+    end
+
+    player.character = real_char
+    if player_data.remote_viewer and player_data.remote_viewer.valid then
+        player_data.remote_viewer.destroy()
+    end
+
+    player_data.real_character = nil
+    player_data.remote_viewer = nil
+    player_data.viewing_site = nil
+end
+
+
 function resmon.init_player(player_index)
     local player = game.players[player_index]
     resmon.init_force(player.force)
@@ -50,6 +69,8 @@ function resmon.init_player(player_index)
     if not player_data.gui_update_ticks or player_data.gui_update_ticks == 60 then player_data.gui_update_ticks = 300 end
 
     if not player_data.overlays then player_data.overlays = {} end
+
+    if player_data.viewing_site then migrate_remove_remote_viewer(player, player_data) end
 
     global.player_data[player_index] = player_data
 end
@@ -538,7 +559,7 @@ function resmon.update_ui(player)
     if root.sites and root.sites.valid then
         root.sites.destroy()
     end
-    local sites_gui = root.add{type="table", column_count=7, name="sites", style="YARM_site_table"}
+    local sites_gui = root.add{type="table", column_count=8, name="sites", style="YARM_site_table"}
 
     if force_data and force_data.ore_sites then
         for site in ascending_by_ratio(force_data.ore_sites) do
@@ -552,6 +573,19 @@ function resmon.update_ui(player)
 
             local color = resmon.site_color(site, player)
             local el = nil
+
+
+            if player_data.renaming_site == site.name then
+                sites_gui.add{type="button",
+                              name="YARM_rename_site_"..site.name,
+                              tooltip={"YARM-tooltips.rename-site-cancel"},
+                              style="YARM_rename_site_cancel"}
+            else
+                sites_gui.add{type="button",
+                              name="YARM_rename_site_"..site.name,
+                              tooltip={"YARM-tooltips.rename-site-named", site.name},
+                              style="YARM_rename_site"}
+            end
 
             el = sites_gui.add{type="label", name="YARM_label_site_"..site.name,
                                caption=site.name}
@@ -581,39 +615,33 @@ function resmon.update_ui(player)
             local site_buttons = sites_gui.add{type="flow", name="YARM_site_buttons_"..site.name,
                                                direction="horizontal", style="YARM_buttons_h"}
 
+            site_buttons.add{type="button",
+                             name="YARM_goto_site_"..site.name,
+                             tooltip={"YARM-tooltips.goto-site"},
+                             style="YARM_goto_site"}
+
             if site.deleting_since then
                 site_buttons.add{type="button",
                                  name="YARM_delete_site_"..site.name,
+                                 tooltip={"YARM-tooltips.delete-site-confirm"},
                                  style="YARM_delete_site_confirm"}
-            elseif player_data.viewing_site == site.name then
-                site_buttons.add{type="button",
-                                 name="YARM_goto_site_"..site.name,
-                                 style="YARM_goto_site_cancel"}
-                if player_data.renaming_site == site.name then
-                    site_buttons.add{type="button",
-                                    name="YARM_rename_site_"..site.name,
-                                    style="YARM_rename_site_cancel"}
-                else
-                    site_buttons.add{type="button",
-                                    name="YARM_rename_site_"..site.name,
-                                    style="YARM_rename_site"}
-                end
             else
                 site_buttons.add{type="button",
-                                 name="YARM_goto_site_"..site.name,
-                                 style="YARM_goto_site"}
-                site_buttons.add{type="button",
                                  name="YARM_delete_site_"..site.name,
+                                 tooltip={"YARM-tooltips.delete-site"},
                                  style="YARM_delete_site"}
-                if site.is_site_expanding then
-                    site_buttons.add{type="button",
-                                     name="YARM_expand_site_"..site.name,
-                                     style="YARM_expand_site_cancel"}
-                else
-                    site_buttons.add{type="button",
-                                     name="YARM_expand_site_"..site.name,
-                                     style="YARM_expand_site"}
-                end
+            end
+
+            if site.is_site_expanding then
+                site_buttons.add{type="button",
+                                 name="YARM_expand_site_"..site.name,
+                                 tooltip={"YARM-tooltips.expand-site-cancel"},
+                                 style="YARM_expand_site_cancel"}
+            else
+                site_buttons.add{type="button",
+                                 name="YARM_expand_site_"..site.name,
+                                 tooltip={"YARM-tooltips.expand-site"},
+                                 style="YARM_expand_site"}
             end
         end
     end
@@ -672,7 +700,6 @@ function resmon.on_click.YARM_rename_confirm(event)
     force_data.ore_sites[new_name] = site
     site.name = new_name
 
-    player_data.viewing_site = new_name
     player_data.renaming_site = nil
     player.gui.center.YARM_site_rename.destroy()
 
@@ -686,6 +713,8 @@ function resmon.on_click.YARM_rename_cancel(event)
 
     player_data.renaming_site = nil
     player.gui.center.YARM_site_rename.destroy()
+
+    resmon.update_force_members_ui(player)
 end
 
 
@@ -703,14 +732,24 @@ function resmon.on_click.rename_site(event)
     player_data.renaming_site = site_name
     local root = player.gui.center.add{type="frame",
                                        name="YARM_site_rename",
-                                       caption={"YARM-site-rename-title"},
+                                       caption={"YARM-site-rename-title", site_name},
                                        direction="horizontal"}
 
     root.add{type="textfield", name="new_name"}.text = site_name
     root.add{type="button", name="YARM_rename_confirm", caption={"YARM-site-rename-confirm"}}
     root.add{type="button", name="YARM_rename_cancel", caption={"YARM-site-rename-cancel"}}
 
+    player.opened = root
+
     resmon.update_force_members_ui(player)
+end
+
+
+function resmon.on_gui_closed(event)
+    log("Custom is "..defines.gui_type.custom.." and event has "..event.gui_type)
+    log(event.element.name.." was closed")
+
+    resmon.on_click.YARM_rename_cancel(event)
 end
 
 
@@ -735,56 +774,10 @@ function resmon.on_click.goto_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_goto_site_"))
 
     local player = game.players[event.player_index]
-    local player_data = global.player_data[event.player_index]
     local force_data = global.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
 
-    -- Don't bodyswap too often, Factorio hates it when you do that.
-    if player_data.last_bodyswap and player_data.last_bodyswap + 10 > event.tick then return end
-    player_data.last_bodyswap = event.tick
-
-    if player_data.viewing_site == site_name then
-        -- returning to our home body
-        if player_data.real_character == nil or not player_data.real_character.valid then
-            player.print({"YARM-warn-no-return-possible"})
-            return
-        end
-
-        player.character = player_data.real_character
-        player_data.remote_viewer.destroy()
-
-        player_data.real_character = nil
-        player_data.remote_viewer = nil
-        player_data.viewing_site = nil
-    else
-        -- stepping out to a remote viewer: first, be sure you remember your old body
-        if not player_data.real_character or not player_data.real_character.valid then
-            --[[ Abort if the "real" character is missing (e.g., god mode) or isn't a player!
-                 NB: this might happen if you use something like The Fat Controller or Command Control
-                 and you do NOT want to get stuck not being able to return from those ]]
-            if not player.character or player.character.name ~= "player" then
-                player.print({"YARM-warn-not-in-real-body"})
-                return
-            elseif player.vehicle then
-                player.print({"YARM-warn-in-vehicle"})
-                return
-            end
-
-            player_data.real_character = player.character
-        end
-        player_data.viewing_site = site_name
-
-        -- make us a viewer and put us in it
-        local viewer = player.surface.create_entity{name="yarm-remote-viewer", position=site.center, force=player.force}
-        viewer.destructible = false
-        player.character = viewer
-
-        -- don't leave an old one behind
-        if player_data.remote_viewer and player_data.remote_viewer.valid then
-            player_data.remote_viewer.destroy()
-        end
-        player_data.remote_viewer = viewer
-    end
+    player.zoom_to_world(site.center, 0.5)
 
     resmon.update_force_members_ui(player)
 end

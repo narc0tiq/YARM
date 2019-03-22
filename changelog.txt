@@ -2,14 +2,16 @@
 Version: 0.8.0
 Date: 2019-03-22
   Features:
-    - Remove the resource monitor technology, recipe, and item.
-    - Add a shortcut button triggering a blueprint-like selection tool
-    - Remove remote viewer entities! Make sure you're not viewing a site before you update!
     - Add a change log (you're looking at it!)
-  Changes:
+    - Remove the resource monitor technology, recipe, and item
+    - Add a shortcut button with a blueprint-like selection tool -- this replaces the resource monitor item
+    - Remove remote viewer entities. If you're currently remote viewing, you should be returned to your real character during the migration
     - Viewing a site now opens the map to the site's center (zoomed to world if radar available)
+    - Renaming can now be cancelled with Esc key
+  Changes:
     - Site creation timer and delete confirmation timer reduced to 1 second (from 10 seconds)
     - Renaming sites is now always available (not hidden behind remote viewing)
+    - Most of the UI buttons now have tooltips
 
 ---------------------------------------------------------------------------------------------------
 Version: 0.7.402
