@@ -1,0 +1,237 @@
+---------------------------------------------------------------------------------------------------
+Version: 0.8.0
+Date: 2019-03-22
+  Features:
+    - Remove the resource monitor technology, recipe, and item.
+    - Add a shortcut button triggering a blueprint-like selection tool
+    - Remove remote viewer entities! Make sure you're not viewing a site before you update!
+    - Add a change log (you're looking at it!)
+  Changes:
+    - Viewing a site now opens the map to the site's center (zoomed to world if radar available)
+    - Site creation timer and delete confirmation timer reduced to 1 second (from 10 seconds)
+    - Renaming sites is now always available (not hidden behind remote viewing)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.402
+Date: 2019-03-04
+  Changes:
+    - YARM's GUI now lives in a mod_gui instead of player.gui.left (@JonasJurczok)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.401
+Date: 2019-03-01
+  Changes:
+    - Update to Factorio 0.17 (@kylewill0725)
+    - Much cheaper resource monitoring research -- now only 10 red science
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.309
+Date: 2018-11-01
+  Locale:
+    - Update Chinese locale (@muink)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.308
+Date: 2018-10-18
+  Locale:
+    - Update Japanese locale (@shelaf)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.307
+Date: 2018-09-24
+  Bugfixes:
+    - Prevent site names from getting too long (@Sergeant-Steve)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.306
+Date: 2018-05-14
+  Locale:
+    - Update Chinese locale (@muink)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.305
+Date: 2018-05-08
+  Features:
+    - Add a custom event when a site is updated (remote.call("YARM", "get_on_site_updated_event_id") to get the event ID) (@afex)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.304
+Date: 2018-04-21
+  Locale:
+    - Update Chinese locale (@muink)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.303
+Date: 2018-01-25
+  Locale:
+    - Add Italian locale (@futuroattore86)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.302
+Date: 2017-12-15
+  Locale:
+    - Update Russian locale (@RikkiLook)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.301
+Date: 2017-12-14
+  Changes:
+    - Update to Factorio 0.16
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.206
+Date: 2017-10-23
+  Features:
+    - Configurability! YARM settings are now available as mod settings (@Martok88)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.205
+Date: 2017-10-17
+  Features:
+    - Configurable warning percentage (default 10%) (@Martok88)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.204
+Date: 2017-08-08
+  Changes:
+    - Stop player from remote viewing while in a vehicle (prevents you from getting kicked out of the vehicle)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.203
+Date: 2017-06-15
+  Locale:
+    - Add Chinese translation (@745275633)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.202
+Date: 2017-06-07
+  Changes:
+    - Mod name now "YARM - Resource Monitor"
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.201
+Date: 2017-05-01
+  Changes:
+    - Update to Factorio 0.15
+    - Remote viewers now have destructible=false instead of health=0
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.108
+Date: 2016-12-05
+  Features:
+    - Add the ability to expand an existing site (without recreating it)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.107
+Date: 2016-09-20
+  Changes:
+    - Major performance improvement (@squizzling)
+    - Add some basic documentation to the README
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.106
+Date: 2016-08-29
+  Changes:
+    - Update to Factorio 0.14
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.105
+Date: 2016-08-15
+  Bugfixes:
+    - Don't try to destroy invalid old remote viewers
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.104
+Date: 2016-08-08
+  Features:
+    - Support custom resource categories
+    - Blacklist Homeworld's sand resource (too common)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.103
+Date: 2016-08-07
+  Bugfixes:
+    - Make remote viewers properly invulnerable (@Nexela)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.102
+Date: 2016-07-15
+  Locale:
+    - Add German translation (@luma88)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.101
+Date: 2016-07-01
+  Changes:
+    - Update to Factorio 0.13 (@Bisa)
+    - New icons (made by @Meppi) - ref: https://forums.factorio.com/viewtopic.php?p=146209#p146209
+  Locale:
+    - Hebrew locale fixes (@jocker-il)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.17
+Date: 2016-06-10
+  Locale:
+    - Add Hebrew translation (@jocker-il)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.16
+Date: 2016-02-26
+  Bugfixes:
+    - Create force_data if not available
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.15
+Date: 2016-02-14
+  Changes:
+    - Reduce YARM save data (@Afforess)
+    - Improve performance (@Afforess)
+    - Allow configuring endless resource base value (@zorbathut)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.12
+Date: 2015-11-06
+  Features:
+    - Add a remote API to toggle the YARM list (@Choumiko)
+  Locale:
+    - Add Russian translation by @RikkiLook
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.7
+Date: 2015-10-21
+  Changes:
+    - Require Factorio 0.12.12 (API changes)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.7.6
+Date: 2015-10-19
+  Changes:
+    - Require Factorio 0.12.11 (after a major API overhaul)
+  Bugfixes:
+    - Find ore entities more reliably (scan full tile, not just tile center)
+    - Reduce GUI update rate (mitigates missed UI clicks, not fully fixed)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.6.23
+Date: 2015-10-04
+  Changes:
+    - Require Factorio 0.12.9 (avoids https://forums.factorio.com/16578)
+  Bugfixes:
+    - Don't leave behind remote viewer entities
+    - Don't generate weird colors (negative numbers are bad)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.6.20
+Date: 2015-10-01
+  Bugfixes:
+    - Detect infinite ores correctly, don't just assume they're infinite if minimum_resource_amount is set (Bob's ores have it set)
+
+---------------------------------------------------------------------------------------------------
+Version: 0.6.19
+Date: 2015-09-30
+  Features:
+    - Initial release! All the things are new.
+    - You can add ore sites
+    - You can remove ore sites
+    - Sites are shared with your force
+    - Sites tell you how much ore is left, how fast it's being mined, and how long until it runs out (at current rate)
