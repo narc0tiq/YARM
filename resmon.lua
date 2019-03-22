@@ -546,7 +546,7 @@ function resmon.update_ui(player)
                 break
             end
 
-            if site.deleting_since and site.deleting_since + 600 < game.tick then
+            if site.deleting_since and site.deleting_since + 60 < game.tick then
                 site.deleting_since = nil
             end
 
@@ -966,7 +966,7 @@ function resmon.update_players(event)
                 resmon.scan_current_site(index)
             elseif not site.finalizing then
                 resmon.finalize_site(index)
-            elseif site.finalizing_since + 600 == event.tick then
+            elseif site.finalizing_since + 60 == event.tick then
                 resmon.submit_site(index)
             end
 
