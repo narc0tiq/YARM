@@ -8,6 +8,7 @@ Date: 2019-03-22
     - Remove remote viewer entities. If you're currently remote viewing, you should be returned to your real character during the migration
     - Viewing a site now opens the map to the site's center (zoomed to world if radar available)
     - Renaming can now be cancelled with Esc key
+    - Add a reset_ui remote call
   Changes:
     - Site creation timer and delete confirmation timer reduced to 1 second (from 10 seconds)
     - Renaming sites is now always available (not hidden behind remote viewing)

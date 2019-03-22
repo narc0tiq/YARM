@@ -2,6 +2,13 @@ require "resmon"
 
 local interface = {}
 
+function interface.reset_ui(player_name_or_index)
+    local player = game.players[player_name_or_index]
+    local frame_flow = mod_gui.get_frame_flow(player)
+    local root = frame_flow.YARM_root
+    if root and root.valid then root.destroy() end
+end
+
 function interface.reset_player(player_name_or_index)
     local player = game.players[player_name_or_index]
     local player_data = global.player_data[player.index]
