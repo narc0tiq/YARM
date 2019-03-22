@@ -61,6 +61,10 @@ function resmon.init_player(player_index)
     local old_root = player.gui.left.YARM_root
     if old_root and old_root.valid then old_root.destroy() end
 
+    -- migration v0.8.0: expando now a set of filter buttons, destroy the root and recreate later
+    local root = mod_gui.get_frame_flow(player).YARM_root
+    if root and root.buttons.YARM_expando then root.destroy() end
+
     if not global.player_data then global.player_data = {} end
 
     local player_data = global.player_data[player_index]
@@ -574,7 +578,7 @@ function resmon.update_ui(player)
         buttons.add{type="button", name="YARM_filter_"..FILTER_ALL, style="YARM_filter_all",
             tooltip={"YARM-tooltips.filter-all"}}
 
-        if not player_data.active_filter then player_data.active_filter = FILTER_NONE end
+        if not player_data.active_filter then player_data.active_filter = FILTER_WARNINGS end
         resmon.update_ui_filter_buttons(player, player_data.active_filter)
     end
 
