@@ -19,24 +19,28 @@ function interface.reset_player(player_name_or_index)
     player_data.remote_viewer = nil
 end
 
-function interface.hide_expando(player_name_or_index)
+function interface.set_filter(player_name_or_index, new_filter)
     local player = game.players[player_name_or_index]
-    if global.player_data[player.index].expandoed then
-        resmon.on_click.YARM_expando({player_index=player.index})
-        return true
-    end
+    local player_data = global.player_data[player.index]
+    local old_filter = player_data.active_filter
 
+    -- TODO Could use some validation here... what values are actually allowed, that kind of thing.
+    player_data.active_filter = new_filter or 'none'
+
+    resmon.update_ui_filter_buttons(player, player_data.active_filter)
+    resmon.update_ui(player)
+
+    return old_filter
+end
+
+function interface.hide_expando(player_name_or_index)
+    log("hide_expando is no longer supported. Try set_filter(player_name_or_index, 'none' or 'warnings' or 'all')")
     return false
 end
 
 function interface.show_expando(player_name_or_index)
-    local player = game.players[player_name_or_index]
-    if not global.player_data[player.index].expandoed then
-        resmon.on_click.YARM_expando({player_index=player.index})
-        return false
-    end
-
-    return true
+    log("show_expando is no longer supported. Try set_filter(player_name_or_index, 'none' or 'warnings' or 'all')")
+    return false
 end
 
 function interface.get_on_site_updated_event_id()

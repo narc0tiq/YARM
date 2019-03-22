@@ -9,6 +9,7 @@ local MAX_SITE_NAME_LENGTH = 50
 resmon = {
     on_click = {},
     endless_resources = {},
+    filters = {},
 }
 
 function string.starts_with(haystack, needle)
@@ -65,7 +66,6 @@ function resmon.init_player(player_index)
     local player_data = global.player_data[player_index]
     if not player_data then player_data = {} end
 
-    if player_data.expandoed == nil then player_data.expandoed = false end
     if not player_data.gui_update_ticks or player_data.gui_update_ticks == 60 then player_data.gui_update_ticks = 300 end
 
     if not player_data.overlays then player_data.overlays = {} end
@@ -535,6 +535,20 @@ local function ascending_by_ratio(sites)
     end
 end
 
+-- NB: filter names should be single words with optional underscores (_)
+-- They will be used for naming GUI elements
+local FILTER_NONE = "none"
+local FILTER_WARNINGS = "warnings"
+local FILTER_ALL = "all"
+
+resmon.filters[FILTER_NONE] = function() return false end
+resmon.filters[FILTER_ALL] = function() return true end
+resmon.filters[FILTER_WARNINGS] = function(site, player)
+    local remaining = site.remaining_permille
+    local threshold = player.mod_settings["YARM-warn-percent"].value * 10
+    return remaining <= threshold
+end
+
 
 function resmon.update_ui(player)
     local player_data = global.player_data[player.index]
@@ -553,7 +567,15 @@ function resmon.update_ui(player)
                                  direction="vertical",
                                  style="YARM_buttons_v"}
 
-        buttons.add{type="button", name="YARM_expando", style="YARM_expando_short"}
+        buttons.add{type="button", name="YARM_filter_"..FILTER_NONE, style="YARM_filter_none",
+            tooltip={"YARM-tooltips.filter-none"}}
+        buttons.add{type="button", name="YARM_filter_"..FILTER_WARNINGS, style="YARM_filter_warnings",
+            tooltip={"YARM-tooltips.filter-warnings"}}
+        buttons.add{type="button", name="YARM_filter_"..FILTER_ALL, style="YARM_filter_all",
+            tooltip={"YARM-tooltips.filter-all"}}
+
+        if not player_data.active_filter then player_data.active_filter = FILTER_NONE end
+        resmon.update_ui_filter_buttons(player, player_data.active_filter)
     end
 
     if root.sites and root.sites.valid then
@@ -561,89 +583,127 @@ function resmon.update_ui(player)
     end
     local sites_gui = root.add{type="table", column_count=8, name="sites", style="YARM_site_table"}
 
+    local site_filter = resmon.filters[player_data.active_filter] or resmon.filters[FILTER_NONE]
     if force_data and force_data.ore_sites then
         for site in ascending_by_ratio(force_data.ore_sites) do
-            if not player_data.expandoed and (site.remaining_permille / 10) > game.players[player.index].mod_settings["YARM-warn-percent"].value then
-                break
-            end
-
-            if site.deleting_since and site.deleting_since + 60 < game.tick then
-                site.deleting_since = nil
-            end
-
-            local color = resmon.site_color(site, player)
-            local el = nil
-
-
-            if player_data.renaming_site == site.name then
-                sites_gui.add{type="button",
-                              name="YARM_rename_site_"..site.name,
-                              tooltip={"YARM-tooltips.rename-site-cancel"},
-                              style="YARM_rename_site_cancel"}
-            else
-                sites_gui.add{type="button",
-                              name="YARM_rename_site_"..site.name,
-                              tooltip={"YARM-tooltips.rename-site-named", site.name},
-                              style="YARM_rename_site"}
-            end
-
-            el = sites_gui.add{type="label", name="YARM_label_site_"..site.name,
-                               caption=site.name}
-            el.style.font_color = color
-
-            el = sites_gui.add{type="label", name="YARM_label_percent_"..site.name,
-                               caption=string.format("%.1f%%", site.remaining_permille / 10)}
-            el.style.font_color = color
-
-            el = sites_gui.add{type="label", name="YARM_label_amount_"..site.name,
-                               caption=format_number(site.amount)}
-            el.style.font_color = color
-
-            el = sites_gui.add{type="label", name="YARM_label_ore_name_"..site.name,
-                               caption=site.ore_name}
-            el.style.font_color = color
-
-            el = sites_gui.add{type="label", name="YARM_label_ore_per_minute_"..site.name,
-                               caption={"YARM-ore-per-minute", site.ore_per_minute}}
-            el.style.font_color = color
-
-            el = sites_gui.add{type="label", name="YARM_label_etd_"..site.name,
-                               caption={"YARM-time-to-deplete", resmon.time_to_deplete(site)}}
-            el.style.font_color = color
-
-
-            local site_buttons = sites_gui.add{type="flow", name="YARM_site_buttons_"..site.name,
-                                               direction="horizontal", style="YARM_buttons_h"}
-
-            site_buttons.add{type="button",
-                             name="YARM_goto_site_"..site.name,
-                             tooltip={"YARM-tooltips.goto-site"},
-                             style="YARM_goto_site"}
-
-            if site.deleting_since then
-                site_buttons.add{type="button",
-                                 name="YARM_delete_site_"..site.name,
-                                 tooltip={"YARM-tooltips.delete-site-confirm"},
-                                 style="YARM_delete_site_confirm"}
-            else
-                site_buttons.add{type="button",
-                                 name="YARM_delete_site_"..site.name,
-                                 tooltip={"YARM-tooltips.delete-site"},
-                                 style="YARM_delete_site"}
-            end
-
-            if site.is_site_expanding then
-                site_buttons.add{type="button",
-                                 name="YARM_expand_site_"..site.name,
-                                 tooltip={"YARM-tooltips.expand-site-cancel"},
-                                 style="YARM_expand_site_cancel"}
-            else
-                site_buttons.add{type="button",
-                                 name="YARM_expand_site_"..site.name,
-                                 tooltip={"YARM-tooltips.expand-site"},
-                                 style="YARM_expand_site"}
+            if site_filter(site, player) then
+                resmon.print_single_site(site, player, sites_gui, player_data)
             end
         end
+    end
+end
+
+
+function resmon.on_click.set_filter(event)
+    local new_filter = string.sub(event.element.name, 1 + string.len("YARM_filter_"))
+    local player = game.players[event.player_index]
+    local player_data = global.player_data[event.player_index]
+
+    player_data.active_filter = new_filter
+
+    resmon.update_ui_filter_buttons(player, new_filter)
+
+    resmon.update_ui(player)
+end
+
+
+function resmon.update_ui_filter_buttons(player, active_filter)
+    local buttons_container = mod_gui.get_frame_flow(player).YARM_root.buttons
+    for filter_name, _ in pairs(resmon.filters) do
+        local is_active_filter = filter_name == active_filter
+
+        local button = buttons_container["YARM_filter_"..filter_name]
+        if button and button.valid then
+            local style_name = button.style.name
+            local is_active_style = style_name:ends_with("_on")
+
+            if is_active_style and not is_active_filter then
+                button.style = string.sub(style_name, 1, string.len(style_name) - 3)
+            elseif is_active_filter and not is_active_style then
+                button.style = style_name .. "_on"
+            end
+        end
+    end
+end
+
+
+function resmon.print_single_site(site, player, sites_gui, player_data)
+    -- TODO: This shouldn't be part of printing the site! It cancels the deletion
+    -- process after 2 seconds pass.
+    if site.deleting_since and site.deleting_since + 120 < game.tick then
+        site.deleting_since = nil
+    end
+
+    local color = resmon.site_color(site, player)
+    local el = nil
+
+
+    if player_data.renaming_site == site.name then
+        sites_gui.add{type="button",
+                        name="YARM_rename_site_"..site.name,
+                        tooltip={"YARM-tooltips.rename-site-cancel"},
+                        style="YARM_rename_site_cancel"}
+    else
+        sites_gui.add{type="button",
+                        name="YARM_rename_site_"..site.name,
+                        tooltip={"YARM-tooltips.rename-site-named", site.name},
+                        style="YARM_rename_site"}
+    end
+
+    el = sites_gui.add{type="label", name="YARM_label_site_"..site.name, caption=site.name}
+    el.style.font_color = color
+
+    el = sites_gui.add{type="label", name="YARM_label_percent_"..site.name,
+        caption=string.format("%.1f%%", site.remaining_permille / 10)}
+    el.style.font_color = color
+
+    el = sites_gui.add{type="label", name="YARM_label_amount_"..site.name,
+        caption=format_number(site.amount)}
+    el.style.font_color = color
+
+    el = sites_gui.add{type="label", name="YARM_label_ore_name_"..site.name,
+        caption=site.ore_name}
+    el.style.font_color = color
+
+    el = sites_gui.add{type="label", name="YARM_label_ore_per_minute_"..site.name,
+        caption={"YARM-ore-per-minute", site.ore_per_minute}}
+    el.style.font_color = color
+
+    el = sites_gui.add{type="label", name="YARM_label_etd_"..site.name,
+        caption={"YARM-time-to-deplete", resmon.time_to_deplete(site)}}
+    el.style.font_color = color
+
+
+    local site_buttons = sites_gui.add{type="flow", name="YARM_site_buttons_"..site.name,
+        direction="horizontal", style="YARM_buttons_h"}
+
+    site_buttons.add{type="button",
+        name="YARM_goto_site_"..site.name,
+        tooltip={"YARM-tooltips.goto-site"},
+        style="YARM_goto_site"}
+
+    if site.deleting_since then
+        site_buttons.add{type="button",
+            name="YARM_delete_site_"..site.name,
+            tooltip={"YARM-tooltips.delete-site-confirm"},
+            style="YARM_delete_site_confirm"}
+    else
+        site_buttons.add{type="button",
+            name="YARM_delete_site_"..site.name,
+            tooltip={"YARM-tooltips.delete-site"},
+            style="YARM_delete_site"}
+    end
+
+    if site.is_site_expanding then
+        site_buttons.add{type="button",
+            name="YARM_expand_site_"..site.name,
+            tooltip={"YARM-tooltips.expand-site-cancel"},
+            style="YARM_expand_site_cancel"}
+    else
+        site_buttons.add{type="button",
+            name="YARM_expand_site_"..site.name,
+            tooltip={"YARM-tooltips.expand-site"},
+            style="YARM_expand_site"}
     end
 end
 
@@ -777,7 +837,7 @@ function resmon.on_click.goto_site(event)
     local force_data = global.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
 
-    player.zoom_to_world(site.center, 0.5)
+    player.zoom_to_world(site.center)
 
     resmon.update_force_members_ui(player)
 end
@@ -914,6 +974,8 @@ end
 function resmon.on_gui_click(event)
     if resmon.on_click[event.element.name] then
         resmon.on_click[event.element.name](event)
+    elseif string.starts_with(event.element.name, "YARM_filter_") then
+        resmon.on_click.set_filter(event)
     elseif string.starts_with(event.element.name, "YARM_delete_site_") then
         resmon.on_click.remove_site(event)
     elseif string.starts_with(event.element.name, "YARM_rename_site_") then
@@ -923,22 +985,6 @@ function resmon.on_gui_click(event)
     elseif string.starts_with(event.element.name, "YARM_expand_site_") then
         resmon.on_click.expand_site(event)
     end
-end
-
-
-function resmon.on_click.YARM_expando(event)
-    local player = game.players[event.player_index]
-    local player_data = global.player_data[event.player_index]
-
-    player_data.expandoed = not player_data.expandoed
-
-    if player_data.expandoed then
-        mod_gui.get_frame_flow(player).YARM_root.buttons.YARM_expando.style = "YARM_expando_long"
-    else
-        mod_gui.get_frame_flow(player).YARM_root.buttons.YARM_expando.style = "YARM_expando_short"
-    end
-
-    resmon.update_ui(player)
 end
 
 
@@ -959,7 +1005,7 @@ function resmon.update_players(event)
                 resmon.scan_current_site(index)
             elseif not site.finalizing then
                 resmon.finalize_site(index)
-            elseif site.finalizing_since + 60 == event.tick then
+            elseif site.finalizing_since + 120 == event.tick then
                 resmon.submit_site(index)
             end
 

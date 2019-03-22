@@ -95,41 +95,37 @@ default_gui.YARM_button_with_icon = {
     bottom_padding = 1,
     left_padding = 1,
 
-    width = 17,
-    height = 17,
+    width = 16,
+    height = 16,
 
     default_graphical_set = button_graphics( 0,  0),
     hovered_graphical_set = button_graphics(16,  0),
     clicked_graphical_set = button_graphics(32,  0),
 }
 
+local function make_filter_buttons(base_name, tex_y)
+    default_gui[base_name] = {
+        type = "button_style",
+        parent = "YARM_button_with_icon",
 
-default_gui.YARM_expando_short = {
-    type = "button_style",
-    parent = "YARM_button_with_icon",
+        default_graphical_set = button_graphics( 0, tex_y),
+        hovered_graphical_set = button_graphics(16, tex_y),
+        clicked_graphical_set = button_graphics(32, tex_y),
+    }
 
-    default_graphical_set = button_graphics( 0, 16),
-    hovered_graphical_set = button_graphics(16, 16),
-    clicked_graphical_set = button_graphics(32, 16),
-}
+    default_gui[base_name.."_on"] = {
+        type = "button_style",
+        parent = "YARM_button_with_icon",
 
-default_gui.YARM_expando_long = {
-    type = "button_style",
-    parent = "YARM_button_with_icon",
+        default_graphical_set = button_graphics(16, tex_y),
+        hovered_graphical_set = button_graphics( 0, tex_y),
+        clicked_graphical_set = button_graphics(32, tex_y),
+    }
+end
 
-    default_graphical_set = button_graphics( 0, 32),
-    hovered_graphical_set = button_graphics(16, 32),
-    clicked_graphical_set = button_graphics(32, 32),
-}
-
-default_gui.YARM_settings = {
-    type = "button_style",
-    parent = "YARM_button_with_icon",
-
-    default_graphical_set = button_graphics( 0, 48),
-    hovered_graphical_set = button_graphics(16, 48),
-    clicked_graphical_set = button_graphics(32, 48),
-}
+make_filter_buttons("YARM_filter_none", 48)
+make_filter_buttons("YARM_filter_warnings", 16)
+make_filter_buttons("YARM_filter_all", 32)
 
 default_gui.YARM_overlay_site = {
     type = "button_style",

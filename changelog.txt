@@ -10,7 +10,7 @@ Date: 2019-03-22
     - Renaming can now be cancelled with Esc key
     - Add a reset_ui remote call
   Changes:
-    - Site creation timer and delete confirmation timer reduced to 1 second (from 10 seconds)
+    - Site creation timer and delete confirmation timer reduced to 2 seconds (from 10 seconds)
     - Renaming sites is now always available (not hidden behind remote viewing)
     - Most of the UI buttons now have tooltips
 
