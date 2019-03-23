@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.8.2
+Date: 2019-03-23
+  Bugfixes:
+    - Prevent an error when Esc-closing a GUI with event.element being unavailable (e.g., the FNEI GUI).
+
+---------------------------------------------------------------------------------------------------
 Version: 0.8.1
 Date: 2019-03-23
   Features:
