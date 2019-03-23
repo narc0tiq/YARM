@@ -6,52 +6,42 @@ your mining sites and warns you when they're starting to run low.
 
 Once the mod is installed, using it is relatively simple:
 
-* First, you must research the technology "Resource Monitoring". This enables
-you to...
-* Then, craft yourself a resource monitor. You should only ever need one, as it
-does not get consumed.
-* Walk over within build distance of an ore patch, take the resource monitor in
-your hand, and tap it on the ore (click as if to place it).
+* Use the shortcut button "Resource monitor marker" to drag-select at least one
+ore entity in a patch (like using a blueprint).
     * If everything went well, you should now see a blue overlay showing up on
-    top of the ore you clicked, and growing as YARM finds its neighbours, and
-    their neighbours, until the entire ore patch has been scanned.
-    * After the scan, you have 10 seconds to tap another ore of the same kind,
-    which will be added to the same site. This is currently the only way to add
-    disconnected ore patches to a single site.
+    top of the ore(s) you clicked, and growing as YARM finds their neighbours,
+    and their neighbours, until the entire ore patch has been scanned.
+    * After the scan, you have 2 seconds to select another ore of the same kind,
+    which will be added to the same site.
         * If you tap the ground instead, you will cancel the site.
         * If you tap a different kind of ore instead, you will instantly create
         the site and start a new one on the other ore.
-    * Upon the expiry of those 10 seconds, the site will be created and a
+    * Upon the expiry of those 2 seconds, the site will be created and a
     message will be shown informing you of its name and the amount of ore found
     in it.
+        * Sites can be renamed at any time! The default name is just a
+        suggestion.
 
 By default, YARM shows only sites that are about to expire (i.e., less than 10%
-of their initial amount remaining). Clicking the single button shown in the
-YARM interface switches it to "all sites" mode, where it will show every site
-you've recorded.
+of their initial amount remaining). There are buttons available to change the
+filter to either "no sites" (which never shows any sites at all!) or "all
+sites" (which never hides them).
 
 Each site has some buttons associated with it:
 
-* The 'eye' button allows you to remote-view the site from wherever you are in
-the world. Click it again to return to your body.
-    * Note: it is possible (though unlikely) to get stuck in the remote viewer,
-    especially if entering it from a non-player entity (e.g., while using the
-    Fat Controller to view a train). This should normally be prevented, but if
-    somehow you end up in that state, you will need to find your character
-    entity, highlight it, and use the console command `/c remote.call("YARM",
-    "reset_player", game.player.name)`.
-* The 'X' button (only shown while not viewing the site) allows you to delete
-the site. When first clicked, it turns red; click it again within 10 seconds to
-confirm deletion, or leave it alone to cancel it.
-* The 'ab|' button (only shown while remote viewing the site) allows you to
-rename the site. This can be useful to prevent auto-naming from overwriting one
-of your sites with another. Names may not be longer than 50 characters!
-* The '+' button (only shown while not viewing the site) allows you to expand
-an existing site. Simply click the '+' for the site you want to expand, then
-smack the resource monitor on the new ore site you want to add to the existing
-monitor. Sites are not renamed by this process.
-    * NB: To prevent inconvenience, the '+' button will also drag a resource
-    monitor into your cursor, if you don't already have it there.
+* The 'ab|' button allows you to rename the site. This can be useful to prevent
+auto-naming from overwriting one of your sites with another.
+    * Note: Names may not be longer than 50 characters!
+* The 'eye' button opens the map to the center of the ore, and zooms to world
+if there is radar coverage.
+* The 'X' button allows you to delete the site. When first clicked, it turns
+red; click it again within 2 seconds to confirm deletion, or leave it alone to
+cancel it.
+* The '+' button allows you to expand an existing site. Click the '+' for the
+site you want to expand, then use the marker tool to select the new ore site
+you want to add to the existing monitor. Sites are not renamed by this process.
+    * NB: For ease of use, the '+' button also activates the resource
+    monitoring marker shortcut.
     * Pressing the '+' while it's red (which indicates addition in progress)
     will finish the adding process (and update the site, if it's changed).
     * While expanding a site, a blue overlay (identical to the one used when
@@ -99,7 +89,8 @@ members of the #factorio IRC on espernet.
 YARM's remote interface is grown as needed; there are only a few functions currently:
 
 - `remote.call("YARM", "reset_player", player_name_or_index)`: sets the target player's character to be whatever the player has selected (if it's of a compatible type, of course) and clears out internal data relative to the player.
-- `remote.call("YARM", "show_expando", player_name_or_index)` and the equivalent `"hide_expando"`: provides programmatic hooks to toggle the expando. Both return a boolean true if YARM was expandoed before the remote call, and false if it was not. This is an opportunity to return the expando to its previous setting after use.
+- `remote.call("YARM", "reset_ui", player_name_or_index)`: destroys the target player's YARM UI, forcing it to be recreated (hopefully correctly) at the next UI update cycle (about every 5 seconds).
+- `remote.call("YARM", "set_filter", player_name_or_index, new_filter)`: provides programmatic hooks to change the active filter. The filter value may be 'none', 'warnings', or 'all' -- other values are unsupported. The previously active filter is returned.
 - `remote.call("YARM", "get_on_site_updated_event_id")`: returns the identifier for the `on_site_updated` event, detailed below. You should probably call this every time mods are initialized, as it is set in the main `control.lua` runtime.
 
 Additionally, there is one event:
