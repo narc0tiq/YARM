@@ -810,8 +810,9 @@ end
 
 
 function resmon.on_gui_closed(event)
-    log("Custom is "..defines.gui_type.custom.." and event has "..event.gui_type)
-    log(event.element.name.." was closed")
+    if event.gui_type ~= defines.gui_type.custom then return end
+    if not event.element.valid then return end
+    if event.element.name ~= "YARM_site_rename" then return end
 
     resmon.on_click.YARM_rename_cancel(event)
 end
