@@ -8,11 +8,16 @@ Date: 2019-03-22
     - Remove remote viewer entities. If you're currently remote viewing, you should be returned to your real character during the migration
     - Viewing a site now opens the map to the site's center (zoomed to world if radar available)
     - Renaming can now be cancelled with Esc key
-    - Add a reset_ui remote call
+    - Add a reset_ui remote call; it requires a player name or index, and will force recreating that player's UI by destroying their YARM UI root
+    - Instead of an on/off expando toggling between "warnings only" and "all sites", there are now actual filters for 'no sites', 'sites with warnings', and 'all sites"
+    - Add a set_filter remote call; it requires a player name or index and one of ('none', 'warnings', or 'all') and sets the current filter accordingly. It returns the old value of the filter (from before the call)
   Changes:
-    - Site creation timer and delete confirmation timer reduced to 2 seconds (from 10 seconds)
+    - Site creation/expansion timer and delete confirmation timeout reduced to 2 seconds (from 10 seconds, aka way too long!). Note that delete confirmation is still limited by UI update rate, which is usually every 5 seconds.
     - Renaming sites is now always available (not hidden behind remote viewing)
     - Most of the UI buttons now have tooltips
+    - The remote calls hide_expando and show_expando do nothing now (they log to factorio-current.log); you should use set_filter instead
+  Bugfixes:
+    - Set button sizes to 16x16 (hopefully fixes appearance at 100% scale)
 
 ---------------------------------------------------------------------------------------------------
 Version: 0.7.402
