@@ -1,10 +1,11 @@
 ---------------------------------------------------------------------------------------------------
-Version: 0.8.0
-Date: 2019-03-22
+Version: 0.8.1
+Date: 2019-03-23
   Features:
     - Add a change log (you're looking at it!)
     - Remove the resource monitor technology, recipe, and item
     - Add a shortcut button with a blueprint-like selection tool -- this replaces the resource monitor item
+    - Add a shortcut key for the selection tool (default Alt+R)
     - Remove remote viewer entities. If you're currently remote viewing, you should be returned to your real character during the migration
     - Viewing a site now opens the map to the site's center (zoomed to world if radar available)
     - Renaming can now be cancelled with Esc key

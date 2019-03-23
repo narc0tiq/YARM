@@ -1,6 +1,13 @@
 data:extend(
 {
     {
+        type = 'custom-input',
+        name = 'get-yarm-selector',
+        key_sequence = 'ALT + R',
+        consuming = 'none'
+    },
+
+    {
         type = "shortcut",
         name = "yarm-selector",
         action = "create-blueprint-item",

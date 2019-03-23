@@ -41,6 +41,11 @@ script.on_event(defines.events.on_gui_closed, function(event)
     if err then msg_all({"YARM-err-specific", "on_gui_closed", err}) end
 end)
 
+script.on_event("get-yarm-selector", function(event)
+    local _, err = pcall(resmon.on_get_selection_tool, event)
+    if err then msg_all({"YARM-err-specific", "on_get_selection_tool", err}) end
+end)
+
 script.on_event(defines.events.on_player_selected_area, function(event)
     local _, err = pcall(resmon.on_player_selected_area, event)
     if err then msg_all{"YARM-err-specific", "on_player_selected_area", err} end

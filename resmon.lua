@@ -896,6 +896,11 @@ function resmon.pull_YARM_item_to_cursor_if_possible(player_index)
 end
 
 
+function resmon.on_get_selection_tool(event)
+    resmon.pull_YARM_item_to_cursor_if_possible(event.player_index)
+end
+
+
 function resmon.start_recreate_overlay_existing_site(player_index)
     local site = global.player_data[player_index].current_site
     site.is_overlay_being_created = true
