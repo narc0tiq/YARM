@@ -3,7 +3,7 @@ data:extend(
     {
         type = 'custom-input',
         name = 'get-yarm-selector',
-        key_sequence = 'ALT + R',
+        key_sequence = 'ALT + Y',
         consuming = 'none'
     },
 

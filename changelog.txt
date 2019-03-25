@@ -3,6 +3,8 @@ Version: 0.8.3
 Date: 2019-03-25
   Locale:
     - Update Russian locale (@RikkiLook)
+  Changes:
+    - Default keybind now Alt+Y, to avoid conflicting with the Toggle Personal Roboport keybind.
 
 ---------------------------------------------------------------------------------------------------
 Version: 0.8.2
