@@ -7,6 +7,7 @@ Date: 2019-03-25
   Changes:
     - Default keybind now Alt+Y, to avoid conflicting with the Toggle Personal Roboport keybind.
     - Remote view now opens the map, rather than zooming to world. This seems more useful in finding where a particular site is (whereas the live view is somewhat less useful).
+    - Use (with permission!) the shortcut graphics made by **morley376** (aka @npc-strider) for the Shortcuts mod.
 
 ---------------------------------------------------------------------------------------------------
 Version: 0.8.2
