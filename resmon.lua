@@ -842,7 +842,7 @@ function resmon.on_click.goto_site(event)
     local force_data = global.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
 
-    player.zoom_to_world(site.center)
+    player.open_map(site.center)
 
     resmon.update_force_members_ui(player)
 end
