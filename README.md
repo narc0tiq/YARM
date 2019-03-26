@@ -82,6 +82,7 @@ members of the #factorio IRC on espernet.
 * Japanese translation by @shelaf
 * More updating assistance by @kylewill0725
 * Other-mod-friendly patches by @JonasJurczok
+* Resource monitor shortcut graphics by @npc-strider (aka morley376)
 
 
 ## Remote interface ##
