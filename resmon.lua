@@ -417,6 +417,13 @@ function resmon.submit_site(player_index)
              timed out) a site expansion without expanding anything (to avoid console spam) ]]
     else
         player.print{"YARM-site-submitted", site.name, format_number(site.amount), site.ore_name}
+
+        local chart_tag = {
+            position = site.center,
+            text = site.name,
+            last_user = player,
+        }
+        player.force.add_chart_tag(site.surface, chart_tag)
     end
 
     -- clear site expanding state so we can re-expand the same site again (and get sensible numbers!)

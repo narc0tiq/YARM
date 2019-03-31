@@ -7,6 +7,8 @@ Date: 2019-04-01
     - Fixed endless resource yield calculation to match Factorio's tooltips (approximately)
   Changes:
     - Remove "Endless resource base production" setting -- now we're showing the actual yield that Factorio itself does, there's no more fixups to do.
+  Features:
+    - Automatically create map markers when sites are created
 ---------------------------------------------------------------------------------------------------
 Version: 0.8.3
 Date: 2019-03-25
