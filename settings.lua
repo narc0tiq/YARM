@@ -12,15 +12,6 @@ data:extend({
 	},
 	{
 		type = "int-setting",
-		name = "YARM-endless-resource-base",
-		setting_type = "runtime-global",
-		order = "b",
-		default_value = 0,
-		minimum_value = 0,
-		maximum_value = 100
-	},
-	{
-		type = "int-setting",
 		name = "YARM-overlay-step",
 		setting_type = "runtime-global",
 		order = "c",
@@ -28,7 +19,7 @@ data:extend({
 		minimum_value = 1,
 		maximum_value = 5
 	},
-	
+
 	-- Per user settings
 	{
 		type = "int-setting",

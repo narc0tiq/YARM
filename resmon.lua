@@ -53,6 +53,13 @@ local function migrate_remove_remote_viewer(player, player_data)
 end
 
 
+local function migrate_remove_minimum_resource_amount(force_data)
+    for _, site in pairs(force_data.ore_sites) do
+        if site.minimum_resource_amount then site.minimum_resource_amount = nil end
+    end
+end
+
+
 function resmon.init_player(player_index)
     local player = game.players[player_index]
     resmon.init_force(player.force)
@@ -92,6 +99,8 @@ function resmon.init_force(force)
         resmon.migrate_ore_sites(force_data)
         resmon.migrate_ore_entities(force_data)
     end
+
+    migrate_remove_minimum_resource_amount(force_data)
 
     global.force_data[force.name] = force_data
 end
@@ -227,10 +236,6 @@ function resmon.add_resource(player_index, entity)
             next_to_overlay = {},
 
         }
-
-        if resmon.is_endless_resource(entity.name, entity.prototype) then
-            player_data.current_site.minimum_resource_amount = entity.prototype.minimum_resource_amount
-        end
     end
 
 
@@ -497,10 +502,12 @@ function resmon.finish_deposit_count(site)
 
     local entity_prototype = game.entity_prototypes[site.ore_type]
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
-        -- calculate remaining permille as:
-        -- how much of the minimum amount does the site have in excess to the site minimum amount?
-        local site_minimum = site.entity_count * site.minimum_resource_amount
-        site.remaining_permille = math.floor(site.amount * 1000 / site_minimum) - 1000 + (settings.global["YARM-endless-resource-base"].value * 10)
+        local normal_resource_amount = entity_prototype.normal_resource_amount
+
+        local site_normal = site.entity_count * normal_resource_amount
+        local average_yield_permille = site.amount * 1000 / site_normal
+
+        site.remaining_permille = math.floor(site.entity_count * average_yield_permille)
     end
 
     script.raise_event(on_site_updated, {

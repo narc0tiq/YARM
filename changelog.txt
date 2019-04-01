@@ -3,6 +3,10 @@ Version: 0.8.4
 Date: 2019-04-01
   Locale:
     - Update Japanese locale (@shelaf)
+  Bugfixes:
+    - Fixed endless resource yield calculation to match Factorio's tooltips (approximately)
+  Changes:
+    - Remove "Endless resource base production" setting -- now we're showing the actual yield that Factorio itself does, there's no more fixups to do.
 ---------------------------------------------------------------------------------------------------
 Version: 0.8.3
 Date: 2019-03-25
