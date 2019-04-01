@@ -8,7 +8,10 @@ Date: 2019-04-01
   Changes:
     - Remove "Endless resource base production" setting -- now we're showing the actual yield that Factorio itself does, there's no more fixups to do.
   Features:
-    - Automatically create map markers when sites are created
+    - Automatically create map markers when sites are created.
+    - Map markers include the current amount of resources in the site OR its yield total (for endless resources).
+    - Map markers are automatically recreated if edited/destroyed.
+    - Map markers are deleted when the site is.
 ---------------------------------------------------------------------------------------------------
 Version: 0.8.3
 Date: 2019-03-25

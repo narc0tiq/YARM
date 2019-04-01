@@ -362,6 +362,21 @@ local function format_number(n) -- credit http://richard.warburton.it
 end
 
 
+local si_prefixes = { '', ' k', ' M', ' G' }
+
+local function format_number_si(n)
+    for i = 1, #si_prefixes do
+        if n < 1000 then
+            return string.format('%d%s', n, si_prefixes[i])
+        end
+        n = math.floor(n / 1000)
+    end
+
+    -- 1,234 T resources? I guess we should support it...
+    return string.format('%s T', format_number(n))
+end
+
+
 local octant_names = {
     [0] = "E", [1] = "SE", [2] = "S", [3] = "SW",
     [4] = "W", [5] = "NW", [6] = "N", [7] = "NE",
@@ -398,6 +413,33 @@ function resmon.finalize_site(player_index)
 end
 
 
+function resmon.update_chart_tag(site)
+    if not site.chart_tag or not site.chart_tag.valid then
+        if not site.force or not site.force.valid then return end
+
+        local chart_tag = {
+            position = site.center,
+            text = site.name,
+        }
+        site.chart_tag = site.force.add_chart_tag(site.surface, chart_tag)
+    end
+
+    local entity_prototype = game.entity_prototypes[site.ore_type]
+
+    local display_value = format_number_si(site.amount)
+    if resmon.is_endless_resource(site.ore_type, entity_prototype) then
+        display_value = string.format("%.1f%%", site.remaining_permille / 10)
+    end
+
+    local first_product = entity_prototype.mineable_properties.products[1]
+    if first_product then
+        display_value = display_value..string.format(' [%s=%s]', first_product.type, first_product.name)
+    end
+
+    site.chart_tag.text = string.format('%s - %s', site.name, display_value)
+end
+
+
 function resmon.submit_site(player_index)
     local player = game.players[player_index]
     local player_data = global.player_data[player_index]
@@ -415,16 +457,14 @@ function resmon.submit_site(player_index)
         end
         --[[ NB: deliberately not outputting anything in the case where the player cancelled (or
              timed out) a site expansion without expanding anything (to avoid console spam) ]]
+
+        if site.chart_tag and site.chart_tag.valid then
+            site.chart_tag.destroy()
+        end
     else
         player.print{"YARM-site-submitted", site.name, format_number(site.amount), site.ore_name}
-
-        local chart_tag = {
-            position = site.center,
-            text = site.name,
-            last_user = player,
-        }
-        player.force.add_chart_tag(site.surface, chart_tag)
     end
+    resmon.update_chart_tag(site)
 
     -- clear site expanding state so we can re-expand the same site again (and get sensible numbers!)
     if(site.is_site_expanding) then
@@ -516,6 +556,7 @@ function resmon.finish_deposit_count(site)
 
         site.remaining_permille = math.floor(site.entity_count * average_yield_permille)
     end
+    resmon.update_chart_tag(site)
 
     script.raise_event(on_site_updated, {
       force_name         = site.force.name,
@@ -778,6 +819,8 @@ function resmon.on_click.YARM_rename_confirm(event)
     force_data.ore_sites[new_name] = site
     site.name = new_name
 
+    resmon.update_chart_tag(site)
+
     player_data.renaming_site = nil
     player.gui.center.YARM_site_rename.destroy()
 
@@ -841,6 +884,10 @@ function resmon.on_click.remove_site(event)
 
     if site.deleting_since then
         force_data.ore_sites[site_name] = nil
+
+        if site.chart_tag and site.chart_tag.valid then
+            site.chart_tag.destroy()
+        end
     else
         site.deleting_since = event.tick
     end
