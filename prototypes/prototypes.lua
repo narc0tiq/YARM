@@ -42,7 +42,7 @@ data:extend(
         name = 'yarm-selector-tool',
         icon = '__{{MOD_NAME}}__/graphics/resource-monitor.png',
         icon_size = 32,
-        flags = {'only-in-cursor'},
+        flags = {'only-in-cursor', 'hidden'},
         stack_size = 1,
         stackable = false,
         selection_color = { g = 1 },
