@@ -414,6 +414,17 @@ end
 
 
 function resmon.update_chart_tag(site)
+    local is_chart_tag_enabled = settings.global["YARM-map-markers"].value
+
+    if not is_chart_tag_enabled then
+        if site.chart_tag and site.chart_tag.valid then
+            -- chart tags were just disabled, so remove them from the world
+            site.chart_tag.destroy()
+            site.chart_tag = nil
+        end
+        return
+    end
+
     if not site.chart_tag or not site.chart_tag.valid then
         if not site.force or not site.force.valid then return end
 
