@@ -1,5 +1,6 @@
 require "util"
 require "libs/array_pair"
+require "libs/ore_tracker"
 require "mod-gui"
 
 -- Sanity: site names aren't allowed to be longer than this, to prevent them
@@ -10,6 +11,9 @@ resmon = {
     on_click = {},
     endless_resources = {},
     filters = {},
+
+    -- updated `on_tick` to contain `ore_tracker.get_entity_cache()`
+    entity_cache = nil,
 }
 
 function string.starts_with(haystack, needle)
@@ -116,6 +120,8 @@ end
 
 function resmon.migrate_ore_entities(force_data)
     for name, site in pairs(force_data.ore_sites) do
+        -- v0.7.15: instead of tracking entities, track their positions and
+        -- re-find the entity when needed.
         if site.known_positions then
             site.known_positions = nil
         end
@@ -128,6 +134,9 @@ function resmon.migrate_ore_entities(force_data)
             end
             site.entities = nil
         end
+
+        -- v0.7.107: change to using the site position as a table key, to
+        -- allow faster searching for already-added entities.
         if site.entity_positions then
             site.entity_table = {}
             site.entity_count = 0
@@ -139,6 +148,25 @@ function resmon.migrate_ore_entities(force_data)
                 site.entity_count = site.entity_count + 1
             end
             site.entity_positions = nil
+        end
+
+        -- v0.8.6: The entities are now tracked by the ore_tracker, and
+        -- sites need only maintain ore tracker indices.
+        if site.entity_table then
+            site.tracker_indices = {}
+            site.entity_count = 0
+
+            for _, pos in pairs(site.entity_table) do
+                local ent = site.surface.find_entity(site.ore_type, pos)
+
+                if ent and ent.valid then
+                    local index = ore_tracker.add_entity(ent)
+                    site.tracker_indices[index] = true
+                    site.entity_count = site.entity_count + 1
+                end
+            end
+
+            site.entity_table = nil
         end
     end
 end
@@ -221,7 +249,7 @@ function resmon.add_resource(player_index, entity)
             force = player.force,
             ore_type = entity.name,
             ore_name = entity.prototype.localised_name,
-            entity_table = {},
+            tracker_indices = {},
             entity_count = 0,
             initial_amount = 0,
             amount = 0,
@@ -254,18 +282,16 @@ end
 function resmon.add_single_entity(player_index, entity)
     local player_data = global.player_data[player_index]
     local site = player_data.current_site
-    local entity_pos = entity.position
+    local tracker_index = ore_tracker.add_entity(entity)
 
     -- Don't re-add the same entity multiple times
-    local key = position_to_string(entity_pos)
-    if site.entity_table[key] then
-        return
-    end
+    if site.tracker_indices[tracker_index] then return end
 
+    -- Reset the finalizing timer
     if site.finalizing then site.finalizing = false end
 
     -- Memorize this entity
-    site.entity_table[key] = entity_pos
+    site.tracker_indices[tracker_index] = true
     site.entity_count = site.entity_count + 1
     table.insert(site.next_to_scan, entity)
     site.amount = site.amount + entity.amount
@@ -283,7 +309,7 @@ function resmon.add_single_entity(player_index, entity)
     end
 
     -- Give visible feedback, too
-    resmon.put_marker_at(entity.surface, entity_pos, player_data)
+    resmon.put_marker_at(entity.surface, entity.position, player_data)
 end
 
 
@@ -514,30 +540,29 @@ function resmon.count_deposits(site, update_cycle)
         return
     end
 
-    site.iter_fn, site.iter_state, site.iter_key = pairs(site.entity_table)
+    site.iter_fn, site.iter_state, site.iter_key = pairs(site.tracker_indices)
     site.update_amount = 0
 end
 
-
 function resmon.tick_deposit_count(site)
-    local key, pos
-    key = site.iter_key
-    for _ = 1, 100 do
-        key, pos = site.iter_fn(site.iter_state, key)
-        if key == nil then
+    local index = site.iter_key
+
+    for _ = 1, 1000 do
+        index = site.iter_fn(site.iter_state, index)
+        if index == nil then
             resmon.finish_deposit_count(site)
             return
         end
-        local ent = site.surface.find_entity(site.ore_type, pos)
-        if ent and ent.valid then
-            site.update_amount = site.update_amount + ent.amount
+
+        local tracking_data = resmon.entity_cache[index]
+        if tracking_data and tracking_data.valid then
+            site.update_amount = site.update_amount + tracking_data.resource_amount
         else
-            site.entity_table[key] = nil  -- It's permitted to delete from a table being iterated
+            site.tracker_indices[index] = nil -- It's permitted to delete from a table being iterated
             site.entity_count = site.entity_count - 1
         end
     end
-    site.iter_key = key
-
+    site.iter_key = index
 end
 
 
@@ -983,11 +1008,14 @@ function resmon.start_recreate_overlay_existing_site(player_index)
     site.next_to_overlay = {}
     site.next_to_overlay_count = 0
 
-    for key,pos in pairs(site.entity_table) do
-        local ent = site.surface.find_entity(site.ore_type, pos)
-        if ent and ent.valid then
-            site.entities_to_be_overlaid[key] = pos
-            site.entities_to_be_overlaid_count = site.entities_to_be_overlaid_count + 1
+    for index in pairs(site.tracker_indices) do
+        local tracking_data = resmon.entity_cache[index]
+        if tracking_data then
+            local ent = tracking_data.entity
+            if ent and ent.valid then
+                site.entities_to_be_overlaid[key] = pos
+                site.entities_to_be_overlaid_count = site.entities_to_be_overlaid_count + 1
+            end
         end
     end
 end
@@ -1111,14 +1139,68 @@ function resmon.update_forces(event)
         if not force_data then
             resmon.init_force(force)
         elseif force_data and force_data.ore_sites then
+
             for _, site in pairs(force_data.ore_sites) do
                 resmon.count_deposits(site, update_cycle)
             end
+
         end
     end
 end
 
-function resmon.on_tick(event)
+local function profiler_output(message, stopwatch)
+    local output = {"", message, " - ", stopwatch}
+
+    log(output)
+    for _, player in pairs(game.players) do
+        player.print(output)
+    end
+end
+
+
+local function on_tick_internal(event)
+    ore_tracker.on_tick(event)
+    resmon.entity_cache = ore_tracker.get_entity_cache()
+
     resmon.update_players(event)
     resmon.update_forces(event)
+end
+
+
+local function on_tick_internal_with_profiling(event)
+    local big_stopwatch = game.create_profiler()
+    local stopwatch = game.create_profiler()
+    ore_tracker.on_tick(event)
+    stopwatch.stop()
+    profiler_output("ore_tracker", stopwatch)
+
+    resmon.entity_cache = ore_tracker.get_entity_cache()
+
+    stopwatch.reset()
+    resmon.update_players(event)
+    stopwatch.stop()
+    profiler_output("update_players", stopwatch)
+
+    stopwatch.reset()
+    resmon.update_forces(event)
+    stopwatch.stop()
+    profiler_output("update_forces", stopwatch)
+
+    big_stopwatch.stop()
+    profiler_output("total on_tick", big_stopwatch)
+end
+
+
+function resmon.on_tick(event)
+    local wants_profiling = settings.global["YARM-debug-profiling"].value or false
+    if wants_profiling then
+        on_tick_internal_with_profiling(event)
+    else
+        on_tick_internal(event)
+    end
+end
+
+
+function resmon.on_load()
+    ore_tracker.on_load()
 end
