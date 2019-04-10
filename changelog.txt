@@ -1,8 +1,13 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.8.5
 Date: 2019-04-11
+  Changes:
+    - Set the YARM selector tool to be hidden from filters. There is never a need to put the selector in your quickbar or in an inventory, as it is not configurable.
+    - Removed pcall()s -- if an error occurs, crash the game just like any other mod. Pcalls are notoriously slow, so this should give us back a little performance.
   Features:
-    - Added a setting to allow turning off the map markers introduced in 0.8.4
+    - Added a setting to allow turning off the map markers introduced in 0.8.4.
+  Locale:
+    - Removed unused locale keys from the base (English) locale.
 ---------------------------------------------------------------------------------------------------
 Version: 0.8.4
 Date: 2019-04-01
