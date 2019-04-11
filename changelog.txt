@@ -1,6 +1,12 @@
 ---------------------------------------------------------------------------------------------------
-Version: 0.8.5
+Version: 0.8.6
 Date: 2019-04-11
+  Changes:
+    - Separate ore tracking functions to another module. This should be an invisible change, except for adding the ability to globally limit the number of entities queried in a single tick.
+    - Save/load times may also be affected by the above, as we are now keeping references to actual entities instead of keeping just their coordinates; on the bright side, UPS should be higher, especially for large sites.
+---------------------------------------------------------------------------------------------------
+Version: 0.8.5
+Date: 2019-04-10
   Changes:
     - Set the YARM selector tool to be hidden from filters. There is never a need to put the selector in your quickbar or in an inventory, as it is not configurable.
     - Removed pcall()s -- if an error occurs, crash the game just like any other mod. Pcalls are notoriously slow, so this should give us back a little performance.
