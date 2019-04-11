@@ -8,6 +8,8 @@ if not resmon then error("{{MOD_NAME}} has become badly corrupted: the variable 
 script.on_init(resmon.init_globals)
 script.on_configuration_changed(resmon.init_globals)
 
+script.on_load(resmon.on_load)
+
 script.on_event(defines.events.on_player_created, resmon.on_player_created)
 script.on_event(defines.events.on_tick, resmon.on_tick)
 script.on_event(defines.events.on_gui_click, resmon.on_gui_click)
