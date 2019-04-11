@@ -5,8 +5,9 @@
     Provides two major helpers:
     - add_entity(), which will store an entity's particulars and provide a
     cache key to allow retrieving its data quickly, and
-    - get_entity(), which will retrieve the entity's data (position and
-    resource_amount), as well as a link back to the entity itself.
+    - get_entity_cache(), which will retrieve a table indexed by the
+    previously-mentioned cache key, containing data about the stored entity
+    (position, resource_amount, and a reference to the entity itself).
 
     Internally, the ore tracker also continually iterates its entities and
     updates the cache with their resource_amount, to allow callers to avoid
@@ -14,7 +15,7 @@
     boundary unnecessarily).
 
     Requires an `on_load` and `on_tick`, and relies on the setting
-    'YARM-entities-per-tick' to control the updates.
+    'YARM-entities-per-tick' to control the rate of updates.
 
 ]]--
 
