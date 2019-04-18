@@ -53,4 +53,11 @@ data:extend({
         minimum_value = 0,
         maximum_value = 100
     },
+	{
+        type = "bool-setting",
+        name = "YARM-group-by-ore",
+        setting_type = "runtime-per-user",
+        order = "b",
+        default_value = false,
+    },
 })

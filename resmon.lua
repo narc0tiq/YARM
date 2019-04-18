@@ -614,13 +614,30 @@ local function site_comparator(left, right)
     end
 end
 
+local function site_comparator_group_by_ore(left, right)
+    if left.ore_type ~= right.ore_type then
+        return left.ore_type < right.ore_type
+    elseif left.remaining_permille ~= right.remaining_permille then
+        return left.remaining_permille < right.remaining_permille
+    elseif left.added_at ~= right.added_at then
+        return left.added_at < right.added_at
+    else
+        return left.name < right.name
+    end
+end
 
-local function ascending_by_ratio(sites)
+
+local function ascending_by_ratio(sites, player)
+    local group_by_ore = player.mod_settings["YARM-group-by-ore"].value
     local ordered_sites = {}
     for _, site in pairs(sites) do
         table.insert(ordered_sites, site)
     end
-    table.sort(ordered_sites, site_comparator)
+    if group_by_ore then
+        table.sort(ordered_sites, site_comparator_group_by_ore)
+    else
+        table.sort(ordered_sites, site_comparator)
+    end
 
     local i = 0
     local n = #ordered_sites
@@ -680,7 +697,7 @@ function resmon.update_ui(player)
 
     local site_filter = resmon.filters[player_data.active_filter] or resmon.filters[FILTER_NONE]
     if force_data and force_data.ore_sites then
-        for site in ascending_by_ratio(force_data.ore_sites) do
+        for site in ascending_by_ratio(force_data.ore_sites, player) do
             if site_filter(site, player) then
                 resmon.print_single_site(site, player, sites_gui, player_data)
             end
