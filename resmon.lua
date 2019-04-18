@@ -604,7 +604,7 @@ function resmon.finish_deposit_count(site)
     })
 end
 
-local function site_comparator(left, right)
+local function site_comparator_default(left, right)
     if left.remaining_permille ~= right.remaining_permille then
         return left.remaining_permille < right.remaining_permille
     elseif left.added_at ~= right.added_at then
@@ -614,30 +614,24 @@ local function site_comparator(left, right)
     end
 end
 
+
 local function site_comparator_group_by_ore(left, right)
     if left.ore_type ~= right.ore_type then
         return left.ore_type < right.ore_type
-    elseif left.remaining_permille ~= right.remaining_permille then
-        return left.remaining_permille < right.remaining_permille
-    elseif left.added_at ~= right.added_at then
-        return left.added_at < right.added_at
     else
-        return left.name < right.name
+        return site_comparator_default(left, right)
     end
 end
 
 
-local function ascending_by_ratio(sites, player)
-    local group_by_ore = player.mod_settings["YARM-group-by-ore"].value
+local function sites_in_order(sites, comparator)
+    -- damn in-place table.sort makes us make a copy first...
     local ordered_sites = {}
     for _, site in pairs(sites) do
         table.insert(ordered_sites, site)
     end
-    if group_by_ore then
-        table.sort(ordered_sites, site_comparator_group_by_ore)
-    else
-        table.sort(ordered_sites, site_comparator)
-    end
+
+    table.sort(ordered_sites, comparator)
 
     local i = 0
     local n = #ordered_sites
@@ -645,6 +639,18 @@ local function ascending_by_ratio(sites, player)
         i = i + 1
         if i <= n then return ordered_sites[i] end
     end
+end
+
+
+local function sites_in_player_order(sites, player)
+    local group_by_ore = player.mod_settings["YARM-group-by-ore"].value
+
+    local comparator = site_comparator_default
+    if group_by_ore then
+        comparator = site_comparator_group_by_ore
+    end
+
+    return sites_in_order(sites, comparator)
 end
 
 -- NB: filter names should be single words with optional underscores (_)
@@ -697,7 +703,7 @@ function resmon.update_ui(player)
 
     local site_filter = resmon.filters[player_data.active_filter] or resmon.filters[FILTER_NONE]
     if force_data and force_data.ore_sites then
-        for site in ascending_by_ratio(force_data.ore_sites, player) do
+        for site in sites_in_player_order(force_data.ore_sites, player) do
             if site_filter(site, player) then
                 resmon.print_single_site(site, player, sites_gui, player_data)
             end
