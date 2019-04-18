@@ -615,7 +615,7 @@ local function site_comparator_default(left, right)
 end
 
 
-local function site_comparator_group_by_ore(left, right)
+local function site_comparator_by_ore_type(left, right)
     if left.ore_type ~= right.ore_type then
         return left.ore_type < right.ore_type
     else
@@ -643,11 +643,11 @@ end
 
 
 local function sites_in_player_order(sites, player)
-    local group_by_ore = player.mod_settings["YARM-group-by-ore"].value
+    local order_by = player.mod_settings["YARM-order-by"].value
 
     local comparator = site_comparator_default
-    if group_by_ore then
-        comparator = site_comparator_group_by_ore
+    if order_by == 'ore-type' then
+        comparator = site_comparator_by_ore_type
     end
 
     return sites_in_order(sites, comparator)

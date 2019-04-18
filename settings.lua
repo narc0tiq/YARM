@@ -53,11 +53,12 @@ data:extend({
         minimum_value = 0,
         maximum_value = 100
     },
-	{
-        type = "bool-setting",
-        name = "YARM-group-by-ore",
+    {
+        type = "string-setting",
+        name = "YARM-order-by",
         setting_type = "runtime-per-user",
         order = "b",
-        default_value = false,
+        default_value = "percent-remaining",
+        allowed_values = { "percent-remaining", "ore-type" }
     },
 })

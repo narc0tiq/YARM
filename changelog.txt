@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.8.7
+Date: 2019-04-18
+  Changes:
+    - The previous release was experimental -- please read the change log for 0.8.6, too!
+  Features:
+    - It is now possible for a player to change the sort order of sites. Currently, this allows sorting by ore type, in addition to the existing sort by percent remaining.
+---------------------------------------------------------------------------------------------------
 Version: 0.8.6
 Date: 2019-04-11
   Changes:
