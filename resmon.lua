@@ -178,6 +178,7 @@ function resmon.migrate_ore_sites(force_data)
             site.remaining_permille = math.floor(site.amount * 1000 / site.initial_amount)
         end
         if not site.ore_per_minute then site.ore_per_minute = 0 end
+        if not site.etd_minutes then site.etd_minutes = -1 end
     end
 end
 
@@ -262,6 +263,7 @@ function resmon.add_resource(player_index, entity)
             next_to_scan = {},
             entities_to_be_overlaid = {},
             next_to_overlay = {},
+            etd_minutes = -1,
 
         }
     end
@@ -583,7 +585,17 @@ function resmon.finish_deposit_count(site)
 
     site.remaining_permille = math.floor(site.amount * 1000 / site.initial_amount)
 
-    local entity_prototype = game.entity_prototypes[site.ore_type]
+    if site.ore_per_minute == 0 then
+        if site.amount == 0 then
+            site.etd_minutes = 0       -- already depleted
+        else
+            site.etd_minutes = -1      -- will never deplete
+        end
+    else
+        site.etd_minutes = math.floor(site.amount / (-site.ore_per_minute))
+    end
+
+   local entity_prototype = game.entity_prototypes[site.ore_type]
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
         local normal_resource_amount = entity_prototype.normal_resource_amount
 
@@ -601,6 +613,7 @@ function resmon.finish_deposit_count(site)
       ore_per_minute     = site.ore_per_minute,
       remaining_permille = site.remaining_permille,
       ore_type           = site.ore_type,
+      etd_minutes        = site.etd_minutes,
     })
 end
 
@@ -618,6 +631,35 @@ end
 local function site_comparator_by_ore_type(left, right)
     if left.ore_type ~= right.ore_type then
         return left.ore_type < right.ore_type
+    else
+        return site_comparator_default(left, right)
+    end
+end
+
+
+local function site_comparator_by_ore_count(left, right)
+    if left.amount ~= right.amount then
+        return left.amount < right.amount
+    else
+        return site_comparator_default(left, right)
+    end
+end
+
+
+local function site_comparator_by_etd(left, right)
+    -- infinite time to depletion is indicated when etd_minutes == -1
+    -- we want sites with infinite depletion time at the end of the list
+    if left.etd_minutes ~= right.etd_minutes then
+        if left.etd_minutes >= 0 and right.etd_minutes >= 0 then
+            -- these are both real etd estimates so sort normally
+            return left.etd_minutes < right.etd_minutes
+        else
+            -- left and right are not equal AND one of them is -1
+            -- (they are not both -1 because then they'd be equal)
+            -- and we want -1 to be at the end of the list
+            -- so reverse the sort order in this case
+            return left.etd_minutes > right.etd_minutes
+        end
     else
         return site_comparator_default(left, right)
     end
@@ -648,6 +690,10 @@ local function sites_in_player_order(sites, player)
     local comparator = site_comparator_default
     if order_by == 'ore-type' then
         comparator = site_comparator_by_ore_type
+    elseif order_by == 'ore-count' then
+        comparator = site_comparator_by_ore_count
+    elseif order_by == 'etd' then
+        comparator = site_comparator_by_etd
     end
 
     return sites_in_order(sites, comparator)
@@ -827,15 +873,18 @@ end
 
 
 function resmon.time_to_deplete(site)
-    if site.ore_per_minute == 0 then return {"YARM-etd-never"} end
+    local minutes = site.etd_minutes or -1
 
-    local minutes = math.floor(site.amount / (-site.ore_per_minute))
+    if minutes == -1 then return {"YARM-etd-never"} end
+
     local hours = math.floor(minutes / 60)
 
     if hours > 0 then
         return {"", {"YARM-etd-hour-fragment", hours}, " ", {"YARM-etd-minute-fragment", minutes % 60}}
     elseif minutes > 0 then
         return {"", {"YARM-etd-minute-fragment", minutes}}
+    elseif site.amount == 0 then
+        return {"YARM-etd-now"}
     else
         return {"YARM-etd-under-1m"}
     end

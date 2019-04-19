@@ -83,6 +83,7 @@ members of the #factorio IRC on espernet.
 * More updating assistance by @kylewill0725
 * Other-mod-friendly patches by @JonasJurczok
 * Resource monitor shortcut graphics by @npc-strider (aka morley376)
+* Sorting implementation by @okradonkey
 
 
 ## Remote interface ##
