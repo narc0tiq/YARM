@@ -1085,7 +1085,8 @@ function resmon.start_recreate_overlay_existing_site(player_index)
         if tracking_data then
             local ent = tracking_data.entity
             if ent and ent.valid then
-                site.entities_to_be_overlaid[key] = pos
+                local key = position_to_string(ent.position)
+                site.entities_to_be_overlaid[key] = ent.position
                 site.entities_to_be_overlaid_count = site.entities_to_be_overlaid_count + 1
             end
         end
