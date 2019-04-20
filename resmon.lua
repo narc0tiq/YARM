@@ -950,7 +950,6 @@ function resmon.on_click.YARM_rename_confirm(event)
         -- boldly assume that there is an ore-icon in the supplied name.
         site.has_ore_icon_in_name = true
     else
-        -- boldly assume that there is an ore-icon in the supplied name.
         site.has_ore_icon_in_name = false
     end
 
