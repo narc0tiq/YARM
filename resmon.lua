@@ -179,6 +179,14 @@ function resmon.migrate_ore_sites(force_data)
         end
         if not site.ore_per_minute then site.ore_per_minute = 0 end
         if not site.etd_minutes then site.etd_minutes = -1 end
+        if site.has_ore_icon_in_name == nil then
+            if site.name:find('%[') then
+                -- boldly assume that there is an ore-icon in the name
+                site.has_ore_icon_in_name = true
+            else
+                site.has_ore_icon_in_name = false
+            end
+        end
     end
 end
 
@@ -434,7 +442,16 @@ function resmon.finalize_site(player_index)
     --[[ don't rename a site we've expanded! (if the site name changes it'll create a new site
          instead of replacing the existing one) ]]
     if not site.is_site_expanding then
-        site.name = string.format("%s %d", get_octant_name(site.center), util.distance({x=0, y=0}, site.center))
+        local entity_prototype = game.entity_prototypes[site.ore_type]
+
+        local first_product = entity_prototype.mineable_properties.products[1]
+        local ore_name = site.ore_type
+        if first_product then
+           site.has_ore_icon_in_name = true
+           ore_name = string.format('[%s=%s]', first_product.type, first_product.name)
+        end
+
+        site.name = string.format("%s %s %d", ore_name, get_octant_name(site.center), util.distance({x=0, y=0}, site.center))
     end
 
     resmon.count_deposits(site, site.added_at % settings.global["YARM-ticks-between-checks"].value)
@@ -472,7 +489,9 @@ function resmon.update_chart_tag(site)
 
     local first_product = entity_prototype.mineable_properties.products[1]
     if first_product then
-        display_value = display_value..string.format(' [%s=%s]', first_product.type, first_product.name)
+        if not site.has_ore_icon_in_name then
+            display_value = display_value..string.format(' [%s=%s]', first_product.type, first_product.name)
+        end
     end
 
     site.chart_tag.text = string.format('%s - %s', site.name, display_value)
@@ -926,6 +945,14 @@ function resmon.on_click.YARM_rename_confirm(event)
     force_data.ore_sites[old_name] = nil
     force_data.ore_sites[new_name] = site
     site.name = new_name
+
+    if new_name:find('%[') then
+        -- boldly assume that there is an ore-icon in the supplied name.
+        site.has_ore_icon_in_name = true
+    else
+        -- boldly assume that there is an ore-icon in the supplied name.
+        site.has_ore_icon_in_name = false
+    end
 
     resmon.update_chart_tag(site)
 
