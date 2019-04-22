@@ -102,11 +102,58 @@ function resmon.init_force(force)
     else
         resmon.migrate_ore_sites(force_data)
         resmon.migrate_ore_entities(force_data)
+
+        resmon.sanity_check_sites(force, force_data)
     end
 
     migrate_remove_minimum_resource_amount(force_data)
 
     global.force_data[force.name] = force_data
+end
+
+
+local function table_contains(haystack, needle)
+    for _, candidate in pairs(haystack) do
+        if candidate == needle then
+            return true
+        end
+    end
+
+    return false
+end
+
+
+function resmon.sanity_check_sites(force, force_data)
+    local discarded_sites = {}
+    local missing_ores = {}
+
+    for name, site in pairs(force_data.ore_sites) do
+        local entity_prototype = game.entity_prototypes[site.ore_type]
+        if not entity_prototype or not entity_prototype.valid then
+            discarded_sites[#discarded_sites + 1] = name
+            if not table_contains(missing_ores, site.ore_type) then
+                missing_ores[#missing_ores + 1] = site.ore_type
+            end
+
+            if site.chart_tag and site.chart_tag.valid then
+                site.chart_tag.destroy()
+            end
+            force_data.ore_sites[name] = nil
+        end
+    end
+
+    if #discarded_sites == 0 then return end
+
+    local discard_message = "YARM-warnings.discard-multi-missing-ore-type-multi"
+    if #missing_ores == 1 then
+        discard_message = "YARM-warnings.discard-multi-missing-ore-type-single"
+        if #discarded_sites == 1 then
+            discard_message = "YARM-warnings.discard-single-missing-ore-type-single"
+        end
+    end
+
+    force.print{discard_message, table.concat(discarded_sites, ', '), table.concat(missing_ores, ', ')}
+    log{"", force.name, ' was warned: ', {discard_message, table.concat(discarded_sites, ', '), table.concat(missing_ores, ', ')}}
 end
 
 
@@ -463,15 +510,14 @@ function resmon.update_chart_tag(site)
         site.chart_tag = site.force.add_chart_tag(site.surface, chart_tag)
     end
 
-    local entity_prototype = game.entity_prototypes[site.ore_type]
-
     local display_value = format_number_si(site.amount)
+    local entity_prototype = game.entity_prototypes[site.ore_type]
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
         display_value = string.format("%.1f%%", site.remaining_permille / 10)
     end
 
     local first_product = entity_prototype.mineable_properties.products[1]
-    if first_product then
+    if first_product and first_product.valid then
         display_value = display_value..string.format(' [%s=%s]', first_product.type, first_product.name)
     end
 
@@ -595,7 +641,7 @@ function resmon.finish_deposit_count(site)
         site.etd_minutes = math.floor(site.amount / (-site.ore_per_minute))
     end
 
-   local entity_prototype = game.entity_prototypes[site.ore_type]
+    local entity_prototype = game.entity_prototypes[site.ore_type]
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
         local normal_resource_amount = entity_prototype.normal_resource_amount
 

@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.8.9
+Date: 2019-04-22
+  Bugfixes:
+    - Gracefully remove sites referencing ores that disappeared (for whatever reason). Warn the player this happened.
+---------------------------------------------------------------------------------------------------
 Version: 0.8.8
 Date: 2019-04-20
   Bugfixes:
