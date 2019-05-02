@@ -3,6 +3,8 @@ Version: 0.8.10
 Date: 2019-05-02
   Bugfixes:
     - Restore missing chart tag ore icons.
+  Changes:
+    - Infinite resources now display number of entities rather than a useless ore count.
 ---------------------------------------------------------------------------------------------------
 Version: 0.8.9
 Date: 2019-04-22

@@ -867,8 +867,13 @@ function resmon.print_single_site(site, player, sites_gui, player_data)
         caption=string.format("%.1f%%", site.remaining_permille / 10)}
     el.style.font_color = color
 
+    local display_amount = format_number(site.amount)
+    local entity_prototype = game.entity_prototypes[site.ore_type]
+    if resmon.is_endless_resource(site.ore_type, entity_prototype) then
+        display_amount = {"YARM-infinite-entity-count", format_number(site.entity_count)}
+    end
     el = sites_gui.add{type="label", name="YARM_label_amount_"..site.name,
-        caption=format_number(site.amount)}
+        caption=display_amount}
     el.style.font_color = color
 
     el = sites_gui.add{type="label", name="YARM_label_ore_name_"..site.name,
