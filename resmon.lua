@@ -517,7 +517,7 @@ function resmon.update_chart_tag(site)
     end
 
     local first_product = entity_prototype.mineable_properties.products[1]
-    if first_product and first_product.valid then
+    if first_product then
         display_value = display_value..string.format(' [%s=%s]', first_product.type, first_product.name)
     end
 
