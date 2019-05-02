@@ -5,6 +5,6 @@
   "title": "YARM - Resource Monitor",
   "author": "Octav 'narc' Sandulescu, based on work by drs, jorgenRe, and L0771",
   "homepage": "https://github.com/narc0tiq/YARM",
-  "dependencies": ["base >= 0.17"],
-  "description": "This mod helps you to keep track of your mining sites."
+  "dependencies": ["base >= 0.17.35"],
+  "description": "This mod helps you to keep track of your mining sites, with useful data such as the percent mined, and estimated time to depletion."
 }

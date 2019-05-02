@@ -48,7 +48,7 @@ local empty_anim_level = {
     running_mask = empty_animation,
 }
 
-local fake_player = table.deepcopy(data.raw.player.player)
+local fake_player = table.deepcopy(data.raw.character.character)
 fake_player.name = "yarm-remote-viewer"
 fake_player.crafting_categories = {"empty-recipe-category"}
 fake_player.mining_categories = {"empty-resource-category"}
