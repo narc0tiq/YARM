@@ -508,6 +508,7 @@ function resmon.update_chart_tag(site)
             text = site.name,
         }
         site.chart_tag = site.force.add_chart_tag(site.surface, chart_tag)
+        if not site.chart_tag then return end -- may fail if chunk is not currently charted accd. to @Bilka
     end
 
     local display_value = format_number_si(site.amount)

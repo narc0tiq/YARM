@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.8.12
+Date: 2019-05-02
+  Bugfixes:
+    - Gracefully handle the inability to place a chart tag (e.g., when the area it belongs to is uncharted).
+---------------------------------------------------------------------------------------------------
 Version: 0.8.11
 Date: 2019-05-02
   Bugfixes:
