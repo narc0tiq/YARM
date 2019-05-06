@@ -24,6 +24,13 @@ function interface.reset_player(player_name_or_index)
     player_data.remote_viewer = nil
 end
 
+function interface.get_current_filter(player_name_or_index)
+    local player = game.players[player_name_or_index]
+    local player_data = global.player_data[player.index]
+
+    return player_data.active_filter or 'none'
+end
+
 function interface.set_filter(player_name_or_index, new_filter)
     local player = game.players[player_name_or_index]
     local player_data = global.player_data[player.index]

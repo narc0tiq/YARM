@@ -819,7 +819,12 @@ end
 
 
 function resmon.update_ui_filter_buttons(player, active_filter)
-    local buttons_container = mod_gui.get_frame_flow(player).YARM_root.buttons
+    -- rarely, it might be possible to arrive here before the YARM GUI gets created
+    local root = mod_gui.get_frame_flow(player).YARM_root
+    -- in that case, leave it for a later update_ui call.
+    if not root or not root.valid then return end
+
+    local buttons_container = root.buttons
     for filter_name, _ in pairs(resmon.filters) do
         local is_active_filter = filter_name == active_filter
 
