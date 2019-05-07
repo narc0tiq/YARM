@@ -1,5 +1,6 @@
 require "resmon"
 require "remote"
+require "commands"
 
 
 -- if this ever happens, I'll be enormously surprised
