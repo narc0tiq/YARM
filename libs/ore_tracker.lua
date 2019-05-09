@@ -22,7 +22,7 @@
 ore_tracker = {
     -- Used for the entity updates spread over multiple ticks
     iterator_state = nil,
-    iterator_key = nil,
+    --iterator_key = nil, -- maintained in `global.ore_tracker`!
     iterator_func = nil,
 
     -- Used to quickly check if an entity is already present.
@@ -118,19 +118,26 @@ local function update_entities_this_tick()
     local entities_per_tick = settings.global['YARM-entities-per-tick'].value
 
     if not ore_tracker.iterator_func then
-        ore_tracker.iterator_func, ore_tracker.iterator_state, ore_tracker.iterator_key =
+        local possible_key = nil
+        ore_tracker.iterator_func, ore_tracker.iterator_state, possible_key =
             pairs(global.ore_tracker.entities)
+
+        -- NB: A client joining the server will find iterator_key already set,
+        -- and we super-want it to resume from that synchronized key.
+        if not global.ore_tracker.iterator_key then
+            global.ore_tracker.iterator_key = possible_key
+        end
     end
 
-    local key = ore_tracker.iterator_key
+    local key = global.ore_tracker.iterator_key
     local state = ore_tracker.iterator_state
     local iterator = ore_tracker.iterator_func
     local tracking_data = nil
     for i = 1, entities_per_tick do
         key, tracking_data = iterator(state, key)
         if key == nil then
+            global.ore_tracker.iterator_key = nil
             ore_tracker.iterator_state = nil
-            ore_tracker.iterator_key = nil
             ore_tracker.iterator_func = nil
             return
         end
@@ -144,7 +151,7 @@ local function update_entities_this_tick()
         end
     end
 
-    ore_tracker.iterator_key = key
+    global.ore_tracker.iterator_key = key
     ore_tracker.iterator_state = state
     ore_tracker.iterator_func = iterator
 end

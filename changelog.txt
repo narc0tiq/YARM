@@ -3,6 +3,8 @@ Version: 0.8.14
 Date: 2019-05-06
   Features:
     - Create fake ore items to allow the YARM selector to show a preview of the ore entity count while dragging (thanks, @Klonan!).
+  Bugfixes:
+    - Probably fixed a desync caused by the delayed (N-per-tick) iteration of entities (see #110 for details).
 ---------------------------------------------------------------------------------------------------
 Version: 0.8.13
 Date: 2019-05-06
