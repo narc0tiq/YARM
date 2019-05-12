@@ -621,10 +621,18 @@ function resmon.finish_deposit_count(site)
     site.iter_state = nil
 
     if site.last_ore_check then
-        local delta_ticks = game.tick - site.last_ore_check
-        local delta_ore = site.update_amount - site.amount
-
-        site.ore_per_minute = math.floor(delta_ore * 3600 / delta_ticks)
+        local delta_ore_since_last_update = site.update_amount - site.amount
+        if delta_ore_since_last_update > 0 then           -- only store the amount and tick from last update if it actually changed
+            site.last_modified_tick = site.last_ore_check --
+            site.last_modified_amount = site.amount       --
+        end
+        if not site.last_modified_amount then             -- make sure those two values have a default
+            site.last_modified_amount = site.amount       --
+            site.last_modified_tick = site.last_ore_check --
+        end
+        local delta_ore_since_last_change = site.update_amount - site.last_modified_amount -- use final amount and tick to calculate
+        local delta_ticks = game.tick - site.last_modified_tick                            --
+        site.ore_per_minute = math.floor(delta_ore_since_last_change * 3600 / delta_ticks)
     end
 
     site.amount = site.update_amount
