@@ -632,7 +632,8 @@ function resmon.finish_deposit_count(site)
         end
         local delta_ore_since_last_change = site.update_amount - site.last_modified_amount -- use final amount and tick to calculate
         local delta_ticks = game.tick - site.last_modified_tick                            --
-        site.ore_per_minute = math.floor(delta_ore_since_last_change * 3600 / delta_ticks)
+        local new_ore_per_minute = math.floor(delta_ore_since_last_change * 3600 / delta_ticks)        -- ease the per minute value over time
+        site.ore_per_minute = site.ore_per_minute + (0.1 * (new_ore_per_minute - site.ore_per_minute)) --
     end
 
     site.amount = site.update_amount
