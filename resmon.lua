@@ -896,8 +896,10 @@ function resmon.print_single_site(site, player, sites_gui, player_data)
     el.style.font_color = color
 
     el = sites_gui.add{type="label", name="YARM_label_ore_per_minute_"..site.name,
-        caption={"YARM-ore-per-minute", string.format("%.3f", site.ore_per_minute)}}
+        caption={"YARM-ore-per-minute", string.format("%.1f", site.ore_per_minute)}}
     el.style.font_color = color
+    el.style.minimal_width = 90
+    el.style.horizontal_align = "right"
 
     el = sites_gui.add{type="label", name="YARM_label_etd_"..site.name,
         caption={"YARM-time-to-deplete", resmon.time_to_deplete(site)}}
