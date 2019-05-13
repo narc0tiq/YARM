@@ -621,10 +621,19 @@ function resmon.finish_deposit_count(site)
     site.iter_state = nil
 
     if site.last_ore_check then
-        local delta_ticks = game.tick - site.last_ore_check
-        local delta_ore = site.update_amount - site.amount
-
-        site.ore_per_minute = math.floor(delta_ore * 3600 / delta_ticks)
+        local delta_ore_since_last_update = site.update_amount - site.amount
+        if delta_ore_since_last_update > 0 then           -- only store the amount and tick from last update if it actually changed
+            site.last_modified_tick = site.last_ore_check --
+            site.last_modified_amount = site.amount       --
+        end
+        if not site.last_modified_amount then             -- make sure those two values have a default
+            site.last_modified_amount = site.amount       --
+            site.last_modified_tick = site.last_ore_check --
+        end
+        local delta_ore_since_last_change = site.update_amount - site.last_modified_amount -- use final amount and tick to calculate
+        local delta_ticks = game.tick - site.last_modified_tick                            --
+        local new_ore_per_minute = math.floor(delta_ore_since_last_change * 3600 / delta_ticks)        -- ease the per minute value over time
+        site.ore_per_minute = site.ore_per_minute + (0.1 * (new_ore_per_minute - site.ore_per_minute)) --
     end
 
     site.amount = site.update_amount
@@ -887,7 +896,7 @@ function resmon.print_single_site(site, player, sites_gui, player_data)
     el.style.font_color = color
 
     el = sites_gui.add{type="label", name="YARM_label_ore_per_minute_"..site.name,
-        caption={"YARM-ore-per-minute", site.ore_per_minute}}
+        caption={"YARM-ore-per-minute", string.format("%.3f", site.ore_per_minute)}}
     el.style.font_color = color
 
     el = sites_gui.add{type="label", name="YARM_label_etd_"..site.name,
