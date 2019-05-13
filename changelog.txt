@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.8.16
+Date: 2019-05-13
+  Locale:
+    - Updated Japanese translation (@shela, #112)
+  Changes:
+    - Smoothed ore-per-minute and ETD calculations (@wchristian, #113)
+---------------------------------------------------------------------------------------------------
 Version: 0.8.15
 Date: 2019-05-09
   Bugfixes:

@@ -85,6 +85,7 @@ members of the #factorio IRC on espernet.
 * Resource monitor shortcut graphics by @npc-strider (aka morley376)
 * Sorting implementation by @okradonkey
 * [The Factorio Discord](https://discord.gg/5N4pQPF), especially Factorio devs helping in #mod-making (especially @Bilka, @Klonan, @Rseding91)
+* Smoothed ore-per-minute calculation by @wchristian
 
 
 ## Remote interface ##
