@@ -802,6 +802,16 @@ function resmon.update_ui(player)
         root.sites.destroy()
     end
     local sites_gui = root.add{type="table", column_count=8, name="sites", style="YARM_site_table"}
+    sites_gui.style.horizontal_spacing = 5
+    local column_alignments = sites_gui.style.column_alignments
+    column_alignments[1] = 'left' -- rename button
+    column_alignments[2] = 'left' -- site name
+    column_alignments[3] = 'right' -- remaining percent
+    column_alignments[4] = 'right' -- site amount
+    column_alignments[5] = 'left' -- ore name
+    column_alignments[6] = 'right' -- ore per minute
+    column_alignments[7] = 'left' -- ETD
+    column_alignments[8] = 'left' -- buttons
 
     local site_filter = resmon.filters[player_data.active_filter] or resmon.filters[FILTER_NONE]
     if force_data and force_data.ore_sites then
@@ -898,8 +908,6 @@ function resmon.print_single_site(site, player, sites_gui, player_data)
     el = sites_gui.add{type="label", name="YARM_label_ore_per_minute_"..site.name,
         caption={"YARM-ore-per-minute", string.format("%.1f", site.ore_per_minute)}}
     el.style.font_color = color
-    el.style.minimal_width = 90
-    el.style.horizontal_align = "right"
 
     el = sites_gui.add{type="label", name="YARM_label_etd_"..site.name,
         caption={"YARM-time-to-deplete", resmon.time_to_deplete(site)}}
