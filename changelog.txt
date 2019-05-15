@@ -3,6 +3,7 @@ Version: 0.8.17
 Date: 2019-05-15
   Changes:
     - Numeric columns in YARM now right-aligned. Everything looks 1000% better! (Thanks, @Choumiko)
+    - Ore type column now features ore icons (using rich text) for the ore's mining results
 ---------------------------------------------------------------------------------------------------
 Version: 0.8.16
 Date: 2019-05-13

@@ -517,12 +517,22 @@ function resmon.update_chart_tag(site)
         display_value = string.format("%.1f%%", site.remaining_permille / 10)
     end
 
-    local first_product = entity_prototype.mineable_properties.products[1]
-    if first_product then
-        display_value = display_value..string.format(' [%s=%s]', first_product.type, first_product.name)
+    site.chart_tag.text = string.format('%s - %s %s', site.name, display_value,
+        resmon.get_rich_text_for_products(entity_prototype))
+end
+
+
+function resmon.get_rich_text_for_products(proto)
+    if not proto or not proto.mineable_properties or not proto.mineable_properties.products then
+        return '' -- only supporting resource entities...
     end
 
-    site.chart_tag.text = string.format('%s - %s', site.name, display_value)
+    local result = ''
+    for _, product in pairs(proto.mineable_properties.products) do
+        result = result..string.format('[%s=%s]', product.type, product.name)
+    end
+
+    return result
 end
 
 
@@ -902,7 +912,7 @@ function resmon.print_single_site(site, player, sites_gui, player_data)
     el.style.font_color = color
 
     el = sites_gui.add{type="label", name="YARM_label_ore_name_"..site.name,
-        caption=site.ore_name}
+        caption={"", resmon.get_rich_text_for_products(entity_prototype), " ", site.ore_name}}
     el.style.font_color = color
 
     el = sites_gui.add{type="label", name="YARM_label_ore_per_minute_"..site.name,
