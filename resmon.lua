@@ -311,6 +311,8 @@ function resmon.add_resource(player_index, entity)
             entities_to_be_overlaid = {},
             next_to_overlay = {},
             etd_minutes = -1,
+            last_ore_check = nil,       -- used for ETD easing; initialized when needed,
+            last_modified_amount = nil, -- but I wanted to _show_ that they can exist.
 
         }
     end
@@ -546,6 +548,10 @@ function resmon.submit_site(player_index)
     resmon.clear_current_site(player_index)
     if (site.is_site_expanding) then
         if(site.has_expanded) then
+            -- reset statistics, the site didn't actually just grow a bunch of ore in existing tiles
+            site.last_ore_check = nil
+            site.last_modified_amount = nil
+
             local amount_added = site.amount - site.original_amount
             local sign = amount_added < 0 and '' or '+' -- format_number will handle the negative sign for us (if needed)
             player.print{"YARM-site-expanded", site.name, format_number(site.amount), site.ore_name,
