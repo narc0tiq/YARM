@@ -1291,6 +1291,9 @@ end
 
 
 function resmon.update_forces(event)
+    -- At tick 0 on an MP server initial join, on_init may not have run
+    if not global.force_data then return end
+
     local update_cycle = event.tick % settings.global["YARM-ticks-between-checks"].value
     for _, force in pairs(game.forces) do
         local force_data = global.force_data[force.name]
