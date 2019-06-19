@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.8.18
+Date: 2019-06-19
+  Bugfixes:
+    - Avoid a server crash on first multiplayer player join (tick 0 on_tick before on_init)
+    - Reset ore statistics on site expansion
+---------------------------------------------------------------------------------------------------
 Version: 0.8.17
 Date: 2019-05-15
   Changes:
