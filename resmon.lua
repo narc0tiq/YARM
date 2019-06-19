@@ -1264,6 +1264,9 @@ end
 
 
 function resmon.update_players(event)
+    -- At tick 0 on an MP server initial join, on_init may not have run
+    if not global.player_data then return end
+
     for index, player in pairs(game.players) do
         local player_data = global.player_data[index]
 
