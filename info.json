@@ -1,12 +1,11 @@
 {
     "name": "{{MOD_NAME}}",
     "version": "{{VERSION}}",
-    "factorio_version": "0.17",
+    "factorio_version": "0.18",
     "title": "YARM - Resource Monitor",
     "author": "Octav 'narc' Sandulescu, based on work by drs, jorgenRe, and L0771",
     "homepage": "https://github.com/narc0tiq/YARM",
     "dependencies": [
-        "base >= 0.17.35",
         "? aai-programmable-vehicles",
         "? angelsrefining",
         "? omnimatter"
