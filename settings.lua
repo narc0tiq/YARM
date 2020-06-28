@@ -59,6 +59,6 @@ data:extend({
         setting_type = "runtime-per-user",
         order = "b",
         default_value = "percent-remaining",
-        allowed_values = { "percent-remaining", "ore-type", "ore-count", "etd" }
+        allowed_values = { "alphabetical", "percent-remaining", "ore-type", "ore-count", "etd" }
     },
 })

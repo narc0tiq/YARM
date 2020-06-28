@@ -738,6 +738,11 @@ local function site_comparator_by_etd(left, right)
 end
 
 
+local function site_comparator_by_alpha(left, right)
+    return left.name < right.name
+end
+
+
 local function sites_in_order(sites, comparator)
     -- damn in-place table.sort makes us make a copy first...
     local ordered_sites = {}
@@ -766,6 +771,8 @@ local function sites_in_player_order(sites, player)
         comparator = site_comparator_by_ore_count
     elseif order_by == 'etd' then
         comparator = site_comparator_by_etd
+    elseif order_by == 'alphabetical' then
+        comparator = site_comparator_by_alpha
     end
 
     return sites_in_order(sites, comparator)
