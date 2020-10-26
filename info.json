@@ -1,0 +1,14 @@
+{
+    "name": "YARM2",
+    "version": "2.0.0",
+    "factorio_version": "1.0",
+    "title": "YARM 2 - Resource Monitor Boogaloo",
+    "author": "Octav 'narc' Sandulescu, based on work by drs, jorgenRe, and L0771",
+    "homepage": "https://github.com/narc0tiq/YARM",
+    "dependencies": [
+        "? angelsrefining",
+        "? omnimatter",
+        "! YARM"
+    ],
+    "description": "This mod helps you to keep track of your mining sites, with useful data such as the percent mined, and estimated time to depletion."
+}
