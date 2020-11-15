@@ -7,10 +7,42 @@ yarm.entity = P
 
 P.persisted_members = {}
 
+table.insert(P.persisted_members, 'spawned_ents')
 P.spawned_ents = {
     -- array of LuaEntity
 }
-table.insert(P.persisted_members, 'spawned_ents')
+
+table.insert(P.persisted_members, 'infinite_resource_names')
+P.infinite_resource_names = {}
+
+local function init_infinite_resources()
+    local resource_protos = game.get_filtered_entity_prototypes({{filter = "type", type = "resource"}})
+    for name, proto in pairs(resource_protos) do
+        if proto.infinite_resource then
+            P.infinite_resource_names[name] = true
+        end
+    end
+end
+
+function P.on_init()
+    init_infinite_resources()
+end
+
+function P.on_configuration_changed()
+    init_infinite_resources()
+end
+
+function P.is_infinite_resource(name)
+    return P.infinite_resource_names[name] or false -- don't really want to return nil, who knows what shit could happen
+end
+
+function P.infinite_resources()
+    local current = nil
+    return function ()
+        current = next(P.infinite_resource_names, current)
+        return current
+    end
+end
 
 --- Spawn an entity and remember it in `spawned_ents` for later
 function P.spawn(surface, name, position, force, extra_opts)
