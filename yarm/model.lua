@@ -49,15 +49,7 @@ function P.on_load()
     P.rebind_persisted()
 end
 
-function P.create_site()
-end
-
-function P.merge_sites(target_name, to_merge_name)
-end
-
-function P.reassign_monitor(mon_data, site_name)
-end
-
+table.insert(P.persisted_members, 'surveys')
 P.surveys = {
     --[[
         [force.name] = {
@@ -66,20 +58,14 @@ P.surveys = {
                     name: string,
                     force: LuaForce,
                     surface: LuaSurface,
-                    ore_types: array = {
-                        [ore.name] = {
-                            ore_name: LocalizedString = { "item-name." .. ore.name } or { "fluid-name." .. ore.name },
-                            amount: number, -- sum of `amount` of member monitors on `ore`
-                            entity_count: number, -- sum of `entity_count` etc.
-                        }
-                    }
+                    product_types: table, -- see REF_PRODUCT_TYPES
                 }
             }
         }
     ]]
 }
-table.insert(P.persisted_members, 'surveys')
 
+table.insert(P.persisted_members, 'sites')
 P.sites = {
     --[[
         [force.name] = {
@@ -88,40 +74,57 @@ P.sites = {
                     name: string, -- same as key, so we can pass the site around in one obj
                     force: LuaForce,
                     surface: LuaSurface,
-                    ore_types: array = {
-                        [ore.name] = {
-                            is_active: boolean, -- active ores contribute to `ore_stats`
-                            ore_name: LocalizedString = { "entity-name." .. ore.name },
-                            amount: number, -- sum of `amount` of member monitors on `ore`
-                            initial_amount: number, -- sum of `initial_amount` etc.
-                            --...
-                            entity_count: number, -- sum of `entity_count` etc.
-                        }
-                    }
+                    product_types: table, -- see REF_PRODUCT_TYPES
                     monitors: array = {
-                        [ent.unit_number] = P.monitors[ent.unit_number]
+                        [i] = P.monitors[...]
                     }
                 }
             }
         }
     ]]
 }
-table.insert(P.persisted_members, 'sites')
 
 P.ore_stats = {
     --[[
         [force.name] = { -- e.g., 'player' or 'red-team'
-            [ore.name] = {
-                amount: number, -- sum of `amount` of `ore` in all `force` sites
-                initial_amount: number, -- sum of `initial_amount` of `ore` in all `force` sites
-                delta_per_minute: number, -- sum of `delta_per_minute` from `force` `ore` sites
-                --...
-            }
+            product_types: table, -- see REF_PRODUCT_TYPES
+            -- other?
         }
     ]]
 }
 
 -- P.surface_stats?
 
---function P.add_item()
+--[[ REF_PRODUCT_TYPES
+    product_types: array = {
+        [item.type .. item.name] = { -- type == 'fluid' or 'item'
+            is_active: boolean, -- active ores contribute to `ore_stats`
+            product_name: LocalizedString = { "item-name." .. product.name } || { 'fluid-name.' .. product.name },
+            amount: number, -- monitor amount || sum of member monitors' amounts
+            initial_amount: number, -- initially seen amount || sum of member monitors' initial_amounts
+            last_update: number, -- tick number of last amount update; allows us to calculate delta_per_minute
+            delta_per_minute: number, -- see REF_DELTA_CALC for details
+            minutes_to_deplete: number, -- amount / delta_per_minute OR false if delta_per_minute is 0
+                -- OR:
+            minutes_to_deplete: table = { -- for sites/stats/other monitor containers
+                optimistic: number, -- biggest minutes_to_deplete with nonzero delta_per_minute
+                pessimistic: number, -- smallest minutes_to_deplete
+                average: number, -- site amount / site delta_per_minute
+            }
+            entity_count: number, -- only if sourced from infinite resource entity
+        }
+    }
+]]
+
+--[[ REF_DELTA_CALC
+    When calculating the delta_per_minute:
+    - delta_amount = difference between the current_amount and the recorded amount
+    - delta_ticks = difference between the current_tick and the last_update tick
+    - delta_update_percent = configuration read [0.1-1]
+    - momentary_delta_per_minute = delta_amount * 3600 / delta_ticks
+    - delta_per_minute = yutil.linear_ease(delta_per_minute, momentary_delta_per_minute, delta_update_percent)
+    - amount = current_amount
+    - last_update = current_tick
+]]
+
 return P

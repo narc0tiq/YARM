@@ -9,8 +9,8 @@ yarm.monitor = P
 P.persisted_members = {}
 
 --- The authoritative list of all the monitors we ever care about
--- NB: Never remove values from `P.monitors` without `table.remove` to reassign
--- indices! Ideally never remove values (just the entity reference)
+-- NB: Never remove values from `P.monitors`, it'll mess up the monitor_index!
+-- ...or if you do, rebuild the index, but it'd need a full table scan...
 table.insert(P.persisted_members, 'monitors')
 P.monitors = {
     --[[
@@ -21,13 +21,8 @@ P.monitors = {
             force: LuaForce,
             surface: LuaSurface,
             position: LuaPosition,
-            ore_types: array = {
-                [ore.name] = {
-                    ore_name: LocalizedString = { "entity-name." .. ore.name },
-                    amount: number, -- sum of `amount` of member monitors on `ore`
-                    entity_count: number, -- sum of `entity_count` etc.
-                }
-            }
+            site_name: string,
+            product_types: table, -- see REF_PRODUCT_TYPES in model.lua
         }
     ]]
 }
@@ -51,9 +46,9 @@ P.monitor_read_state = {
     priority_items = {},
 
     --- Last iterated index; every time the regular tick wants to refresh a
-    -- monitor, it continues from the index immediately after this one (looping
-    -- back to 1 if at the end of the list)
-    last_index = 0,
+    -- monitor, it continues from here (looping automatically, thanks to
+    -- next(P.monitors, last_index))
+    last_index = nil,
 
     --- Tick number when last_index was last reset; used to pause to avoid
     -- iterating more often than once every 300 ticks (which is useless --
@@ -61,7 +56,10 @@ P.monitor_read_state = {
     iteration_start_tick = 0,
 }
 
+--- Reset P.monitor_index
+-- NB: monitor_index[unit_number] = index_in(P.monitors)
 local function reindex_monitors()
+    P.monitor_index = {}
     for idx, mon_data in pairs(P.monitors) do
         if mon_data.monitor.valid then
             P.monitor_index[mon_data.monitor.unit_number] = idx
@@ -82,7 +80,7 @@ local function make_mon_data(monitor, pole)
         surface = monitor.surface,
         position = monitor.position,
         site_name = '',
-        ore_types = {},
+        product_types = {},
     }
 end
 
@@ -101,13 +99,10 @@ function P.add(monitor, pole)
     else
         behavior.resource_read_mode = defines.control_behavior.mining_drill.resource_read_mode.this_miner
     end
-
-    -- TODO: Count entities the monitor can see!
-    --yarm.scanner.scan_around(monitor)
 end
 
 function P.remove(mon_data)
-    mon_data.monitor = { valid = false }
+    mon_data.monitor = false
 end
 
 function P.get_by_unit_number(unit_number)
@@ -129,6 +124,8 @@ function P.update_monitor(mon_data)
     end
 
     local signals = mon_data.monitor.get_merged_signals()
+    -- NB: Signals are **always** of finite resources only. Infinite resources
+    -- always come up as 0 because the monitor has a mining_speed of 0.
 end
 
 function P.on_player_setup_blueprint(e)

@@ -69,6 +69,7 @@ P.MONITOR_NAMES = {
 -- Spawns an invisible pole on top of the monitor and connects them with red
 -- wire. Then tells the monitor module about both entities.
 function P.on_built_monitor(e)
+    -- TODO Wireless monitor gets a constant combinator with up to 15 outputs
     if not yutil.contains(P.MONITOR_NAMES, e.created_entity.name) then
         return
     end
@@ -84,6 +85,9 @@ function P.on_built_monitor(e)
     end
 
     yarm.monitor.add(mon, pole)
+
+    -- TODO yarm.site.add(site_from_tag, monitor) or yarm.site.create_and_add(monitor)
+    -- Actually maybe that's something for yarm.monitor to do?
 end
 
 local BUILT_EVENTS = {
@@ -95,6 +99,7 @@ local BUILT_EVENTS = {
 }
 for _, evname in pairs(BUILT_EVENTS) do
     yarm.on_event(evname, P.on_built_monitor,
+        -- P.MONITOR_NAMES:select(n => {filter = 'name', name = n}):to_list()
         yutil.materialize(yutil.select(P.MONITOR_NAMES, function (mon_name)
             return { filter = 'name', name = mon_name }
         end)))
