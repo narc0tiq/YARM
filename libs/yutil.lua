@@ -49,7 +49,7 @@ end
 -- Values from the `right` table will override those from the `left`.
 -- Neither table is modified (a new table is created with `table.deepcopy`)
 function P.table_merge(left, right)
-    local result = table.deepcopy(left)
+    local result = table.deepcopy(left or {})
     if type(right) ~= 'table' then
         return result -- nothing given, nothing changed
     end
