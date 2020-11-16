@@ -111,6 +111,12 @@ function P.get_by_unit_number(unit_number)
 end
 
 function P.on_tick(e)
+    -- TODOs
+    -- update monitors in priority queue
+    -- if < 299 ticks since starting and next monitor is nil, do nothing
+    -- figure out number of monitors to update per 300 ticks
+    -- update N monitors
+    -- if 299 ticks since starting and next monitor is not nil, update as many monitors as needed to get to nil
 end
 
 --- Update the given mon_data table with the monitor's current state.
