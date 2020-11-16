@@ -119,6 +119,18 @@ function P.on_tick(e)
     -- if 299 ticks since starting and next monitor is not nil, update as many monitors as needed to get to nil
 end
 
+local function locale_group_from_signal_type(sigtype)
+    if sigtype == 'item' then
+        return 'item-name'
+    elseif sigtype == 'fluid' then
+        return 'fluid-name'
+    elseif sigtype == 'virtual' then
+        return 'virtual-signal-name'
+    else
+        error("Cannot tell locale group from signal type '"..sigtype.."'!")
+    end
+end
+
 --- Update the given mon_data table with the monitor's current state.
 -- If monitor is no longer valid, it is removed from future updates.
 -- @return true if an update was done, false otherwise
@@ -129,9 +141,64 @@ function P.update_monitor(mon_data)
         return false
     end
 
-    local signals = mon_data.monitor.get_merged_signals()
     -- NB: Signals are **always** of finite resources only. Infinite resources
     -- always come up as 0 because the monitor has a mining_speed of 0.
+    local signals = mon_data.monitor.get_merged_signals()
+
+    -- NB: signals of 0 are not present in the get_merged_signals, but may
+    -- still be present in mon_data.product_types... therefore:
+    -- 1. make a composite keyed on mon_data.product_types' keys, value = { sigdata = sigdata }
+    local composite = {}
+    for key, sigdata in pairs(mon_data.product_types) do
+        composite[key] = { sigdata = sigdata }
+    end
+    -- 2. add signals to composite: generate the key and table_merge {sigval = sigval }
+    for _, sigval in pairs(signals) do
+        local key = locale_group_from_signal_type(sigval.signal.type) .. '.' .. sigval.signal.name
+        composite[key] = yutil.table_merge(composite[key], { sigval = sigval })
+    end
+
+    for key, comp in pairs(composite) do
+        mon_data.product_types[key] = P.update_signal(key, comp.sigdata, comp.sigval)
+    end
+end
+
+function P.update_signal(key, sigdata, sigval)
+    -- Updating has three possible states:
+    -- a. sigdata missing, sigval present -> return new sigdata table
+    -- b. sigdata present, sigval missing -> sigval.count = 0, then fall through to
+    -- c. both present -> update amount and calculate deltas
+    if not sigdata then
+        return {
+            product_name = { key },
+            amount = sigval.count,
+            initial_amount = sigval.count,
+            last_update = game.tick,
+            delta_per_minute = 0,
+            minutes_to_deplete = false, -- used as a marker for "never" because I can't find infinity in Lua
+        }
+    elseif not sigval then
+        sigval = { count = 0 }
+    end
+
+    local delta_ticks = game.tick - sigdata.last_update
+    if delta_ticks <= 0 then
+        return sigdata -- No time passed since last count, can't calculate anything
+    end
+
+    local delta_update_percent = 0.25 -- TODO read from configuration
+    local delta_amount = sigdata.amount - sigval.count
+    local momentary_delta_per_minute = delta_amount * 3600 / delta_ticks
+
+    sigdata.amount = sigval.count
+    sigdata.delta_per_minute = yutil.linear_ease(sigdata.delta_per_minute, momentary_delta_per_minute, delta_update_percent)
+    if sigdata.delta_per_minute <= 0 then -- count either grew or didn't change, therefore no ETD
+        sigdata.minutes_to_deplete = false
+    else
+        sigdata.minutes_to_deplete = sigdata.amount / sigdata.delta_per_minute
+    end
+
+    return sigdata
 end
 
 function P.on_player_setup_blueprint(e)
