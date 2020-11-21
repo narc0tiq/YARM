@@ -1,7 +1,6 @@
 require 'resmon'
 require 'remote'
 require 'yarm.all'
-require 'libs/yutil'
 
 script.on_init(yarm.on_init)
 script.on_load(yarm.on_load)

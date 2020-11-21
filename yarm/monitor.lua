@@ -1,4 +1,3 @@
-require 'model'
 require 'libs/yutil'
 
 if yarm == nil then yarm = {} end
