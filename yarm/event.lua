@@ -5,10 +5,11 @@ yarm.event = P
 
 P.handlers = {
     --[[
-        [unused_index] = {
-            event = event.name,
-            action = function(e) blah end,
-            filters = {} or nil
+        [event.name] = {
+            actions = { some_func, some_other_func },
+            filters = { some_filters, some_other_filters },
+            unfiltered: boolean -- whether any of the bound actions wants to run with no filter
+        }
     ]]
 }
 
@@ -31,27 +32,24 @@ local function compose_handlers(handlers)
 end
 
 function P.on_event(event, action, filters)
-    table.insert(P.handlers, { event = event, action = action, filters = filters })
+    local hs = P.handlers
+    if P.handlers[event] == nil then
+        P.handlers[event] = {
+            actions = { action },
+            filters = { filters },
+            unfiltered = filters == nil
+        }
+        return
+    end
+
+    local handler = hs[event]
+    table.insert(handler.actions, action)
+    table.insert(handler.filters, filters)
+    handler.unfiltered = handler.unfiltered or filters == nil
 end
 
 function P.bind_events()
-    local composite = {}
-
-    for _, evdata in pairs(P.handlers) do
-        if composite[evdata.event] == nil then
-            composite[evdata.event] = { actions = {}, filters = {}, unfiltered = false }
-        end
-        local evcomposite = composite[evdata.event]
-
-        table.insert(evcomposite.actions, evdata.action)
-        if evdata.filters ~= nil then
-            table.insert(evcomposite.filters, evdata.filters)
-        else
-            evcomposite.unfiltered = true
-        end
-    end
-
-    for evname, details in pairs(composite) do
+    for evname, details in pairs(P.handlers) do
         if details.unfiltered then
             -- at least one filterless handler, all must be unfiltered
             script.on_event(evname, compose_handlers(details.actions))
