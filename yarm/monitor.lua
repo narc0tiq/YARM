@@ -105,26 +105,29 @@ function P.get_by_unit_number(unit_number)
     return P.monitors[P.monitor_index[unit_number]]
 end
 
-function P.on_tick(e)
+local TICK_FREQ = 20
+local PERIODS_IN_5S = 300 / TICK_FREQ
+
+function P.on_update_period(e)
     local state = P.monitor_read_state
     for _, mon_data in pairs(state.priority_items) do
         P.update_monitor(mon_data)
     end
     state.priority_items = {}
 
-    local tickMod = game.tick % 300
-    if tickMod == 0 then
+    local periodMod = math.floor(game.tick / TICK_FREQ) % PERIODS_IN_5S
+    if periodMod == 0 then
         state.last_index = nil -- should already be the case, but defensive programming
     elseif state.last_index == nil then
-        return -- in tick 1..299, no more monitors to update
+        return -- in period 1..N, no more monitors to update
     end
 
-    local updatesThisTick = math.ceil(#P.monitors / 300)
-    if tickMod == 299 then
-        updatesThisTick = #P.monitors -- last tick before a reset, must update all remaining
+    local updatesThisPeriod = math.ceil(#P.monitors / PERIODS_IN_5S)
+    if periodMod == PERIODS_IN_5S - 1 then
+        updatesThisPeriod = #P.monitors -- last period before a reset, must update all remaining
     end
 
-    for i = 1, updatesThisTick do
+    for i = 1, updatesThisPeriod do
         local key, mon_data = next(P.monitors, state.last_index)
         state.last_index = key
         if key == nil then
@@ -134,7 +137,7 @@ function P.on_tick(e)
         P.update_monitor(mon_data)
     end
 end
-yarm.on_event(defines.events.on_tick, P.on_tick)
+yarm.on_nth_tick(TICK_FREQ, P.on_update_period)
 
 --- Update the given mon_data table with the monitor's current state.
 -- If monitor is no longer valid, it is removed from future updates.

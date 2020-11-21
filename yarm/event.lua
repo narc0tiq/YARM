@@ -13,6 +13,12 @@ P.handlers = {
     ]]
 }
 
+P.nth_ticks = {
+    --[[
+        [n] = { some_func, some_other_func },
+    ]]
+}
+
 local function compose_filters(filters)
     local ret = {}
     for _, filterset in pairs(filters) do
@@ -48,6 +54,13 @@ function P.on_event(event, action, filters)
     handler.unfiltered = handler.unfiltered or filters == nil
 end
 
+function P.on_nth_tick(n, action)
+    if P.nth_ticks[n] == nil then
+        P.nth_ticks[n] = {}
+    end
+    table.insert(P.nth_ticks[n], action)
+end
+
 function P.bind_events()
     for evname, details in pairs(P.handlers) do
         if details.unfiltered then
@@ -57,6 +70,10 @@ function P.bind_events()
             -- all handlers filtered, actual filter will be a composite
             script.on_event(evname, compose_handlers(details.actions), compose_filters(details.filters))
         end
+    end
+
+    for n, actions in pairs(P.nth_ticks) do
+        script.on_nth_tick(n, compose_handlers(actions))
     end
 end
 
@@ -75,5 +92,6 @@ yarm.on_load = P.delegate_to_modules('on_load')
 yarm.on_configuration_changed = P.delegate_to_modules('on_configuration_changed')
 
 yarm.on_event = P.on_event
+yarm.on_nth_tick = P.on_nth_tick
 
 return P
