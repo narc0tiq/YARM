@@ -110,5 +110,16 @@ function P.contains(tab, element)
     return false
 end
 
+function P.locale_group_from_signal_type(sigtype)
+    if sigtype == 'item' then
+        return 'item-name'
+    elseif sigtype == 'fluid' then
+        return 'fluid-name'
+    elseif sigtype == 'virtual' then
+        return 'virtual-signal-name'
+    else
+        error("Cannot tell locale group from signal type '"..sigtype.."'!")
+    end
+end
 
 return P

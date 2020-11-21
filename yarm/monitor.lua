@@ -119,18 +119,6 @@ function P.on_tick(e)
     -- if 299 ticks since starting and next monitor is not nil, update as many monitors as needed to get to nil
 end
 
-local function locale_group_from_signal_type(sigtype)
-    if sigtype == 'item' then
-        return 'item-name'
-    elseif sigtype == 'fluid' then
-        return 'fluid-name'
-    elseif sigtype == 'virtual' then
-        return 'virtual-signal-name'
-    else
-        error("Cannot tell locale group from signal type '"..sigtype.."'!")
-    end
-end
-
 --- Update the given mon_data table with the monitor's current state.
 -- If monitor is no longer valid, it is removed from future updates.
 -- @return true if an update was done, false otherwise
@@ -143,20 +131,23 @@ function P.update_monitor(mon_data)
 
     -- NB: Signals are **always** of finite resources only. Infinite resources
     -- always come up as 0 because the monitor has a mining_speed of 0.
-    local signals = mon_data.monitor.get_merged_signals()
+    local signals = mon_data.monitor.get_merged_signals() or {}
 
     -- NB: signals of 0 are not present in the get_merged_signals, but may
     -- still be present in mon_data.product_types... therefore:
-    -- 1. make a composite keyed on mon_data.product_types' keys, value = { sigdata = sigdata }
+    -- 1. create a composite keyed on mon_data.product_types' keys, value = { sigdata = sigdata }
     local composite = {}
     for key, sigdata in pairs(mon_data.product_types) do
         composite[key] = { sigdata = sigdata }
     end
-    -- 2. add signals to composite: generate the key and table_merge {sigval = sigval }
+    -- 2. add signals to composite: generate the key and table_merge { sigval = sigval }
     for _, sigval in pairs(signals) do
-        local key = locale_group_from_signal_type(sigval.signal.type) .. '.' .. sigval.signal.name
+        local key = yutil.locale_group_from_signal_type(sigval.signal.type) .. '.' .. sigval.signal.name
         composite[key] = yutil.table_merge(composite[key], { sigval = sigval })
     end
+    -- TODO: Wireless monitor - add to composite
+    -- ¿What if an infinite resource is outputting the same product as a finite one?
+    -- Maybe we should have a separate infinite_product_types?
 
     for key, comp in pairs(composite) do
         mon_data.product_types[key] = P.update_signal(key, comp.sigdata, comp.sigval)
