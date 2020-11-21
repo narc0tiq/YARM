@@ -105,7 +105,7 @@ function P.get_by_unit_number(unit_number)
     return P.monitors[P.monitor_index[unit_number]]
 end
 
-local TICK_FREQ = 20
+local TICK_FREQ = 20 -- Must be a divisor of 300
 local PERIODS_IN_5S = 300 / TICK_FREQ
 
 function P.on_update_period(e)
@@ -115,7 +115,7 @@ function P.on_update_period(e)
     end
     state.priority_items = {}
 
-    local periodMod = math.floor(game.tick / TICK_FREQ) % PERIODS_IN_5S
+    local periodMod = (game.tick / TICK_FREQ) % PERIODS_IN_5S
     if periodMod == 0 then
         state.last_index = nil -- should already be the case, but defensive programming
     elseif state.last_index == nil then
