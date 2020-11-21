@@ -49,11 +49,6 @@ P.monitor_read_state = {
     -- monitor, it continues from here (looping automatically, thanks to
     -- next(P.monitors, last_index))
     last_index = nil,
-
-    --- Tick number when last_index was last reset; used to pause to avoid
-    -- iterating more often than once every 300 ticks (which is useless --
-    -- miners won't update values any more often than that)
-    iteration_start_tick = 0,
 }
 
 --- Reset P.monitor_index
@@ -111,13 +106,35 @@ function P.get_by_unit_number(unit_number)
 end
 
 function P.on_tick(e)
-    -- TODOs
-    -- update monitors in priority queue
-    -- if < 299 ticks since starting and next monitor is nil, do nothing
-    -- figure out number of monitors to update per 300 ticks
-    -- update N monitors
-    -- if 299 ticks since starting and next monitor is not nil, update as many monitors as needed to get to nil
+    local state = P.monitor_read_state
+    for _, mon_data in pairs(state.priority_items) do
+        P.update_monitor(mon_data)
+    end
+    state.priority_items = {}
+
+    local tickMod = game.tick % 300
+    if tickMod == 0 then
+        state.last_index = nil -- should already be the case, but defensive programming
+    elseif state.last_index == nil then
+        return -- in tick 1..299, no more monitors to update
+    end
+
+    local updatesThisTick = math.ceil(#P.monitors / 300)
+    if tickMod == 299 then
+        updatesThisTick = #P.monitors -- last tick before a reset, must update all remaining
+    end
+
+    for i = 1, updatesThisTick do
+        local key, mon_data = next(P.monitors, state.last_index)
+        state.last_index = key
+        if key == nil then
+            return -- no more monitors to update
+        end
+
+        P.update_monitor(mon_data)
+    end
 end
+yarm.on_event(defines.events.on_tick, P.on_tick)
 
 --- Update the given mon_data table with the monitor's current state.
 -- If monitor is no longer valid, it is removed from future updates.
