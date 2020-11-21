@@ -65,25 +65,6 @@ P.surveys = {
     ]]
 }
 
-table.insert(P.persisted_members, 'sites')
-P.sites = {
-    --[[
-        [force.name] = {
-            [surface.name] = {
-                [site.name] = {
-                    name: string, -- same as key, so we can pass the site around in one obj
-                    force: LuaForce,
-                    surface: LuaSurface,
-                    product_types: table, -- see REF_PRODUCT_TYPES
-                    monitors: array = {
-                        [i] = P.monitors[...]
-                    }
-                }
-            }
-        }
-    ]]
-}
-
 P.ore_stats = {
     --[[
         [force.name] = { -- e.g., 'player' or 'red-team'

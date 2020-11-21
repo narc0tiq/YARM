@@ -86,10 +86,13 @@ function P.on_built_monitor(e)
         error("Failed to connect invisible pole to monitor!")
     end
 
-    yarm.monitor.add(mon, pole)
+    local mon_data = yarm.monitor.add(mon, pole)
 
-    -- TODO yarm.site.add(site_from_tag, monitor) or yarm.site.create_and_add(monitor)
-    -- Actually maybe that's something for yarm.monitor to do?
+    if e.tags and e.tags.site_name then
+        yarm.site.add_monitor_to(e.tags.site_name, mon_data)
+    else
+        yarm.site.new_from_monitor(mon_data)
+    end
 end
 
 local BUILT_EVENTS = {

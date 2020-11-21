@@ -122,4 +122,14 @@ function P.locale_group_from_signal_type(sigtype)
     end
 end
 
+--- Initialize table properties across a variable depth
+-- Useful for things like P.sites[force_name][surface_name][site_name]
+-- @param table is the table that will have its values inint
+-- @param properties is an array of the properties that must exist within the table (e.g., { force_name, surface_name, site_name })
+-- @param initializer will be used to initialize the leaf if it does not already exist (if nil, leaf remains as {})
+function P.table_initialize_deep(table, properties, initializer)
+    -- TODO foreach in properties do initialize...
+    -- TODO if initializer ~= nil then the last thing done gets the initializer run
+end
+
 return P
