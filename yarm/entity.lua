@@ -70,6 +70,8 @@ P.MONITOR_NAMES = {
 -- wire. Then tells the monitor module about both entities.
 function P.on_built_monitor(e)
     -- TODO Wireless monitor gets a constant combinator with up to 15 outputs
+    -- TODO Different BUILT_EVENTS have evdata in different places, need to unify these
+    -- Currently we only really handle on_built_entity
     if not yutil.contains(P.MONITOR_NAMES, e.created_entity.name) then
         return
     end
@@ -97,12 +99,17 @@ local BUILT_EVENTS = {
     defines.events.script_raised_built,
     defines.events.script_raised_revive,
 }
-for _, evname in pairs(BUILT_EVENTS) do
-    yarm.on_event(evname, P.on_built_monitor,
-        -- P.MONITOR_NAMES:select(n => {filter = 'name', name = n}):to_list()
-        yutil.materialize(yutil.select(P.MONITOR_NAMES, function (mon_name)
-            return { filter = 'name', name = mon_name }
-        end)))
-end
+-- P.MONITOR_NAMES:select(n => {filter = 'name', name = n}):to_list()
+local BUILT_FILTERS = yutil.materialize(
+    yutil.select(
+        P.MONITOR_NAMES, function (mon_name)
+             return { filter = 'name', name = mon_name }
+        end))
+
+yarm.on_event(defines.events.on_built_entity, P.on_built_monitor, BUILT_FILTERS)
+-- TODO must unify the different event args, for now just keep getting the warning
+-- for _, evname in pairs(BUILT_EVENTS) do
+--     yarm.on_event(evname, P.on_built_monitor, BUILT_FILTERS)
+-- end
 
 return P
