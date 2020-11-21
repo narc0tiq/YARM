@@ -73,7 +73,7 @@ local function make_mon_data(monitor, pole)
         force = monitor.force,
         surface = monitor.surface,
         position = monitor.position,
-        site_name = '',
+        site_name = false, -- not added to a site yet
         product_types = {},
     }
 end
@@ -93,6 +93,8 @@ function P.add(monitor, pole)
     else
         behavior.resource_read_mode = defines.control_behavior.mining_drill.resource_read_mode.this_miner
     end
+
+    return mon_data
 end
 
 function P.remove(mon_data)
