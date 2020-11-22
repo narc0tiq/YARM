@@ -48,21 +48,39 @@ local function collect_into_site_data(site_prod, monitor_prod)
     site_prod.amount = site_prod.amount + monitor_prod.amount
     site_prod.initial_amount = site_prod.initial_amount + monitor_prod.initial_amount
     site_prod.delta_per_minute = site_prod.delta_per_minute + monitor_prod.delta_per_minute
-    -- TODO site_prod.minutes_to_deplete.[earliest|latest]
+
+    if monitor_prod.minutes_to_deplete then
+        local smtd = site_prod.minutes_to_deplete
+        if not smtd.earliest or smtd.earliest > monitor_prod.minutes_to_deplete then
+            smtd.earliest = monitor_prod.minutes_to_deplete
+        end
+        if not smtd.latest or smtd.latest < monitor_prod.minutes_to_deplete then
+            smtd.latest = monitor_prod.minutes_to_deplete
+        end
+    end
 end
 
 function P.recount(site)
-    local site_data = site.product_types
-    for _, monitor in site.monitors do
-        for key, mondata in monitor.product_types do
-            if site_data[key] == nil then
-                site_data[key] = yarm.model.new_product_data(key, 0)
-                site_data[key].minutes_to_deplete = { average = false, first_depleted = false, last_depleted = false }
+    site.product_types = {}
+
+    local spt = site.product_types
+    for _, monitor in pairs(site.monitors) do
+        for key, mondata in pairs(monitor.product_types) do
+            if spt[key] == nil then
+                spt[key] = yarm.model.new_product_data(key, 0)
+                spt[key].minutes_to_deplete = { average = false, first_depleted = false, last_depleted = false }
             end
-            collect_into_site_data(site_data[key], mondata)
+            collect_into_site_data(spt[key], mondata)
         end
     end
-    -- TODO site_prod.minutes_to_deplete.average?
+
+    for _, site_prod in pairs(spt) do
+        if site_prod.delta_per_minute == 0 then
+            site_prod.minutes_to_deplete.average = false
+        else
+            site_prod.minutes_to_deplete.average = site_prod.amount / site_prod.delta_per_minute
+        end
+    end
 end
 
 function P.merge(site_to_delete, site_to_grow, player)
@@ -85,13 +103,16 @@ function P.delete(site)
 end
 
 function P.new_from_monitor(mon_data)
-    -- TODO create a site and then add_monitor_to it
+    local our_sites = yutil.table_scan_with_init(P.sites, {mon_data.force.name, mon_data.surface.name})
+    local site_name = yutil.random_backer_name(our_sites)
+    P.add_monitor_to(site_name, mon_data)
 end
 
 function P.add_monitor_to(site_name, mon_data)
     P.detach_monitor(mon_data)
     local site = P.find_or_create(mon_data.force, mon_data.surface, site_name)
-    -- TODO
+    table.insert(site.monitors, mon_data)
+    P.recount(site)
 end
 
 function P.detach_monitor(mon_data)

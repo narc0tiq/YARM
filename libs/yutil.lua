@@ -154,4 +154,20 @@ function P.index_of(table, predicate)
     return -1
 end
 
+--- Generate a random backer name; optionally try to ensure the random name is not present in a given table
+-- NB: will only attempt 5 random picks before failing with error
+function P.random_backer_name(unless_in)
+    for i = 1, 5 do
+        local index = math.random(#game.backer_names)
+        local candidate = game.backer_names[index]
+        if type(unless_in) ~= 'table' then
+            return candidate
+        end
+        if unless_in[candidate] == nil then
+            return candidate
+        end
+    end
+    error("Could not generate random backer name after 5 attempts!")
+end
+
 return P
