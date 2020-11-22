@@ -55,7 +55,7 @@ P.monitor_read_state = {
 local function reindex_monitors()
     P.monitor_index = {}
     for idx, mon_data in pairs(P.monitors) do
-        if mon_data.monitor.valid then
+        if mon_data.monitor and mon_data.monitor.valid then
             P.monitor_index[mon_data.monitor.unit_number] = idx
         end
     end
