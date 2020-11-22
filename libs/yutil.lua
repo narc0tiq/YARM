@@ -122,14 +122,36 @@ function P.locale_group_from_signal_type(sigtype)
     end
 end
 
---- Initialize table properties across a variable depth
+--- Scan into a deep table across a variable depth, initializing the sub-tables if necessary
 -- Useful for things like P.sites[force_name][surface_name][site_name]
--- @param table is the table that will have its values inint
--- @param properties is an array of the properties that must exist within the table (e.g., { force_name, surface_name, site_name })
--- @param initializer will be used to initialize the leaf if it does not already exist (if nil, leaf remains as {})
-function P.table_initialize_deep(table, properties, initializer)
-    -- TODO foreach in properties do initialize...
-    -- TODO if initializer ~= nil then the last thing done gets the initializer run
+-- @param table is the table that will have its sub-tables scanned or initialized
+-- @param properties is an array of the sub-tables that must exist within the table (e.g., { force_name, surface_name, site_name })
+-- @param initializer will be called to initialize the leaf if it does not already exist (if nil, leaf remains as {})
+-- @return the leaf that was either created or found
+function P.table_scan_with_init(table, properties, initializer)
+    if type(table) ~= 'table' then error("Can't deep-initialize a non-table!") end
+    local current = table
+    for i = 1, #properties do
+        local prop = properties[i]
+        if current[prop] == nil then
+            current[prop] = {}
+            if i == #properties and initializer ~= nil then
+                current[prop] = initializer()
+            end
+        end
+        current = current[prop]
+    end
+    return current
+end
+
+--- Find the first index within `table` that matches `predicate`
+function P.index_of(table, predicate)
+    for i, val in pairs(table) do
+        if predicate(val) then
+            return i
+        end
+    end
+    return -1
 end
 
 return P

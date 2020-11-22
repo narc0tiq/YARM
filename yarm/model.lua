@@ -99,9 +99,9 @@ end
             minutes_to_deplete: number, -- amount / delta_per_minute OR false if delta_per_minute is 0
                 -- OR:
             minutes_to_deplete: table = { -- for sites/stats/other monitor containers
-                optimistic: number, -- biggest minutes_to_deplete with nonzero delta_per_minute
-                pessimistic: number, -- smallest minutes_to_deplete
                 average: number, -- site amount / site delta_per_minute
+                earliest: number, -- smallest minutes_to_deplete
+                latest: number, -- biggest minutes_to_deplete with nonzero delta_per_minute
             }
             entity_count: number, -- only if sourced from infinite resource entity
         }
