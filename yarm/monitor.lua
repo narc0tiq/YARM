@@ -181,14 +181,7 @@ function P.update_signal(key, sigdata, sigval)
     -- b. sigdata present, sigval missing -> sigval.count = 0, then fall through to
     -- c. both present -> update amount and calculate deltas
     if not sigdata then
-        return {
-            product_name = { key },
-            amount = sigval.count,
-            initial_amount = sigval.count,
-            last_update = game.tick,
-            delta_per_minute = 0,
-            minutes_to_deplete = false, -- used as a marker for "never" because I can't find infinity in Lua
-        }
+        return yarm.model.new_product_data(key, sigval.count)
     elseif not sigval then
         sigval = { count = 0 }
     end

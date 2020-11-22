@@ -76,6 +76,17 @@ P.ore_stats = {
 
 -- P.surface_stats?
 
+function P.new_product_data(locale_key, count)
+    return {
+        product_name = { locale_key },
+        last_update = game.tick,
+        amount = count,
+        initial_amount = count,
+        delta_per_minute = 0,
+        minutes_to_deplete = false, -- used as a marker for "never" because I can't find infinity in Lua
+    }
+end
+
 --[[ REF_PRODUCT_TYPES
     product_types: array = {
         [product.locale_type .. '.' .. product.name] = {
