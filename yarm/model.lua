@@ -80,7 +80,6 @@ P.ore_stats = {
     product_types: array = {
         [product.locale_type .. '.' .. product.name] = {
             -- NB: locale_type := 'fluid-name' | 'product-name' | 'virtual-signal-name'
-            is_active: boolean, -- active ores contribute to `ore_stats`
             product_name: LocalizedString = { "item-name." .. product.name } || { 'fluid-name.' .. product.name },
             amount: number, -- monitor amount || sum of member monitors' amounts
             initial_amount: number, -- initially seen amount || sum of member monitors' initial_amounts
