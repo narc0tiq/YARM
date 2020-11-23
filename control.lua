@@ -22,13 +22,6 @@ local function on_gui_opened(e)
 end
 script.on_event(defines.events.on_gui_opened, on_gui_opened)
 
-local function on_yarm_command(e)
-    if e.parameter == 'reinit' then
-        yarm.on_init()
-    end
-end
-
-commands.add_command('yarm', {'command.yarm-help'}, on_yarm_command)
 
 -- script.on_init(resmon.init_globals)
 -- script.on_configuration_changed(resmon.init_globals)

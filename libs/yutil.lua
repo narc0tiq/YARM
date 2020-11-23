@@ -77,11 +77,11 @@ function P.where(tab, predicate)
 end
 
 --- Iterator that transforms the given `tab`le according to a `transform`ation
-function P.select(tab, transform)
+function P.select(table, transform)
     local k, v = nil
     return function ()
         repeat
-            k, v = next(tab, k)
+            k, v = next(table, k)
             if k ~= nil then
                 return k, transform(v)
             end
@@ -101,8 +101,8 @@ function P.materialize(iterator)
 end
 
 --- Looks for a specific `element` inside a `tab`le
-function P.contains(tab, element)
-    for _, v in pairs(tab) do
+function P.contains(table, element)
+    for _, v in pairs(table) do
         if v == element then
             return true
         end
@@ -167,7 +167,16 @@ function P.random_backer_name(unless_in)
             return candidate
         end
     end
-    error("Could not generate random backer name after 5 attempts!")
+    error("Could not generate unique random backer name after 5 attempts!")
+end
+
+--- Split a string by whitespace
+function P.split_ws(str)
+    result = {}
+    for match in (str..' '):gmatch("(.-)%s+") do
+        table.insert(result, match)
+    end
+    return result
 end
 
 return P
