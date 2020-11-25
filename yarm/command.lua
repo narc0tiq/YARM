@@ -113,5 +113,22 @@ function P.commands.show_sites(e)
     P.respond(e, 'Not yet implemented, sorry')
 end
 
+function P.commands.give(e)
+    local player = nil
+    if e.argv[2] then
+        player = game.get_player(e.argv[2])
+    end
+    if not player then
+        if not e.player_index then
+            P.respond(e, '[YARM][Err] Must specify a target player (either by name or game.players index)!')
+        end
+        player = game.get_player(e.player_index)
+    end
+
+    player.insert{name = yarm.entity.BASIC_MONITOR_NAME, count = 20}
+    player.insert{name = yarm.entity.WIRELESS_MONITOR_NAME, count = 20}
+    P.respond(e, 'Gave '..player.name..' 20 of each monitor')
+end
+
 commands.add_command('yarm', {'command.yarm-help'}, P.on_yarm)
 return P
