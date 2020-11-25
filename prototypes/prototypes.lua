@@ -11,8 +11,8 @@ data:extend(
         type = 'shortcut',
         name = 'yarm-selector',
         order = "a[yarm]",
-        action = 'create-blueprint-item',
-        item_to_create = 'yarm-selector-tool',
+        action = 'spawn-item',
+        item_to_spawn = 'yarm-selector-tool',
         style = 'green',
         icon = {
             filename = '__{{MOD_NAME}}__/graphics/resource-monitor-x32-white.png',
