@@ -1,7 +1,6 @@
 require "util"
 require "libs/array_pair"
 require "libs/ore_tracker"
-require "mod-gui"
 local mod_gui = require("mod-gui")
 
 -- Sanity: site names aren't allowed to be longer than this, to prevent them

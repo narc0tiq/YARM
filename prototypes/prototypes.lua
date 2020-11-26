@@ -13,6 +13,7 @@ data:extend(
         order = "a[yarm]",
         action = 'spawn-item',
         item_to_spawn = 'yarm-selector-tool',
+        spawnable = true,
         style = 'green',
         icon = {
             filename = '__{{MOD_NAME}}__/graphics/resource-monitor-x32-white.png',

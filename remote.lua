@@ -1,5 +1,4 @@
 require "resmon"
-local mod_gui = require("mod-gui")
 
 local interface = {}
 
