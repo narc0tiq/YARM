@@ -154,8 +154,10 @@ function P.index_of(table, predicate)
     return -1
 end
 
---- Generate a random backer name; optionally try to ensure the random name is not present in a given table
--- NB: will only attempt 5 random picks before failing with error
+--- Generate a random backer name; optionally try to ensure the random name is
+-- not present as a key in a given table.
+-- NB: If a table is not given, will return the first pick immediately
+-- NB: If not found in 5 picks, will return a crappy key based on table_size(unless_in)
 function P.random_backer_name(unless_in)
     for i = 1, 5 do
         local index = math.random(#game.backer_names)
@@ -167,7 +169,9 @@ function P.random_backer_name(unless_in)
             return candidate
         end
     end
-    error("Could not generate unique random backer name after 5 attempts!")
+    -- Crappy name is better than no name, I guess...
+    return string.format('%04d', table_size(unless_in))
+    -- TODO Consider a uniqueness check on this, as well.
 end
 
 --- Split a string by whitespace
