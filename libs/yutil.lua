@@ -123,21 +123,21 @@ function P.locale_group_from_signal_type(sigtype)
 end
 
 --- Scan into a deep table across a variable depth, initializing the sub-tables if necessary
--- Useful for things like P.sites[force_name][surface_name][site_name]
+-- Useful for things like P.site_index[force_name][surface_name][site_name]
 -- @param table is the table that will have its sub-tables scanned or initialized
 -- @param properties is an array of the sub-tables that must exist within the table (e.g., { force_name, surface_name, site_name })
--- @param initializer will be called to initialize the leaf if it does not already exist (if nil, leaf remains as {})
 -- @return the leaf that was either created or found
-function P.table_scan_with_init(table, properties, initializer)
-    if type(table) ~= 'table' then error("Can't deep-initialize a non-table!") end
+function P.table_scan(table, properties)
+    if type(table) ~= 'table' then error("Can't table-scan a non-table!") end
+
+    -- NB: Here is one of those rare cases where we really care about _only_
+    -- iterating the numeric keys and _only_ in order (though Factorio would
+    -- guarantee the latter even for pairs()). Thus, ipairs() to the rescue!
+
     local current = table
-    for i = 1, #properties do
-        local prop = properties[i]
+    for _, prop in ipairs(properties) do
         if current[prop] == nil then
             current[prop] = {}
-            if i == #properties and initializer ~= nil then
-                current[prop] = initializer()
-            end
         end
         current = current[prop]
     end
