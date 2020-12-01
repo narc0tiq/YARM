@@ -152,9 +152,12 @@ function P.detach_monitor(mon_data)
     -- NB: The above should be a rare event; only monitors that were just created should ever trigger this
 
     local site = P.find_or_create(mon_data.force, mon_data.surface, mon_data.site_name)
-    -- NB: mon_data should be literally present inside site.monitors
+    -- NB: mon_data should be literally present inside site.monitors unless the
+    -- site was just created (which should never actually happen, but oddities...)
     local mon_index = yutil.index_of(site.monitors, function(candidate) return candidate == mon_data end)
-    table.remove(site.monitors, mon_index)
+    if mon_index > 0 then
+        table.remove(site.monitors, mon_index)
+    end
     P.recount(site)
     if #site.monitors == 0 then P.delete(site) end
 end
