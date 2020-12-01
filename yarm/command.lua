@@ -76,13 +76,19 @@ function P.commands.show(e)
 end
 
 function P.commands.show_monitors(e)
-    if #yarm.monitor.monitors == 0 then
+    local container = yarm.monitor.monitors
+    if e.player_index then
+        local force = game.get_player(e.player_index).force
+        container = yarm.monitor.get_all_by_force(force)
+    end
+
+    if #container == 0 then
         P.respond(e, 'There are no monitors yet! Try placing one!')
         return
     end
 
     local lines = {}
-    for i, mondata in pairs(yarm.monitor.monitors) do
+    for i, mondata in pairs(container) do
         local monitor_line = {i, ': at '}
         table.insert(monitor_line, util.positiontostr(mondata.position))
         table.insert(monitor_line, ', in site "')

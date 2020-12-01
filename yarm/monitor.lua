@@ -34,6 +34,16 @@ P.monitor_index = {
     ]]
 }
 
+P.monitor_index_force = {
+    --[[
+        [mon.force.name] = {
+            P.monitors.indexOf(mon1),
+            P.monitors.indexOf(mon2),
+            --etc.
+        }
+    ]]
+}
+
 --- Allows monitor updates to be spread across multiple ticks by saving
 -- necessary data to pause/resume the updates.
 table.insert(P.persisted_members, 'monitor_read_state')
@@ -54,9 +64,12 @@ P.monitor_read_state = {
 -- NB: monitor_index[unit_number] = index_in(P.monitors)
 local function reindex_monitors()
     P.monitor_index = {}
+    P.monitor_index_force = {}
     for idx, mon_data in pairs(P.monitors) do
         if mon_data.monitor and mon_data.monitor.valid then
             P.monitor_index[mon_data.monitor.unit_number] = idx
+            local force_container = yutil.table_scan(P.monitor_index_force, {mon_data.force.name})
+            table.insert(force_container, idx)
         end
     end
 end
@@ -104,6 +117,14 @@ end
 function P.get_by_unit_number(unit_number)
     if not P.monitor_index[unit_number] then return nil end
     return P.monitors[P.monitor_index[unit_number]]
+end
+
+function P.get_all_by_force(force)
+    local result = {}
+    for _, idx in pairs(P.monitors_by_force[force.name]) do
+        table.insert(result, P.monitors[idx])
+    end
+    return result
 end
 
 local TICK_FREQ = 20 -- Must be a divisor of 300
