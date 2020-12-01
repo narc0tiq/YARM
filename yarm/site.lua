@@ -143,6 +143,7 @@ function P.add_monitor_to(site_name, mon_data)
     P.detach_monitor(mon_data)
     local site = P.find_or_create(mon_data.force, mon_data.surface, site_name)
     table.insert(site.monitors, mon_data)
+    mon_data.site_name = site.name
     P.recount(site)
 end
 
