@@ -484,6 +484,9 @@ function resmon.finalize_site(player_index)
          instead of replacing the existing one) ]]
     if not site.is_site_expanding then
         site.name = string.format("%s %d", get_octant_name(site.center), util.distance({x=0, y=0}, site.center))
+        if settings.global["YARM-site-prefix-with-surface"].value then
+            site.name = string.format("%s %s", site.surface.name, site.name)
+        end
     end
 
     resmon.count_deposits(site, site.added_at % settings.global["YARM-ticks-between-checks"].value)
