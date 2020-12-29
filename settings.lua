@@ -37,6 +37,13 @@ data:extend({
     },
     {
         type = "bool-setting",
+        name = "YARM-site-prefix-with-surface",
+        setting_type = "runtime-global",
+        order = "d",
+        default_value = false
+    },
+    {
+        type = "bool-setting",
         name = "YARM-debug-profiling",
         setting_type = "runtime-global",
         order = "zz[debug]",
