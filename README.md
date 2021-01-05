@@ -87,7 +87,7 @@ members of the #factorio IRC on espernet.
 * [The Factorio Discord](https://discord.gg/5N4pQPF), especially Factorio devs helping in #mod-making (especially @Bilka, @Klonan, @Rseding91)
 * Smoothed ore-per-minute calculation by @wchristian
 * Alphabetical site sorting by @mgkr
-* Optional surface name prefix by @perobertson
+* Multiple changes and fixes by @perobertson
 
 
 ## Remote interface ##
