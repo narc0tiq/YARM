@@ -1160,7 +1160,7 @@ function resmon.pull_YARM_item_to_cursor_if_possible(player_index)
     if player.cursor_stack.valid_for_read then -- already have something?
         if player.cursor_stack.name == "yarm-selector-tool" then return end
 
-        player.clean_cursor() -- and it's not a selector tool, so Q it away
+        player.clear_cursor() -- and it's not a selector tool, so Q it away
     end
 
     player.cursor_stack.set_stack{name="yarm-selector-tool"}
