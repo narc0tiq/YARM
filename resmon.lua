@@ -477,6 +477,14 @@ function resmon.finalize_site(player_index)
     site.initial_amount = site.amount
     site.ore_per_minute = 0
     site.remaining_permille = 1000
+	--A list of the last N updates to the ore field, used to create a realistic depletion time.
+	site.update_snapshots = {}
+	site.update_snapshots[1] = {game.tick, site.amount}
+	for i=2,10 do
+		site.update_snapshots[i] = {0,0}
+	end
+	site.update_snapshots_idx = 2
+	site.ore_per_minute_at_last_change = site.ore_per_minute
 
     site.center = find_center(site.extents)
 
@@ -633,28 +641,100 @@ function resmon.tick_deposit_count(site)
     site.iter_key = index
 end
 
-
 function resmon.finish_deposit_count(site)
     site.iter_key = nil
     site.iter_fn = nil
     site.iter_state = nil
-
+	
+	--[=====[ Overall idea with snapshots:
+		1. We have a static sized list (to prevent memory allocation/garbage collection on lots of tiny objects) of the previous N (10) times that we saw the ore field change.
+		2. We capture two things about these change events: the tick the change happened at, and the size of the field as a result of that change.
+		3. We can then run through the array and calculate the average rate of change for the last 10 change events.
+		4. Because we know how long the 10 snapshots cover, we can proportionally scale how much the time between the last snapshot and now should have on the average.
+		4a. IE: if we have 10 snapshots 1 minute apart from each other, and the field was filled and idle for the last 10 minutes, then we'd report the drain rate as 50% of whatever
+			the drain rate was during the 10 snapshots (50% of the time passed in the snapshots, 50% after the snapshot).
+		5. Remember to check that the tick value isn't 0; if it is, that array index isn't initialized yet and you'll have to average on a lesser count.
+		6. Remember that the array is circular, so the oldest data is always at the index *after* the position you just updated; though sometimes that means it is at the start of the array instead of the end!
+	--]=====]
+	if not site.update_snapshots then
+		site.update_snapshots = {}
+		site.update_snapshots_idx = 2
+		site.update_snapshots[1] = {site.last_modified_tick, site.last_modified_amount}
+		for i=2,10 do
+			site.update_snapshots[i] = {0,0}
+		end
+		site.ore_per_minute_at_last_change = site.ore_per_minute
+	end
+	
     if site.last_ore_check then
         local delta_ore_since_last_update = site.update_amount - site.amount
-        if delta_ore_since_last_update > 0 then           -- only store the amount and tick from last update if it actually changed
-            site.last_modified_tick = site.last_ore_check --
+		
+		if delta_ore_since_last_update ~= 0 then
+			site.update_snapshots[site.update_snapshots_idx][1] = game.tick
+			site.update_snapshots[site.update_snapshots_idx][2] = site.update_amount
+			site.update_snapshots_idx = (site.update_snapshots_idx % 10) + 1
+			
+			site.last_modified_tick = site.last_ore_check -- only store the amount and tick from last update if it actually changed
+            site.last_modified_amount = site.amount   
+		end
+		if not site.last_modified_amount then             -- make sure those two values have a default
             site.last_modified_amount = site.amount       --
-        end
-        if not site.last_modified_amount then             -- make sure those two values have a default
-            site.last_modified_amount = site.amount       --
             site.last_modified_tick = site.last_ore_check --
         end
-        local delta_ore_since_last_change = site.update_amount - site.last_modified_amount -- use final amount and tick to calculate
-        local delta_ticks = game.tick - site.last_modified_tick                            --
-        local new_ore_per_minute = math.floor(delta_ore_since_last_change * 3600 / delta_ticks)        -- ease the per minute value over time
-        site.ore_per_minute = site.ore_per_minute + (0.1 * (new_ore_per_minute - site.ore_per_minute)) --
+		
+		local idx = site.update_snapshots_idx
+		local mining_rate = 0
+		if site.update_snapshots[idx][1] == 0 and idx > 2 then
+			--we don't have 10 slots of data yet, start in order, stop at idx
+			for i=2,idx-1 do
+				local update_time = site.update_snapshots[i][1] - site.update_snapshots[i-1][1]
+				local update_amt = site.update_snapshots[i][2] - site.update_snapshots[i-1][2]
+	
+				mining_rate = mining_rate + math.floor(update_amt * (3600 / update_time))
+			end
+			site.ore_per_minute = math.floor(mining_rate / idx)
+		else
+			--We have 10 slots of data. We start pointing at the oldest data already.
+			for i=2,10 do
+				--If idx is 4, this checks [4] - [5]
+				local update_time = site.update_snapshots[idx][1] - site.update_snapshots[(idx % 10) + 1][1]
+				local update_amt = site.update_snapshots[idx][2] - site.update_snapshots[(idx % 10) + 1][2]
+		
+				mining_rate = mining_rate + math.floor(update_amt * (3600 / update_time))
+				--So move ahead to oldest+1 data.
+				idx = (idx % 10) + 1
+			end
+			--9 instead of 10 because while we have 10 data points, we only have 9 differences.
+			site.ore_per_minute = math.floor(mining_rate / 9)
+		end
+		site.ore_per_minute_at_last_change = site.ore_per_minute
     end
 
+	--Adjust mining rate to account for time since last mining change
+	idx = site.update_snapshots_idx
+	local time_in_data = 0
+	local oldest_mining_tick = 0
+	local newest_mining_tick = 0
+	if site.update_snapshots[idx][1] == 0 and idx > 2 then
+		oldest_mining_tick = site.update_snapshots[1][1]
+		newest_mining_tick = site.update_snapshots[idx-1][1]
+	else
+		oldest_mining_tick = site.update_snapshots[idx][1]
+		if idx ~= 1 then
+			newest_mining_tick = site.update_snapshots[idx - 1][1]
+		else
+			newest_mining_tick = site.update_snapshots[10][1]
+		end
+	end
+	
+	--If you have 10 minutes of data, and 1 minute has passed, that minute is only worth 1/10th of your current average
+	time_in_data = newest_mining_tick - oldest_mining_tick
+	if game.tick - newest_mining_tick > 0 then
+		local idle_time_modifier = (game.tick - newest_mining_tick) / time_in_data / 2
+		
+		site.ore_per_minute = math.floor(site.ore_per_minute_at_last_change - site.ore_per_minute_at_last_change * idle_time_modifier)
+	end
+	
     site.amount = site.update_amount
     site.last_ore_check = game.tick
 
