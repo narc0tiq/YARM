@@ -934,7 +934,7 @@ function resmon.print_single_site(site, player, sites_gui, player_data)
     local display_amount = format_number(site.amount)
     if settings.global["YARM-adjust-for-productivity"] then
         local site_amount = display_amount
-        local site_amount_w_productivity = format_number(site.amount * (1 + player.force.mining_drill_productivity_bonus))
+        local site_amount_w_productivity = format_number(math.floor(site.amount * (1 + player.force.mining_drill_productivity_bonus)))
         if settings.global["YARM-productivity-show-raw-and-adjusted"] then
             if settings.global["YARM-productivity-parentheses-part-is"] == "adjusted" then
                 display_amount = string.format("%s (%s)", site_amount, site_amount_w_productivity)
