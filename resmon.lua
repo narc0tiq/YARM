@@ -517,6 +517,19 @@ function resmon.update_chart_tag(site)
     end
 
     local display_value = format_number_si(site.amount)
+    if settings.global["YARM-adjust-for-productivity"] then
+        local site_amount = display_value
+        local site_amount_w_productivity = format_number(site.amount * (1 + player.force.mining_drill_productivity_bonus))
+        if settings.global["YARM-productivity-show-raw-and-adjusted"] then
+            if settings.global["YARM-productivity-parentheses-part-is"] == "adjusted" then
+                display_value = string.format("%s (%s)", site_amount, site_amount_w_productivity)
+            else
+                display_value = string.format("%s (%s)", site_amount_w_productivity, site_amount)
+            end
+        else
+            display_value = site_amount_w_productivity
+        end
+    end
     local entity_prototype = game.entity_prototypes[site.ore_type]
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
         display_value = string.format("%.1f%%", site.remaining_permille / 10)
@@ -919,6 +932,21 @@ function resmon.print_single_site(site, player, sites_gui, player_data)
     el.style.font_color = color
 
     local display_amount = format_number(site.amount)
+    if settings.global["YARM-adjust-for-productivity"] then
+        local site_amount = display_amount
+        local site_amount_w_productivity = format_number(site.amount * (1 + player.force.mining_drill_productivity_bonus))
+        if settings.global["YARM-productivity-show-raw-and-adjusted"] then
+            if settings.global["YARM-productivity-parentheses-part-is"] == "adjusted" then
+                display_amount = string.format("%s (%s)", site_amount, site_amount_w_productivity)
+            else
+                display_amount = string.format("%s (%s)", site_amount_w_productivity, site_amount)
+            end
+        else
+            display_amount = site_amount_w_productivity
+        end
+        -- FIXME: honor the "show both" setting
+    end
+
     local entity_prototype = game.entity_prototypes[site.ore_type]
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
         display_amount = {"YARM-infinite-entity-count", format_number(site.entity_count)}

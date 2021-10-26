@@ -49,6 +49,29 @@ data:extend({
         order = "zz[debug]",
         default_value = false,
     },
+    
+    {
+        type = "bool-setting",
+	name = "YARM-adjust-for-productivity",
+	setting_type = "runtime-global",
+	order = "c",
+	default_value = "false",
+    },
+    {
+        type = "bool-setting",
+	name = "YARM-productivity-show-raw-and-adjusted",
+	setting_type = "runtime-global",
+	order = "d",
+	default_value = "false",
+    },
+    {
+        type = "string-setting",
+	name = "YARM-productivity-parentheses-part-is",
+	setting_type = "runtime-global",
+	order = "e",
+	default_value = "adjusted",
+	allowed_values = {"adjusted", "raw"}
+    },
 
     -- Per user settings
     {
