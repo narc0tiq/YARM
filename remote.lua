@@ -60,4 +60,8 @@ function interface.get_on_site_updated_event_id()
     return on_site_updated
 end
 
+function interface.get_global_data()
+    return global
+end
+
 remote.add_interface("YARM", interface)
