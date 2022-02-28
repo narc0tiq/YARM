@@ -88,6 +88,7 @@ members of the #factorio IRC on espernet.
 * Smoothed ore-per-minute calculation by @wchristian
 * Alphabetical site sorting by @mgkr
 * Multiple changes and fixes by @perobertson
+* [GVV](https://mods.factorio.com/mod/gvv) compatibility by @JasonLandbridge
 
 
 ## Remote interface ##
