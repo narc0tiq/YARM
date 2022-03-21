@@ -89,6 +89,7 @@ members of the #factorio IRC on espernet.
 * Alphabetical site sorting by @mgkr
 * Multiple changes and fixes by @perobertson
 * [GVV](https://mods.factorio.com/mod/gvv) compatibility by @JasonLandbridge
+* SpaceX compatibility patch by @ExterminatorX99
 
 
 ## Remote interface ##
