@@ -506,7 +506,7 @@ function resmon.update_chart_tag(site)
     end
 
     if not site.chart_tag or not site.chart_tag.valid then
-        if not site.force or not site.force.valid then return end
+        if not site.force or not site.force.valid or not site.surface.valid then return end
 
         local chart_tag = {
             position = site.center,
