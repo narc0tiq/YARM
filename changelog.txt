@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.8.207
+Date: 2021-04-04
+  Bugfixes:
+    - Revert back to previous ore calculations to prevent further save file corruption -- see #145 for details
+---------------------------------------------------------------------------------------------------
 Version: 0.8.206
 Date: 2021-04-04
   Changes:
