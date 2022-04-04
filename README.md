@@ -90,6 +90,7 @@ members of the #factorio IRC on espernet.
 * Multiple changes and fixes by @perobertson
 * [GVV](https://mods.factorio.com/mod/gvv) compatibility by @JasonLandbridge
 * Space Exploration compatibility patch by @ExterminatorX99
+* Estimate calculations by @Kingdud (with apologies for taking over a year to test)
 
 
 ## Remote interface ##
