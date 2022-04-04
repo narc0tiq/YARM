@@ -11,7 +11,7 @@ jobs:
       CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
 
     docker:
-    - image: cimg/base
+    - image: cimg/base:current
 
     steps:
     - checkout
