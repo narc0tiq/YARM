@@ -1133,7 +1133,6 @@ function resmon.on_click.remove_site(event)
     resmon.update_force_members_ui(player)
 end
 
-
 function resmon.on_click.goto_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_goto_site_"))
 
@@ -1141,7 +1140,18 @@ function resmon.on_click.goto_site(event)
     local force_data = global.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
 
-    player.open_map(site.center)
+    if game.active_mods["space-exploration"] ~= nil then
+        local zone = remote.call("space-exploration", "get_zone_from_surface_index", { surface_index = site.surface.index })
+        if not zone then
+            -- the zone is not available for some reason.
+            player.print { "YARM-spaceexploration-zone-unavailable" }
+            log("YARM: Unavailable to view SE zone at " .. serpent.line(site.center) .. " on surface " .. site.surface)
+            return
+        end -- TODO: need to show some error logs for this
+        remote.call("space-exploration", "remote_view_start", { player = player, zone_name = zone.name, position = site.center, location_name = site.name, freeze_history = true })
+    else
+        player.open_map(site.center)
+    end
 
     resmon.update_force_members_ui(player)
 end
