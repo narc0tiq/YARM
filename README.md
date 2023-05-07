@@ -89,9 +89,10 @@ members of the #factorio IRC on espernet.
 * Alphabetical site sorting by @mgkr
 * Multiple changes and fixes by @perobertson
 * [GVV](https://mods.factorio.com/mod/gvv) compatibility by @JasonLandbridge
-* Space Exploration compatibility patch by @ExterminatorX99
+* SpaceEx compatibility patch by @ExterminatorX99
 * Estimate calculations by @Kingdud (with apologies for taking over a year to test)
     * But it will need a bit more fixing to prevent corrupting saves. If you have v0.8.206, please read [this comment](https://github.com/narc0tiq/YARM/issues/145#issuecomment-1087358098)
+* SpaceEx explorer viewer patch by @oof2win2
 
 
 ## Remote interface ##

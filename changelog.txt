@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.8.208
+Date: 2023-05-08
+  Bugfixes:
+    - Fix ore-per-minute calculation error (@wchristian, #148)
+  Changes:
+    - Add compatibility with SE explorer for site remote viewing (@oof2win2, #147)
+---------------------------------------------------------------------------------------------------
 Version: 0.8.207
 Date: 2021-04-04
   Bugfixes:
