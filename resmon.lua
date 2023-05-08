@@ -646,6 +646,25 @@ function resmon.tick_deposit_count(site)
     site.iter_key = index
 end
 
+-- as a default case, takes a diff between two values and returns a smoothed
+-- easing step. however to force convergence, it does *not* smooth diffs below 1
+-- and clamps smoothed diffs below 10 to be at least 1.
+function resmon.smooth_clamp_diff(diff)
+    if diff < 0 then
+        if diff > -1 then
+            return diff
+        elseif diff > -10 then
+            return -1
+        end
+    else
+        if diff < 1 then
+            return diff
+        elseif diff < 10 then
+            return 1
+        end
+    end
+    return 0.1 * diff
+end
 
 function resmon.finish_deposit_count(site)
     site.iter_key = nil
@@ -658,14 +677,15 @@ function resmon.finish_deposit_count(site)
             site.last_modified_tick = site.last_ore_check --
         end
         local delta_ore_since_last_update = site.last_modified_amount - site.amount
-        if delta_ore_since_last_update ~= 0 then           -- only store the amount and tick from last update if it actually changed
+        if delta_ore_since_last_update ~= 0 then          -- only store the amount and tick from last update if it actually changed
             site.last_modified_tick = site.last_ore_check --
             site.last_modified_amount = site.amount       --
         end
         local delta_ore_since_last_change = site.update_amount - site.last_modified_amount -- use final amount and tick to calculate
         local delta_ticks = game.tick - site.last_modified_tick                            --
-        local new_ore_per_minute = math.floor(delta_ore_since_last_change * 3600 / delta_ticks)        -- ease the per minute value over time
-        site.ore_per_minute = site.ore_per_minute + (0.1 * (new_ore_per_minute - site.ore_per_minute)) --
+        local new_ore_per_minute = delta_ore_since_last_change * 3600 / delta_ticks          -- ease the per minute value over time
+        local diff_step = resmon.smooth_clamp_diff(new_ore_per_minute - site.ore_per_minute) --
+        site.ore_per_minute = site.ore_per_minute + diff_step                                --
     end
 
     site.amount = site.update_amount
