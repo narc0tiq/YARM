@@ -517,11 +517,11 @@ function resmon.update_chart_tag(site)
     end
 
     local display_value = format_number_si(site.amount)
-    if settings.global["YARM-adjust-for-productivity"] then
+    if settings.global["YARM-adjust-for-productivity"].value then
         local site_amount = display_value
         local site_amount_w_productivity = format_number_si(site.amount * (1 + site.force.mining_drill_productivity_bonus))
-        if settings.global["YARM-productivity-show-raw-and-adjusted"] then
-            if settings.global["YARM-productivity-parentheses-part-is"] == "adjusted" then
+        if settings.global["YARM-productivity-show-raw-and-adjusted"].value then
+            if settings.global["YARM-productivity-parentheses-part-is"].value == "adjusted" then
                 display_value = string.format("%s (%s)", site_amount, site_amount_w_productivity)
             else
                 display_value = string.format("%s (%s)", site_amount_w_productivity, site_amount)
@@ -945,11 +945,11 @@ function resmon.print_single_site(site, player, sites_gui, player_data)
     el.style.font_color = color
 
     local display_amount = format_number(site.amount)
-    if settings.global["YARM-adjust-for-productivity"] then
+    if settings.global["YARM-adjust-for-productivity"].value then
         local site_amount = display_amount
         local site_amount_w_productivity = format_number(math.floor(site.amount * (1 + player.force.mining_drill_productivity_bonus)))
-        if settings.global["YARM-productivity-show-raw-and-adjusted"] then
-            if settings.global["YARM-productivity-parentheses-part-is"] == "adjusted" then
+        if settings.global["YARM-productivity-show-raw-and-adjusted"].value then
+            if settings.global["YARM-productivity-parentheses-part-is"].value == "adjusted" then
                 display_amount = string.format("%s (%s)", site_amount, site_amount_w_productivity)
             else
                 display_amount = string.format("%s (%s)", site_amount_w_productivity, site_amount)

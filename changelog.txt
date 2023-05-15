@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.8.210
+Date: 2023-05-15
+  Bugfixes:
+    - Fix productivity display (per instructions from @EvilPLa)
+---------------------------------------------------------------------------------------------------
 Version: 0.8.209
 Date: 2023-05-09
   Bugfixes:
@@ -10,6 +15,7 @@ Date: 2023-05-08
     - Fix ore-per-minute calculation error (@wchristian, #148)
   Changes:
     - Add compatibility with SE explorer for site remote viewing (@oof2win2, #147)
+    - Add productivity-adjusted ore amounts for site display (@georgehank, #136)
 ---------------------------------------------------------------------------------------------------
 Version: 0.8.207
 Date: 2021-04-04
