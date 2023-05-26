@@ -225,7 +225,10 @@ function resmon.migrate_ore_sites(force_data)
             site.remaining_permille = math.floor(site.amount * 1000 / site.initial_amount)
         end
         if not site.ore_per_minute then site.ore_per_minute = 0 end
-        if not site.etd_minutes then site.etd_minutes = -1 end
+        if not site.etd_minutes then site.etd_minutes = 1 / 0 end
+        if not site.scanned_etd_minutes then site.scanned_etd_minutes = -1 end
+        if not site.lifetime_etd_minutes then site.lifetime_etd_minutes = 1 / 0 end
+        if not site.etd_is_lifetime then site.etd_is_lifetime = 1 end
     end
 end
 
@@ -311,6 +314,9 @@ function resmon.add_resource(player_index, entity)
             entities_to_be_overlaid = {},
             next_to_overlay = {},
             etd_minutes = -1,
+            scanned_etd_minutes = -1,
+            lifetime_etd_minutes = -1,
+            etd_is_lifetime = 1,
             last_ore_check = nil,       -- used for ETD easing; initialized when needed,
             last_modified_amount = nil, -- but I wanted to _show_ that they can exist.
 
@@ -688,12 +694,25 @@ function resmon.finish_deposit_count(site)
 
     if site.ore_per_minute == 0 then
         if site.amount == 0 then
-            site.etd_minutes = 0       -- already depleted
+            site.scanned_etd_minutes = 0       -- already depleted
         else
-            site.etd_minutes = -1      -- will never deplete
+            site.scanned_etd_minutes = -1      -- will never deplete
         end
     else
-        site.etd_minutes = math.floor(site.amount / (-site.ore_per_minute))
+        site.scanned_etd_minutes = site.amount / (-site.ore_per_minute)
+    end
+
+    local age_minutes = ( game.tick - site.added_at ) / 3600
+    local depleted = site.initial_amount - site.amount
+    local estimated_end_age = site.initial_amount * age_minutes / depleted
+    site.lifetime_etd_minutes = estimated_end_age - age_minutes
+
+    if site.scanned_etd_minutes == -1 or site.lifetime_etd_minutes < site.scanned_etd_minutes then
+        site.etd_minutes = site.lifetime_etd_minutes
+        site.etd_is_lifetime = 1
+    else
+        site.etd_minutes = site.scanned_etd_minutes
+        site.etd_is_lifetime = 0
     end
 
     local entity_prototype = game.entity_prototypes[site.ore_type]
@@ -816,9 +835,9 @@ local FILTER_ALL = "all"
 resmon.filters[FILTER_NONE] = function() return false end
 resmon.filters[FILTER_ALL] = function() return true end
 resmon.filters[FILTER_WARNINGS] = function(site, player)
-    local remaining = site.remaining_permille
-    local threshold = player.mod_settings["YARM-warn-percent"].value * 10
-    return remaining <= threshold
+    local remaining = site.etd_minutes
+    local threshold = player.mod_settings["YARM-warn-timeleft"].value * 60
+    return remaining ~= -1 and remaining <= threshold
 end
 
 
@@ -853,7 +872,7 @@ function resmon.update_ui(player)
     if root.sites and root.sites.valid then
         root.sites.destroy()
     end
-    local sites_gui = root.add{type="table", column_count=8, name="sites", style="YARM_site_table"}
+    local sites_gui = root.add{type="table", column_count=9, name="sites", style="YARM_site_table"}
     sites_gui.style.horizontal_spacing = 5
     local column_alignments = sites_gui.style.column_alignments
     column_alignments[1] = 'left' -- rename button
@@ -863,7 +882,8 @@ function resmon.update_ui(player)
     column_alignments[5] = 'left' -- ore name
     column_alignments[6] = 'right' -- ore per minute
     column_alignments[7] = 'left' -- ETD
-    column_alignments[8] = 'left' -- buttons
+    column_alignments[8] = 'right' -- ETD
+    column_alignments[9] = 'left' -- buttons
 
     local site_filter = resmon.filters[player_data.active_filter] or resmon.filters[FILTER_NONE]
     if force_data and force_data.ore_sites then
@@ -973,11 +993,16 @@ function resmon.print_single_site(site, player, sites_gui, player_data)
     el.style.font_color = color
 
     el = sites_gui.add{type="label", name="YARM_label_ore_per_minute_"..site.name,
-        caption={"YARM-ore-per-minute", string.format("%.1f", site.ore_per_minute)}}
+        caption=resmon.render_speed(site)}
+    el.style.font_color = color
+
+    local etd_icon = site.etd_is_lifetime == 1 and "[img=quantity-time]" or "[img=utility/played_green]"
+    el = sites_gui.add{type="label", name="YARM_label_etd_header_"..site.name,
+        caption={"YARM-time-to-deplete", etd_icon}}
     el.style.font_color = color
 
     el = sites_gui.add{type="label", name="YARM_label_etd_"..site.name,
-        caption={"YARM-time-to-deplete", resmon.time_to_deplete(site)}}
+        caption=resmon.time_to_deplete(site)}
     el.style.font_color = color
 
 
@@ -1018,14 +1043,19 @@ end
 function resmon.time_to_deplete(site)
     local minutes = site.etd_minutes or -1
 
-    if minutes == -1 then return {"YARM-etd-never"} end
+    if minutes == -1 or minutes == math.huge then return {"YARM-etd-never"} end
 
     local hours = math.floor(minutes / 60)
+    local days = math.floor(hours / 24)
+    hours = hours % 60
+    minutes = minutes % 60
+    local time_frag = {"YARM-etd-hour-fragment",
+        {"", string.format("%02d", hours), ":", string.format("%02d", math.floor(minutes))}}
 
-    if hours > 0 then
-        return {"", {"YARM-etd-hour-fragment", hours}, " ", {"YARM-etd-minute-fragment", minutes % 60}}
+    if days > 0 then
+        return {"", {"YARM-etd-day-fragment", days}, " ", time_frag}
     elseif minutes > 0 then
-        return {"", {"YARM-etd-minute-fragment", minutes}}
+        return time_frag
     elseif site.amount == 0 then
         return {"YARM-etd-now"}
     else
@@ -1034,21 +1064,43 @@ function resmon.time_to_deplete(site)
 end
 
 
+function resmon.render_speed(site)
+    if site.ore_per_minute < -0.1 then
+        return {"YARM-ore-per-minute", string.format("%.1f", site.ore_per_minute)}
+    elseif site.ore_per_minute < 0 then
+        return {"YARM-ore-per-minute", {"", "<", string.format("%.1f", -0.1)}}
+    else
+        return ""
+    end
+end
+
+
 function resmon.site_color(site, player)
-    local warn_permille = 100
+    local threshold = player.mod_settings["YARM-warn-timeleft"].value * 60
+    local minutes = site.etd_minutes
+    if minutes == -1 then minutes = threshold end
+    local factor = minutes / threshold
+    if factor > 1 then factor = 1 end
+    local hue = factor / 3
+    return resmon.hsv2rgb(hue, 1, 1)
+end
 
-    local color = {
-        r=math.floor(warn_permille * 255 / site.remaining_permille),
-        g=math.floor(site.remaining_permille * 255 / warn_permille),
-        b=0
-    }
-    if color.r > 255 then color.r = 255
-    elseif color.r < 2 then color.r = 2 end
-
-    if color.g > 255 then color.g = 255
-    elseif color.g < 2 then color.g = 2 end
-
-    return color
+function resmon.hsv2rgb(h, s, v)
+    local r, g, b
+    local i = math.floor(h * 6);
+    local f = h * 6 - i;
+    local p = v * (1 - s);
+    local q = v * (1 - f * s);
+    local t = v * (1 - (1 - f) * s);
+    i = i % 6
+    if i == 0 then r, g, b = v, t, p
+    elseif i == 1 then r, g, b = q, v, p
+    elseif i == 2 then r, g, b = p, v, t
+    elseif i == 3 then r, g, b = p, q, v
+    elseif i == 4 then r, g, b = t, p, v
+    elseif i == 5 then r, g, b = v, p, q
+    end
+    return { r = r, g = g, b = b }
 end
 
 

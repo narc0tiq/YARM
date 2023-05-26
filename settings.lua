@@ -76,19 +76,19 @@ data:extend({
     -- Per user settings
     {
         type = "int-setting",
-        name = "YARM-warn-percent",
+        name = "YARM-warn-timeleft",
         setting_type = "runtime-per-user",
         order = "a",
-        default_value = 10,
+        default_value = 24,
         minimum_value = 0,
-        maximum_value = 100
+        maximum_value = 60000
     },
     {
         type = "string-setting",
         name = "YARM-order-by",
         setting_type = "runtime-per-user",
         order = "b",
-        default_value = "percent-remaining",
+        default_value = "etd",
         allowed_values = { "alphabetical", "percent-remaining", "ore-type", "ore-count", "etd" }
     },
 })
