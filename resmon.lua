@@ -76,6 +76,9 @@ function resmon.init_player(player_index)
     local root = mod_gui.get_frame_flow(player).YARM_root
     if root and root.buttons.YARM_expando then root.destroy() end
 
+    -- migration v0.TBD: add toggle bg button
+    if root and not root.buttons.YARM_toggle_bg then root.destroy() end
+
     if not global.player_data then global.player_data = {} end
 
     local player_data = global.player_data[player_index]
@@ -864,6 +867,8 @@ function resmon.update_ui(player)
             tooltip={"YARM-tooltips.filter-warnings"}}
         buttons.add{type="button", name="YARM_filter_"..FILTER_ALL, style="YARM_filter_all",
             tooltip={"YARM-tooltips.filter-all"}}
+        buttons.add{type="button", name="YARM_toggle_bg", style="YARM_toggle_bg",
+            tooltip={"YARM-tooltips.toggle-bg"}}
 
         if not player_data.active_filter then player_data.active_filter = FILTER_WARNINGS end
         resmon.update_ui_filter_buttons(player, player_data.active_filter)
@@ -1257,6 +1262,14 @@ function resmon.on_click.expand_site(event)
     end
 end
 
+function resmon.on_click.toggle_bg(event)
+    local player = game.players[event.player_index]
+    local root = mod_gui.get_frame_flow(player).YARM_root
+    if not root then return end
+    root.style = (root.style.name == "YARM_outer_frame_no_border_bg")
+      and "YARM_outer_frame_no_border" or "YARM_outer_frame_no_border_bg"
+    resmon.update_ui(player)
+end
 
 function resmon.pull_YARM_item_to_cursor_if_possible(player_index)
     local player = game.players[player_index]
@@ -1372,6 +1385,8 @@ function resmon.on_gui_click(event)
         resmon.on_click.goto_site(event)
     elseif string.starts_with(event.element.name, "YARM_expand_site_") then
         resmon.on_click.expand_site(event)
+    elseif string.starts_with(event.element.name, "YARM_toggle_bg") then
+        resmon.on_click.toggle_bg(event)
     end
 end
 

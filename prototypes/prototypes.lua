@@ -90,15 +90,19 @@ local red_label = {
 }
 default_gui.YARM_err_label = red_label
 
-local function button_graphics(xpos, ypos)
+local function arb_graphics(xpos, ypos, size)
     return {
         filename = '__{{MOD_NAME}}__/graphics/gui.png',
         priority = 'extra-high-no-scale',
-        width = 16,
-        height = 16,
+        width = size,
+        height = size,
         x = xpos,
         y = ypos,
     }
+end
+
+local function button_graphics(xpos, ypos)
+    return arb_graphics(xpos, ypos, 16)
 end
 
 default_gui.YARM_outer_frame_no_border = {
@@ -106,6 +110,13 @@ default_gui.YARM_outer_frame_no_border = {
     parent = 'outer_frame',
     graphical_set = {}
 }
+
+default_gui.YARM_outer_frame_no_border_bg = {
+    type = 'frame_style',
+    parent = 'outer_frame',
+    graphical_set = arb_graphics(3,3,1)
+}
+default_gui.YARM_outer_frame_no_border_bg.graphical_set.blend_mode = 'multiplicative'
 
 default_gui.YARM_button_with_icon = {
     type = 'button_style',
@@ -149,6 +160,7 @@ end
 make_filter_buttons('YARM_filter_none', 48)
 make_filter_buttons('YARM_filter_warnings', 16)
 make_filter_buttons('YARM_filter_all', 32)
+make_filter_buttons('YARM_toggle_bg', 80)
 
 default_gui.YARM_overlay_site = {
     type = 'button_style',
