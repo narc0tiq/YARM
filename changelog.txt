@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.9.0
+Date: 2023-05-30
+  Changes:
+    - Add smarter ETD calculations (@mithaldu/@wchristian)
+    - Add dark background toggle (@mithaldu/@wchristian)
+---------------------------------------------------------------------------------------------------
 Version: 0.8.210
 Date: 2023-05-15
   Bugfixes:
