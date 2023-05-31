@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.9.5
+Date: 2023-05-31
+  Bugfixes:
+    - Handle coloring correctly when threshold is set to 0 (@mithaldu/@wchristian)
+    - Add a setting to automatically increase the maximum of an ore site (@mithaldu/@wchristian)
+---------------------------------------------------------------------------------------------------
 Version: 0.9.4
 Date: 2023-05-31
   Bugfixes:
