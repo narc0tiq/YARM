@@ -72,6 +72,15 @@ data:extend({
 	default_value = "adjusted",
 	allowed_values = {"adjusted", "raw"}
     },
+    {
+        type = "double-setting",
+        name = "YARM-grow-limit",
+        setting_type = "runtime-global",
+        order = "f",
+        default_value = -1,
+        minimum_value = -1,
+        maximum_value = 10000000
+    },
 
     -- Per user settings
     {
@@ -99,14 +108,5 @@ data:extend({
         order = "c",
         default_value = "etd",
         allowed_values = { "alphabetical", "percent-remaining", "ore-type", "ore-count", "etd" }
-    },
-    {
-        type = "double-setting",
-        name = "YARM-grow-limit",
-        setting_type = "runtime-per-user",
-        order = "d",
-        default_value = -1,
-        minimum_value = -1,
-        maximum_value = 10000000
     },
 })
