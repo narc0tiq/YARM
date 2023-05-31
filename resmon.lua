@@ -268,8 +268,9 @@ function resmon.on_player_selected_area(event)
     if event.item ~= 'yarm-selector-tool' then return end
 
     local player_data = global.player_data[event.player_index]
+    local entities = event.entities
 
-    if #event.entities < 1 then
+    if #entities < 1 then
         -- if we have an expanding site, submit it. else, just drop the current site
         if player_data.current_site and player_data.current_site.is_site_expanding then
             resmon.submit_site(event.player_index)
@@ -279,11 +280,17 @@ function resmon.on_player_selected_area(event)
         return
     end
 
-    for _, entity in pairs(event.entities) do
+    local entities_by_type = {}
+    for _, entity in pairs(entities) do
         if entity.prototype.type == 'resource' then
-            resmon.add_resource(event.player_index, entity)
+            entities_by_type[entity.name] = entities_by_type[entity.name] or {}
+            table.insert(entities_by_type[entity.name], entity)
         end
     end
+
+    player_data.todo = player_data.todo or {}
+    for _, group in pairs(entities_by_type) do table.insert(player_data.todo, group) end
+    -- note: resmon.update_players() (via on_tick) will continue the operation from here
 end
 
 
@@ -1478,6 +1485,13 @@ function resmon.update_players(event)
 
             if site.is_overlay_being_created then
                 resmon.process_overlay_for_existing_site(index)
+            end
+        else
+            local todo = player_data.todo or {}
+            if #todo > 0 then
+                for _, entity in pairs(table.remove(todo)) do
+                    resmon.add_resource(index, entity)
+                end
             end
         end
 
