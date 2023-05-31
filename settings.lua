@@ -100,4 +100,13 @@ data:extend({
         default_value = "etd",
         allowed_values = { "alphabetical", "percent-remaining", "ore-type", "ore-count", "etd" }
     },
+    {
+        type = "double-setting",
+        name = "YARM-grow-limit",
+        setting_type = "runtime-per-user",
+        order = "d",
+        default_value = -1,
+        minimum_value = -1,
+        maximum_value = 10000000
+    },
 })

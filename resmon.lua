@@ -251,6 +251,19 @@ local function find_resource_at(surface, position)
 end
 
 
+local function find_center(area)
+    local xpos = (area.left + area.right) / 2
+    local ypos = (area.top + area.bottom) / 2
+    return {x = xpos, y = ypos}
+end
+
+
+local function find_center_tile(area)
+    local center = find_center(area)
+    return {x = math.floor(center.x), y = math.floor(center.y)}
+end
+
+
 function resmon.on_player_selected_area(event)
     if event.item ~= 'yarm-selector-tool' then return end
 
@@ -421,29 +434,25 @@ function resmon.scan_current_site(player_index)
     local site = global.player_data[player_index].current_site
 
     local to_scan = math.min(30, #site.next_to_scan)
+    local max_dist = settings.global["YARM-grow-limit"].value
     for i = 1, to_scan do
         local entity = table.remove(site.next_to_scan, 1)
         local entity_position = entity.position
         local surface = entity.surface
+        site.first_center = site.first_center or find_center(site.extents)
 
         -- Look in every direction around this entity...
         for _, dir in pairs(defines.direction) do
             -- ...and if there's a resource, add it
-            local found = find_resource_at(surface, shift_position(entity_position, dir))
-            if found and found.name == site.ore_type then
-                resmon.add_single_entity(player_index, found)
+            local search_pos = shift_position(entity_position, dir)
+            if max_dist < 0 or util.distance(search_pos, site.first_center) < max_dist then
+                local found = find_resource_at(surface, search_pos)
+                if found and found.name == site.ore_type then
+                    resmon.add_single_entity(player_index, found)
+                end
             end
         end
     end
-end
-
-
-local function find_center(area)
-    local xpos = (area.left + area.right) / 2
-    local ypos = (area.top + area.bottom) / 2
-
-    return {x = math.floor(xpos),
-            y = math.floor(ypos)}
 end
 
 
@@ -492,7 +501,7 @@ function resmon.finalize_site(player_index)
     site.ore_per_minute = 0
     site.remaining_permille = 1000
 
-    site.center = find_center(site.extents)
+    site.center = find_center_tile(site.extents)
 
     --[[ don't rename a site we've expanded! (if the site name changes it'll create a new site
          instead of replacing the existing one) ]]
