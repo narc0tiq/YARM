@@ -81,6 +81,13 @@ data:extend({
         minimum_value = -1,
         maximum_value = 10000000
     },
+    {
+        type = "bool-setting",
+        name = "YARM-adjust-over-percentage-sites",
+        setting_type = "runtime-global",
+        order = "g",
+        default_value = "false",
+    },
 
     -- Per user settings
     {

@@ -723,6 +723,9 @@ function resmon.finish_deposit_count(site)
         or -1
 
     site.amount = site.update_amount
+    if settings.global["YARM-adjust-over-percentage-sites"].value then
+        site.initial_amount = math.max(site.initial_amount, site.amount)
+    end
     site.last_ore_check = game.tick
 
     site.remaining_permille = math.floor(site.amount * 1000 / site.initial_amount)
