@@ -75,7 +75,7 @@ data:extend({
 
     -- Per user settings
     {
-        type = "int-setting",
+        type = "double-setting",
         name = "YARM-warn-timeleft",
         setting_type = "runtime-per-user",
         order = "a",
@@ -84,7 +84,7 @@ data:extend({
         maximum_value = 10000000
     },
     {
-        type = "int-setting",
+        type = "double-setting",
         name = "YARM-warn-timeleft_totals",
         setting_type = "runtime-per-user",
         order = "b",
