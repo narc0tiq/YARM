@@ -1158,7 +1158,7 @@ function resmon.site_color(site, player)
     local threshold = player.mod_settings["YARM-warn-"..threshold_type].value * 60
     local minutes = site.etd_minutes
     if minutes == -1 then minutes = threshold end
-    local factor = minutes / threshold
+    local factor = (threshold == 0 and 1) or (minutes / threshold)
     if factor > 1 then factor = 1 end
     local hue = factor / 3
     return resmon.hsv2rgb(hue, 1, 1)
