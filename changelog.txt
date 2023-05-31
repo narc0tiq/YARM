@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.9.2
+Date: 2023-05-31
+  Bugfixes:
+    - Fix crash bug and display of summary for endless resources like oil (@mithaldu/@wchristian)
+---------------------------------------------------------------------------------------------------
 Version: 0.9.1
 Date: 2023-05-31
   Changes:
