@@ -228,6 +228,8 @@ function resmon.migrate_ore_sites(force_data)
             site.remaining_permille = math.floor(site.amount * 1000 / site.initial_amount)
         end
         if not site.ore_per_minute then site.ore_per_minute = 0 end
+        if not site.scanned_ore_per_minute then site.scanned_ore_per_minute = 0 end
+        if not site.lifetime_ore_per_minute then site.lifetime_ore_per_minute = 0 end
         if not site.etd_minutes then site.etd_minutes = 1 / 0 end
         if not site.scanned_etd_minutes then site.scanned_etd_minutes = -1 end
         if not site.lifetime_etd_minutes then site.lifetime_etd_minutes = 1 / 0 end
@@ -319,6 +321,9 @@ function resmon.add_resource(player_index, entity)
             etd_minutes = -1,
             scanned_etd_minutes = -1,
             lifetime_etd_minutes = -1,
+            ore_per_minute = -1,
+            scanned_ore_per_minute = -1,
+            lifetime_ore_per_minute = -1,
             etd_is_lifetime = 1,
             last_ore_check = nil,       -- used for ETD easing; initialized when needed,
             last_modified_amount = nil, -- but I wanted to _show_ that they can exist.
@@ -686,8 +691,16 @@ function resmon.finish_deposit_count(site)
         local delta_ore_since_last_change = site.update_amount - site.last_modified_amount -- use final amount and tick to calculate
         local delta_ticks = game.tick - site.last_modified_tick                            --
         local new_ore_per_minute = delta_ore_since_last_change * 3600 / delta_ticks          -- ease the per minute value over time
-        local diff_step = resmon.smooth_clamp_diff(new_ore_per_minute - site.ore_per_minute) --
-        site.ore_per_minute = site.ore_per_minute + diff_step                                --
+        local diff_step = resmon.smooth_clamp_diff(new_ore_per_minute - site.scanned_ore_per_minute) --
+        site.scanned_ore_per_minute = site.scanned_ore_per_minute + diff_step                                --
+    end
+
+    if site.scanned_ore_per_minute ~= 0 then
+        site.scanned_etd_minutes = site.amount / (-site.scanned_ore_per_minute)
+    elseif site.amount == 0 then
+        site.scanned_etd_minutes = 0       -- already depleted
+    else
+        site.scanned_etd_minutes = -1      -- will never deplete
     end
 
     site.amount = site.update_amount
@@ -695,25 +708,17 @@ function resmon.finish_deposit_count(site)
 
     site.remaining_permille = math.floor(site.amount * 1000 / site.initial_amount)
 
-    if site.ore_per_minute == 0 then
-        if site.amount == 0 then
-            site.scanned_etd_minutes = 0       -- already depleted
-        else
-            site.scanned_etd_minutes = -1      -- will never deplete
-        end
-    else
-        site.scanned_etd_minutes = site.amount / (-site.ore_per_minute)
-    end
-
     local age_minutes = ( game.tick - site.added_at ) / 3600
     local depleted = site.initial_amount - site.amount
-    local estimated_end_age = site.initial_amount * age_minutes / depleted
-    site.lifetime_etd_minutes = estimated_end_age - age_minutes
+    site.lifetime_ore_per_minute = -depleted / age_minutes
+    site.lifetime_etd_minutes = site.amount / (-site.lifetime_ore_per_minute)
 
     if site.scanned_etd_minutes == -1 or site.lifetime_etd_minutes < site.scanned_etd_minutes then
+        site.ore_per_minute = site.lifetime_ore_per_minute
         site.etd_minutes = site.lifetime_etd_minutes
         site.etd_is_lifetime = 1
     else
+        site.ore_per_minute = site.scanned_ore_per_minute
         site.etd_minutes = site.scanned_etd_minutes
         site.etd_is_lifetime = 0
     end
