@@ -271,6 +271,12 @@ function resmon.on_player_selected_area(event)
     local entities = event.entities
 
     if #entities < 1 then
+        entities = {find_resource_at(event.surface, {
+            x = 0.5 + math.floor(( event.area.left_top.x + event.area.right_bottom.x) / 2),
+            y = 0.5 + math.floor(( event.area.left_top.y + event.area.right_bottom.y) / 2) } )}
+    end
+
+    if #entities < 1 then
         -- if we have an expanding site, submit it. else, just drop the current site
         if player_data.current_site and player_data.current_site.is_site_expanding then
             resmon.submit_site(event.player_index)
