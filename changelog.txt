@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.9.3
+Date: 2023-05-31
+  Changes:
+    - Allow limiting the growing mode when creating a new site (@mithaldu/@wchristian)
+  Bugfixes:
+    - Allow hour warnings to be values with decimals (@mithaldu/@wchristian)
+    - Allow creating multiple sites at once (@mithaldu/@wchristian)
+    - Allow creating sites with a single click reliably (@mithaldu/@wchristian)
+---------------------------------------------------------------------------------------------------
 Version: 0.9.2
 Date: 2023-05-31
   Bugfixes:
