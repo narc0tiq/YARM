@@ -81,13 +81,22 @@ data:extend({
         order = "a",
         default_value = 24,
         minimum_value = 0,
-        maximum_value = 60000
+        maximum_value = 10000000
+    },
+    {
+        type = "int-setting",
+        name = "YARM-warn-timeleft_totals",
+        setting_type = "runtime-per-user",
+        order = "b",
+        default_value = 48,
+        minimum_value = 0,
+        maximum_value = 10000000
     },
     {
         type = "string-setting",
         name = "YARM-order-by",
         setting_type = "runtime-per-user",
-        order = "b",
+        order = "c",
         default_value = "etd",
         allowed_values = { "alphabetical", "percent-remaining", "ore-type", "ore-count", "etd" }
     },

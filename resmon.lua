@@ -837,8 +837,8 @@ resmon.filters[FILTER_NONE] = function() return false end
 resmon.filters[FILTER_ALL] = function() return true end
 resmon.filters[FILTER_WARNINGS] = function(site, player)
     local remaining = site.etd_minutes
-    local threshold = player.mod_settings["YARM-warn-timeleft"].value * 60
-    return remaining ~= -1 and remaining <= threshold
+    local threshold_hours = site.is_summary and "timeleft_totals" or "timeleft"
+    return remaining ~= -1 and remaining <= player.mod_settings["YARM-warn-"..threshold_hours].value * 60
 end
 
 
@@ -875,7 +875,11 @@ function resmon.update_ui(player)
     if root.sites and root.sites.valid then
         root.sites.destroy()
     end
-    local sites_gui = root.add{type="table", column_count=9, name="sites", style="YARM_site_table"}
+
+    if not force_data or not force_data.ore_sites then return end
+
+    local column_count = 9
+    local sites_gui = root.add{type="table", column_count=column_count, name="sites", style="YARM_site_table"}
     sites_gui.style.horizontal_spacing = 5
     local column_alignments = sites_gui.style.column_alignments
     column_alignments[1] = 'left' -- rename button
@@ -889,15 +893,45 @@ function resmon.update_ui(player)
     column_alignments[9] = 'left' -- buttons
 
     local site_filter = resmon.filters[player_data.active_filter] or resmon.filters[FILTER_NONE]
-    if force_data and force_data.ore_sites then
-        for site in sites_in_player_order(force_data.ore_sites, player) do
-            if site_filter(site, player) then
-                resmon.print_single_site(site, player, sites_gui, player_data)
-            end
-        end
+    local summary = resmon.generate_summaries(force_data, player)
+    local render_separator
+    for summary_site in sites_in_player_order(summary, player) do
+        if resmon.print_single_site(site_filter, summary_site, player, sites_gui, player_data)
+            then render_separator = 1 end
+    end
+    if render_separator then
+        for _ = 1,column_count do sites_gui.add{type="label"}.style.maximal_height = 6 end
+    end
+    for site in sites_in_player_order(force_data.ore_sites, player) do
+        resmon.print_single_site(site_filter, site, player, sites_gui, player_data)
     end
 end
 
+function resmon.generate_summaries(force_data, player)
+    local summary = {}
+    for site in sites_in_player_order(force_data.ore_sites, player) do
+        if not summary[site.ore_type] then summary[site.ore_type] = {
+            name = "Total " .. resmon.get_rich_text_for_products(game.entity_prototypes[site.ore_type]),
+            ore_type = site.ore_type, ore_name = site.ore_name,
+            initial_amount = 0, amount = 0, ore_per_minute = 0,
+            etd_minutes = 0, remaining_permille = 1000, is_summary = 1,
+            site_count = 0,
+        } end
+
+        local summary_site = summary[site.ore_type]
+        summary_site.site_count = summary_site.site_count + 1
+        summary_site.initial_amount = summary_site.initial_amount + site.initial_amount
+        summary_site.amount = summary_site.amount + site.amount
+        summary_site.ore_per_minute = summary_site.ore_per_minute + site.ore_per_minute
+        summary_site.remaining_permille = math.floor(1000 * summary_site.amount / summary_site.initial_amount)
+
+        summary_site.etd_minutes =
+            ( summary_site.ore_per_minute ~= 0 and summary_site.amount / (-summary_site.ore_per_minute) )
+            or ( summary_site.amount == 0 and 0 )
+            or -1
+    end
+    return summary
+end
 
 function resmon.on_click.set_filter(event)
     local new_filter = string.sub(event.element.name, 1 + string.len("YARM_filter_"))
@@ -937,7 +971,9 @@ function resmon.update_ui_filter_buttons(player, active_filter)
 end
 
 
-function resmon.print_single_site(site, player, sites_gui, player_data)
+function resmon.print_single_site(site_filter, site, player, sites_gui, player_data)
+    if not site_filter(site, player) then return end
+
     -- TODO: This shouldn't be part of printing the site! It cancels the deletion
     -- process after 2 seconds pass.
     if site.deleting_since and site.deleting_since + 120 < game.tick then
@@ -948,20 +984,25 @@ function resmon.print_single_site(site, player, sites_gui, player_data)
     local el = nil
 
 
-    if player_data.renaming_site == site.name then
-        sites_gui.add{type="button",
-                        name="YARM_rename_site_"..site.name,
-                        tooltip={"YARM-tooltips.rename-site-cancel"},
-                        style="YARM_rename_site_cancel"}
-    else
-        sites_gui.add{type="button",
-                        name="YARM_rename_site_"..site.name,
-                        tooltip={"YARM-tooltips.rename-site-named", site.name},
-                        style="YARM_rename_site"}
-    end
+    if not site.is_summary then
+        if player_data.renaming_site == site.name then
+            sites_gui.add{type="button",
+                            name="YARM_rename_site_"..site.name,
+                            tooltip={"YARM-tooltips.rename-site-cancel"},
+                            style="YARM_rename_site_cancel"}
+        else
+            sites_gui.add{type="button",
+                            name="YARM_rename_site_"..site.name,
+                            tooltip={"YARM-tooltips.rename-site-named", site.name},
+                            style="YARM_rename_site"}
+        end
 
-    el = sites_gui.add{type="label", name="YARM_label_site_"..site.name, caption=site.name}
-    el.style.font_color = color
+        el = sites_gui.add{type="label", name="YARM_label_site_"..site.name, caption=site.name}
+        el.style.font_color = color
+    else
+        sites_gui.add{type="label", caption=""}
+        sites_gui.add{type="label", caption=""}
+    end
 
     el = sites_gui.add{type="label", name="YARM_label_percent_"..site.name,
         caption=string.format("%.1f%%", site.remaining_permille / 10)}
@@ -999,10 +1040,14 @@ function resmon.print_single_site(site, player, sites_gui, player_data)
         caption=resmon.render_speed(site)}
     el.style.font_color = color
 
-    local etd_icon = site.etd_is_lifetime == 1 and "[img=quantity-time]" or "[img=utility/played_green]"
-    el = sites_gui.add{type="label", name="YARM_label_etd_header_"..site.name,
-        caption={"YARM-time-to-deplete", etd_icon}}
-    el.style.font_color = color
+    if not site.is_summary then
+        local etd_icon = site.etd_is_lifetime == 1 and "[img=quantity-time]" or "[img=utility/played_green]"
+        el = sites_gui.add{type="label", name="YARM_label_etd_header_"..site.name,
+            caption={"YARM-time-to-deplete", etd_icon}}
+        el.style.font_color = color
+    else
+        sites_gui.add{type="label", caption=""}
+    end
 
     el = sites_gui.add{type="label", name="YARM_label_etd_"..site.name,
         caption=resmon.time_to_deplete(site)}
@@ -1012,34 +1057,38 @@ function resmon.print_single_site(site, player, sites_gui, player_data)
     local site_buttons = sites_gui.add{type="flow", name="YARM_site_buttons_"..site.name,
         direction="horizontal", style="YARM_buttons_h"}
 
-    site_buttons.add{type="button",
-        name="YARM_goto_site_"..site.name,
-        tooltip={"YARM-tooltips.goto-site"},
-        style="YARM_goto_site"}
+    if not site.is_summary then
+        site_buttons.add{type="button",
+            name="YARM_goto_site_"..site.name,
+            tooltip={"YARM-tooltips.goto-site"},
+            style="YARM_goto_site"}
 
-    if site.deleting_since then
-        site_buttons.add{type="button",
-            name="YARM_delete_site_"..site.name,
-            tooltip={"YARM-tooltips.delete-site-confirm"},
-            style="YARM_delete_site_confirm"}
-    else
-        site_buttons.add{type="button",
-            name="YARM_delete_site_"..site.name,
-            tooltip={"YARM-tooltips.delete-site"},
-            style="YARM_delete_site"}
+        if site.deleting_since then
+            site_buttons.add{type="button",
+                name="YARM_delete_site_"..site.name,
+                tooltip={"YARM-tooltips.delete-site-confirm"},
+                style="YARM_delete_site_confirm"}
+        else
+            site_buttons.add{type="button",
+                name="YARM_delete_site_"..site.name,
+                tooltip={"YARM-tooltips.delete-site"},
+                style="YARM_delete_site"}
+        end
+
+        if site.is_site_expanding then
+            site_buttons.add{type="button",
+                name="YARM_expand_site_"..site.name,
+                tooltip={"YARM-tooltips.expand-site-cancel"},
+                style="YARM_expand_site_cancel"}
+        else
+            site_buttons.add{type="button",
+                name="YARM_expand_site_"..site.name,
+                tooltip={"YARM-tooltips.expand-site"},
+                style="YARM_expand_site"}
+        end
     end
 
-    if site.is_site_expanding then
-        site_buttons.add{type="button",
-            name="YARM_expand_site_"..site.name,
-            tooltip={"YARM-tooltips.expand-site-cancel"},
-            style="YARM_expand_site_cancel"}
-    else
-        site_buttons.add{type="button",
-            name="YARM_expand_site_"..site.name,
-            tooltip={"YARM-tooltips.expand-site"},
-            style="YARM_expand_site"}
-    end
+    return 1
 end
 
 
@@ -1079,7 +1128,8 @@ end
 
 
 function resmon.site_color(site, player)
-    local threshold = player.mod_settings["YARM-warn-timeleft"].value * 60
+    local threshold_type = site.is_summary and "timeleft_totals" or "timeleft"
+    local threshold = player.mod_settings["YARM-warn-"..threshold_type].value * 60
     local minutes = site.etd_minutes
     if minutes == -1 then minutes = threshold end
     local factor = minutes / threshold
