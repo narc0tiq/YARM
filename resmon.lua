@@ -910,11 +910,13 @@ end
 function resmon.generate_summaries(force_data, player)
     local summary = {}
     for site in sites_in_player_order(force_data.ore_sites, player) do
+        local is_endless = resmon.is_endless_resource(site.ore_type, game.entity_prototypes[site.ore_type]) and 1 or nil
         if not summary[site.ore_type] then summary[site.ore_type] = {
             name = "Total " .. resmon.get_rich_text_for_products(game.entity_prototypes[site.ore_type]),
             ore_type = site.ore_type, ore_name = site.ore_name,
             initial_amount = 0, amount = 0, ore_per_minute = 0,
-            etd_minutes = 0, remaining_permille = 1000, is_summary = 1,
+            etd_minutes = 0, is_summary = 1, entity_count = 0,
+            remaining_permille = (is_endless and 0 or 1000),
             site_count = 0,
         } end
 
@@ -923,7 +925,9 @@ function resmon.generate_summaries(force_data, player)
         summary_site.initial_amount = summary_site.initial_amount + site.initial_amount
         summary_site.amount = summary_site.amount + site.amount
         summary_site.ore_per_minute = summary_site.ore_per_minute + site.ore_per_minute
-        summary_site.remaining_permille = math.floor(1000 * summary_site.amount / summary_site.initial_amount)
+        summary_site.remaining_permille = is_endless and (summary_site.remaining_permille + site.remaining_permille)
+            or math.floor(1000 * summary_site.amount / summary_site.initial_amount)
+        summary_site.entity_count = summary_site.entity_count + site.entity_count
 
         summary_site.etd_minutes =
             ( summary_site.ore_per_minute ~= 0 and summary_site.amount / (-summary_site.ore_per_minute) )
