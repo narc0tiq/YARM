@@ -695,13 +695,10 @@ function resmon.finish_deposit_count(site)
         site.scanned_ore_per_minute = site.scanned_ore_per_minute + diff_step                                --
     end
 
-    if site.scanned_ore_per_minute ~= 0 then
-        site.scanned_etd_minutes = site.amount / (-site.scanned_ore_per_minute)
-    elseif site.amount == 0 then
-        site.scanned_etd_minutes = 0       -- already depleted
-    else
-        site.scanned_etd_minutes = -1      -- will never deplete
-    end
+    site.scanned_etd_minutes =
+        ( site.scanned_ore_per_minute ~= 0 and site.amount / (-site.scanned_ore_per_minute) )
+        or ( site.amount == 0 and 0 )
+        or -1
 
     site.amount = site.update_amount
     site.last_ore_check = game.tick
@@ -820,16 +817,12 @@ end
 local function sites_in_player_order(sites, player)
     local order_by = player.mod_settings["YARM-order-by"].value
 
-    local comparator = site_comparator_default
-    if order_by == 'ore-type' then
-        comparator = site_comparator_by_ore_type
-    elseif order_by == 'ore-count' then
-        comparator = site_comparator_by_ore_count
-    elseif order_by == 'etd' then
-        comparator = site_comparator_by_etd
-    elseif order_by == 'alphabetical' then
-        comparator = site_comparator_by_alpha
-    end
+    local comparator =
+           ( order_by == 'ore-type'     and site_comparator_by_ore_type )
+        or ( order_by == 'ore-count'    and site_comparator_by_ore_count )
+        or ( order_by == 'etd'          and site_comparator_by_etd )
+        or ( order_by == 'alphabetical' and site_comparator_by_alpha )
+        or site_comparator_default
 
     return sites_in_order(sites, comparator)
 end
