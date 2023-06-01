@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.9.6
+Date: 2023-06-01
+  Bugfixes:
+    - Fix a crash caused by multiple ore types generating the same product (@mithaldu/@wchristian)
+---------------------------------------------------------------------------------------------------
 Version: 0.9.5
 Date: 2023-05-31
   Bugfixes:
