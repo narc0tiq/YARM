@@ -3,7 +3,7 @@ require "remote"
 
 
 -- if this ever happens, I'll be enormously surprised
-if not resmon then error("{{MOD_NAME}} has become badly corrupted: the variable resmon should've been set!") end
+if not resmon then error("YARM has become badly corrupted: the variable resmon should've been set!") end
 
 -- Enable Lua API global Variable Viewer
 -- https://mods.factorio.com/mod/gvv

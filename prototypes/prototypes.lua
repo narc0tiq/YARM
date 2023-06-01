@@ -15,21 +15,21 @@ data:extend(
         item_to_spawn = 'yarm-selector-tool',
         style = 'green',
         icon = {
-            filename = '__{{MOD_NAME}}__/graphics/resource-monitor-x32-white.png',
+            filename = '__YARM__/graphics/resource-monitor-x32-white.png',
             priority = 'extra-high-no-scale',
             size = 32,
             scale = 1,
             flags = {'icon'},
         },
         small_icon = {
-            filename = '__{{MOD_NAME}}__/graphics/resource-monitor-x24.png',
+            filename = '__YARM__/graphics/resource-monitor-x24.png',
             priority = 'extra-high-no-scale',
             size = 24,
             scale = 1,
             flags = {'icon'},
         },
         disabled_small_icon = {
-            filename = '__{{MOD_NAME}}__/graphics/resource-monitor-x24-white.png',
+            filename = '__YARM__/graphics/resource-monitor-x24-white.png',
             priority = 'extra-high-no-scale',
             size = 24,
             scale = 1,
@@ -40,7 +40,7 @@ data:extend(
     {
         type = 'selection-tool',
         name = 'yarm-selector-tool',
-        icon = '__{{MOD_NAME}}__/graphics/resource-monitor.png',
+        icon = '__YARM__/graphics/resource-monitor.png',
         icon_size = 32,
         flags = {'only-in-cursor', 'hidden', 'spawnable'},
         stack_size = 1,
@@ -59,7 +59,7 @@ data:extend(
         type = 'container',
         name = 'rm_overlay',
         flags = {'placeable-neutral', 'player-creation', 'not-repairable'},
-        icon = '__{{MOD_NAME}}__/graphics/rm_Overlay.png',
+        icon = '__YARM__/graphics/rm_Overlay.png',
         icon_size = 32,
 
         max_health = 1,
@@ -72,7 +72,7 @@ data:extend(
         inventory_size = 1,
         picture =
         {
-            filename = '__{{MOD_NAME}}__/graphics/rm_Overlay.png',
+            filename = '__YARM__/graphics/rm_Overlay.png',
             priority = 'extra-high',
             width = 32,
             height = 32,
@@ -92,7 +92,7 @@ default_gui.YARM_err_label = red_label
 
 local function arb_graphics(xpos, ypos, size)
     return {
-        filename = '__{{MOD_NAME}}__/graphics/gui.png',
+        filename = '__YARM__/graphics/gui.png',
         priority = 'extra-high-no-scale',
         width = size,
         height = size,

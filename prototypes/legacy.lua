@@ -22,7 +22,7 @@ data:extend(
 })
 
 local empty_animation = {
-    filename = "__{{MOD_NAME}}__/graphics/nil.png",
+    filename = "__YARM__/graphics/nil.png",
     priority = "medium",
     width = 1,
     height = 1,

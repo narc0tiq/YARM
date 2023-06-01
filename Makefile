@@ -25,14 +25,9 @@
 PKG_NAME := $(shell cat PKG_NAME)
 PACKAGE_NAME := $(if $(PKG_NAME),$(PKG_NAME),$(error No package name, please create PKG_NAME))
 PACKAGE_NAME := $(if $(DEV),$(PACKAGE_NAME)-dev,$(PACKAGE_NAME))
-ifneq ($(wildcard SHORT_VERSION),)
-	VERSION := $(shell cat SHORT_VERSION || true)
-	BUILD_NUMBER := $(shell git describe --tags --match 'v[0-9]*.[0-9]*' --long|cut -d- -f2 || echo 1)
-	VERSION_STRING := $(if $(VERSION),$(VERSION).$(BUILD_NUMBER),$(error No version supplied, please add it as 'VERSION=x.y'))
-else
-	VERSION := $(shell cat VERSION || true)
-	VERSION_STRING := $(if $(VERSION),$(VERSION),$(error No version supplied, please add it as 'VERSION=x.y.z'))
-endif
+VERSION := $(shell cat VERSION || true)
+VERSION_STRING := $(if $(VERSION),$(VERSION),$(error No version supplied, please add it as 'VERSION=x.y.z'))
+DATE_STRING := $(shell date '+%Y-%m-%d')
 
 OUTPUT_NAME := $(PACKAGE_NAME)_$(VERSION_STRING)
 OUTPUT_DIR := pkg/$(OUTPUT_NAME)
@@ -43,12 +38,13 @@ SED_FILES := $(shell find . -iname '*.json' -type f \! -path './pkg/*') \
              $(shell find . -iname '*.lua' -type f \! -path './pkg/*')
 OUT_FILES := $(SED_FILES:%=$(OUTPUT_DIR)/%)
 
-SED_EXPRS := -e 's/{{MOD_NAME}}/$(PACKAGE_NAME)/g'
-SED_EXPRS += -e 's/{{VERSION}}/$(VERSION_STRING)/g'
-
 all: package
 
 package-copy: $(PKG_DIRS) $(PKG_FILES)
+	sed -i -e '0,/"version": ".*",/s//"version": "$(VERSION_STRING)",/' info.json
+	sed -i -e '0,/local mod_version = ".*"/s//local mod_version = "$(VERSION_STRING)"/' resmon.lua
+	sed -i -e '0,/^Version: .*/s//Version: $(VERSION_STRING)/' changelog.txt
+	sed -i -e '0,/^Date: .*/s//Date: $(DATE_STRING)/' changelog.txt
 	mkdir -p $(OUTPUT_DIR)
 ifneq ($(PKG_COPY),)
 	cp -r $(PKG_COPY) pkg/$(OUTPUT_NAME)
@@ -56,12 +52,12 @@ endif
 
 $(OUTPUT_DIR)/%.lua: %.lua
 	mkdir -p $(@D)
-	sed -e 's/{{__FILE__}}/'"$(strip $(subst /,\/, $(subst ./,,$*)))"'.lua/g' $(SED_EXPRS) $< > $@
+	cp $< $@
 	luac -p $@
 
 $(OUTPUT_DIR)/%: %
 	mkdir -p $(@D)
-	sed $(SED_EXPRS) $< > $@
+	cp $< $@
 
 package-dir: package-copy $(OUT_FILES)
 
