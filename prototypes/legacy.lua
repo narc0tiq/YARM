@@ -10,16 +10,16 @@ allow migrating from old versions up to the current one.
 -- to prevent uncontrolled reset of player data.
 
 data:extend(
-{
     {
-        type = "resource-category",
-        name = "empty-resource-category",
-    },
-    {
-        type = "recipe-category",
-        name = "empty-recipe-category",
-    },
-})
+        {
+            type = "resource-category",
+            name = "empty-resource-category",
+        },
+        {
+            type = "recipe-category",
+            name = "empty-recipe-category",
+        },
+    })
 
 local empty_animation = {
     filename = "__YARM__/graphics/nil.png",
@@ -29,7 +29,7 @@ local empty_animation = {
     direction_count = 18,
     frame_count = 1,
     animation_speed = 1,
-    shift = {0,0},
+    shift = { 0, 0 },
     axially_symmetrical = false,
 }
 
@@ -50,8 +50,8 @@ local empty_anim_level = {
 
 local fake_player = table.deepcopy(data.raw.character.character)
 fake_player.name = "yarm-remote-viewer"
-fake_player.crafting_categories = {"empty-recipe-category"}
-fake_player.mining_categories = {"empty-resource-category"}
+fake_player.crafting_categories = { "empty-recipe-category" }
+fake_player.mining_categories = { "empty-resource-category" }
 fake_player.max_health = 100
 fake_player.inventory_size = 0
 fake_player.build_distance = 0
@@ -66,9 +66,9 @@ fake_player.animations = {
     level2addon = empty_anim_level,
     level3addon = empty_anim_level,
 }
-fake_player.light = {{ intensity=0, size=0 }}
-fake_player.flags = {"placeable-off-grid", "not-on-map", "not-repairable"}
-fake_player.collision_mask = {"ground-tile"}
+fake_player.light = { { intensity = 0, size = 0 } }
+fake_player.flags = { "placeable-off-grid", "not-on-map", "not-repairable" }
+fake_player.collision_mask = { "ground-tile" }
 
 data:extend({ fake_player })
 

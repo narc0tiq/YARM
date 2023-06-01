@@ -1,4 +1,3 @@
-
 local ore_items = {}
 
 for name, proto in pairs(data.raw.resource) do

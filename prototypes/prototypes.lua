@@ -1,92 +1,92 @@
 data:extend(
-{
     {
-        type = 'custom-input',
-        name = 'get-yarm-selector',
-        key_sequence = 'ALT + Y',
-        consuming = 'none'
-    },
-
-    {
-        type = 'shortcut',
-        name = 'yarm-selector',
-        order = "a[yarm]",
-        action = 'spawn-item',
-        item_to_spawn = 'yarm-selector-tool',
-        style = 'green',
-        icon = {
-            filename = '__YARM__/graphics/resource-monitor-x32-white.png',
-            priority = 'extra-high-no-scale',
-            size = 32,
-            scale = 1,
-            flags = {'icon'},
-        },
-        small_icon = {
-            filename = '__YARM__/graphics/resource-monitor-x24.png',
-            priority = 'extra-high-no-scale',
-            size = 24,
-            scale = 1,
-            flags = {'icon'},
-        },
-        disabled_small_icon = {
-            filename = '__YARM__/graphics/resource-monitor-x24-white.png',
-            priority = 'extra-high-no-scale',
-            size = 24,
-            scale = 1,
-            flags = {'icon'},
-        },
-    },
-
-    {
-        type = 'selection-tool',
-        name = 'yarm-selector-tool',
-        icon = '__YARM__/graphics/resource-monitor.png',
-        icon_size = 32,
-        flags = {'only-in-cursor', 'hidden', 'spawnable'},
-        stack_size = 1,
-        stackable = false,
-        selection_color = { g = 1 },
-        selection_mode = 'any-entity',
-        alt_selection_color = { g = 1, b = 1 },
-        alt_selection_mode = {'nothing'},
-        selection_cursor_box_type = 'copy',
-        alt_selection_cursor_box_type = 'copy',
-        entity_filter_mode = 'whitelist',
-        entity_type_filters = {'resource'},
-    },
-
-    {
-        type = 'container',
-        name = 'rm_overlay',
-        flags = {'placeable-neutral', 'player-creation', 'not-repairable'},
-        icon = '__YARM__/graphics/rm_Overlay.png',
-        icon_size = 32,
-
-        max_health = 1,
-        order = 'z[resource-monitor]',
-
-        collision_mask = {'resource-layer'},
-        collision_box = {{-0.35, -0.35}, {0.35, 0.35}},
-
-        selection_box = {{-0.5, -0.5}, {0.5, 0.5}},
-        inventory_size = 1,
-        picture =
         {
-            filename = '__YARM__/graphics/rm_Overlay.png',
-            priority = 'extra-high',
-            width = 32,
-            height = 32,
-            shift = {0.0, 0.0}
-        }
-    },
-})
+            type = 'custom-input',
+            name = 'get-yarm-selector',
+            key_sequence = 'ALT + Y',
+            consuming = 'none'
+        },
+
+        {
+            type = 'shortcut',
+            name = 'yarm-selector',
+            order = "a[yarm]",
+            action = 'spawn-item',
+            item_to_spawn = 'yarm-selector-tool',
+            style = 'green',
+            icon = {
+                filename = '__YARM__/graphics/resource-monitor-x32-white.png',
+                priority = 'extra-high-no-scale',
+                size = 32,
+                scale = 1,
+                flags = { 'icon' },
+            },
+            small_icon = {
+                filename = '__YARM__/graphics/resource-monitor-x24.png',
+                priority = 'extra-high-no-scale',
+                size = 24,
+                scale = 1,
+                flags = { 'icon' },
+            },
+            disabled_small_icon = {
+                filename = '__YARM__/graphics/resource-monitor-x24-white.png',
+                priority = 'extra-high-no-scale',
+                size = 24,
+                scale = 1,
+                flags = { 'icon' },
+            },
+        },
+
+        {
+            type = 'selection-tool',
+            name = 'yarm-selector-tool',
+            icon = '__YARM__/graphics/resource-monitor.png',
+            icon_size = 32,
+            flags = { 'only-in-cursor', 'hidden', 'spawnable' },
+            stack_size = 1,
+            stackable = false,
+            selection_color = { g = 1 },
+            selection_mode = 'any-entity',
+            alt_selection_color = { g = 1, b = 1 },
+            alt_selection_mode = { 'nothing' },
+            selection_cursor_box_type = 'copy',
+            alt_selection_cursor_box_type = 'copy',
+            entity_filter_mode = 'whitelist',
+            entity_type_filters = { 'resource' },
+        },
+
+        {
+            type = 'container',
+            name = 'rm_overlay',
+            flags = { 'placeable-neutral', 'player-creation', 'not-repairable' },
+            icon = '__YARM__/graphics/rm_Overlay.png',
+            icon_size = 32,
+
+            max_health = 1,
+            order = 'z[resource-monitor]',
+
+            collision_mask = { 'resource-layer' },
+            collision_box = { { -0.35, -0.35 }, { 0.35, 0.35 } },
+
+            selection_box = { { -0.5, -0.5 }, { 0.5, 0.5 } },
+            inventory_size = 1,
+            picture =
+            {
+                filename = '__YARM__/graphics/rm_Overlay.png',
+                priority = 'extra-high',
+                width = 32,
+                height = 32,
+                shift = { 0.0, 0.0 }
+            }
+        },
+    })
 
 local default_gui = data.raw['gui-style'].default
 
 local red_label = {
     type = 'label_style',
     parent = 'label',
-    font_color = {r=1, g=0.2, b=0.2}
+    font_color = { r = 1, g = 0.2, b = 0.2 }
 }
 default_gui.YARM_err_label = red_label
 
@@ -114,7 +114,7 @@ default_gui.YARM_outer_frame_no_border = {
 default_gui.YARM_outer_frame_no_border_bg = {
     type = 'frame_style',
     parent = 'outer_frame',
-    graphical_set = arb_graphics(3,3,1)
+    graphical_set = arb_graphics(3, 3, 1)
 }
 default_gui.YARM_outer_frame_no_border_bg.graphical_set.blend_mode = 'multiplicative'
 
@@ -132,9 +132,9 @@ default_gui.YARM_button_with_icon = {
     width = 16,
     height = 16,
 
-    default_graphical_set = button_graphics( 0,  0),
-    hovered_graphical_set = button_graphics(16,  0),
-    clicked_graphical_set = button_graphics(32,  0),
+    default_graphical_set = button_graphics(0, 0),
+    hovered_graphical_set = button_graphics(16, 0),
+    clicked_graphical_set = button_graphics(32, 0),
 }
 
 local function make_filter_buttons(base_name, tex_y)
@@ -142,17 +142,17 @@ local function make_filter_buttons(base_name, tex_y)
         type = 'button_style',
         parent = 'YARM_button_with_icon',
 
-        default_graphical_set = button_graphics( 0, tex_y),
+        default_graphical_set = button_graphics(0, tex_y),
         hovered_graphical_set = button_graphics(16, tex_y),
         clicked_graphical_set = button_graphics(32, tex_y),
     }
 
-    default_gui[base_name..'_on'] = {
+    default_gui[base_name .. '_on'] = {
         type = 'button_style',
         parent = 'YARM_button_with_icon',
 
         default_graphical_set = button_graphics(16, tex_y),
-        hovered_graphical_set = button_graphics( 0, tex_y),
+        hovered_graphical_set = button_graphics(0, tex_y),
         clicked_graphical_set = button_graphics(32, tex_y),
     }
 end
@@ -166,7 +166,7 @@ default_gui.YARM_overlay_site = {
     type = 'button_style',
     parent = 'YARM_button_with_icon',
 
-    default_graphical_set = button_graphics( 0, 64),
+    default_graphical_set = button_graphics(0, 64),
     hovered_graphical_set = button_graphics(16, 64),
     clicked_graphical_set = button_graphics(32, 64),
 }
@@ -175,7 +175,7 @@ default_gui.YARM_goto_site = {
     type = 'button_style',
     parent = 'YARM_button_with_icon',
 
-    default_graphical_set = button_graphics( 0, 80),
+    default_graphical_set = button_graphics(0, 80),
     hovered_graphical_set = button_graphics(16, 80),
     clicked_graphical_set = button_graphics(32, 80),
 }
@@ -184,7 +184,7 @@ default_gui.YARM_delete_site = {
     type = 'button_style',
     parent = 'YARM_button_with_icon',
 
-    default_graphical_set = button_graphics( 0, 96),
+    default_graphical_set = button_graphics(0, 96),
     hovered_graphical_set = button_graphics(16, 96),
     clicked_graphical_set = button_graphics(32, 96),
 }
@@ -193,7 +193,7 @@ default_gui.YARM_rename_site = {
     type = 'button_style',
     parent = 'YARM_button_with_icon',
 
-    default_graphical_set = button_graphics( 0, 112),
+    default_graphical_set = button_graphics(0, 112),
     hovered_graphical_set = button_graphics(16, 112),
     clicked_graphical_set = button_graphics(32, 112),
 }
@@ -202,7 +202,7 @@ default_gui.YARM_delete_site_confirm = {
     type = 'button_style',
     parent = 'YARM_button_with_icon',
 
-    default_graphical_set = button_graphics( 0, 128),
+    default_graphical_set = button_graphics(0, 128),
     hovered_graphical_set = button_graphics(16, 128),
     clicked_graphical_set = button_graphics(32, 128),
 }
@@ -211,7 +211,7 @@ default_gui.YARM_goto_site_cancel = {
     type = 'button_style',
     parent = 'YARM_button_with_icon',
 
-    default_graphical_set = button_graphics( 0, 144),
+    default_graphical_set = button_graphics(0, 144),
     hovered_graphical_set = button_graphics(16, 144),
     clicked_graphical_set = button_graphics(32, 144),
 }
@@ -220,7 +220,7 @@ default_gui.YARM_rename_site_cancel = {
     type = 'button_style',
     parent = 'YARM_button_with_icon',
 
-    default_graphical_set = button_graphics( 0, 160),
+    default_graphical_set = button_graphics(0, 160),
     hovered_graphical_set = button_graphics(16, 160),
     clicked_graphical_set = button_graphics(32, 160),
 }
@@ -229,7 +229,7 @@ default_gui.YARM_expand_site = {
     type = 'button_style',
     parent = 'YARM_button_with_icon',
 
-    default_graphical_set = button_graphics( 0, 176),
+    default_graphical_set = button_graphics(0, 176),
     hovered_graphical_set = button_graphics(16, 176),
     clicked_graphical_set = button_graphics(32, 176),
 }
@@ -238,7 +238,7 @@ default_gui.YARM_expand_site_cancel = {
     type = 'button_style',
     parent = 'YARM_button_with_icon',
 
-    default_graphical_set = button_graphics( 0, 192),
+    default_graphical_set = button_graphics(0, 192),
     hovered_graphical_set = button_graphics(16, 192),
     clicked_graphical_set = button_graphics(32, 192),
 }

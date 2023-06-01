@@ -5,7 +5,7 @@ local interface = {}
 
 function interface.how_many_entities_tracked(player_name_or_index)
     local player = game.players[player_name_or_index]
-    player.print({"", "Tracking ", #global.ore_tracker.entities, " entities"})
+    player.print({ "", "Tracking ", #global.ore_tracker.entities, " entities" })
 end
 
 function interface.reset_ui(player_name_or_index)

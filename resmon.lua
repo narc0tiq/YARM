@@ -23,29 +23,25 @@ function string.starts_with(haystack, needle)
     return string.sub(haystack, 1, string.len(needle)) == needle
 end
 
-
 function string.ends_with(haystack, needle)
     return string.sub(haystack, -string.len(needle)) == needle
 end
 
-
 function resmon.init_globals()
-    for index,_ in pairs(game.players) do
+    for index, _ in pairs(game.players) do
         resmon.init_player(index)
     end
 end
-
 
 function resmon.on_player_created(event)
     resmon.init_player(event.player_index)
 end
 
-
 -- migration v0.8.0: remove remote viewers and put players back into the right entity if available
 local function migrate_remove_remote_viewer(player, player_data)
     local real_char = player_data.real_character
     if not real_char or not real_char.valid then
-        player.print{"YARM-warn-no-return-possible"}
+        player.print { "YARM-warn-no-return-possible" }
         return
     end
 
@@ -96,7 +92,6 @@ function resmon.init_player(player_index)
     global.player_data[player_index] = player_data
 end
 
-
 function resmon.init_force(force)
     if not global.force_data then global.force_data = {} end
 
@@ -116,7 +111,6 @@ function resmon.init_force(force)
 
     global.force_data[force.name] = force_data
 end
-
 
 local function table_contains(haystack, needle)
     for _, candidate in pairs(haystack) do
@@ -158,10 +152,10 @@ function resmon.sanity_check_sites(force, force_data)
         end
     end
 
-    force.print{discard_message, table.concat(discarded_sites, ', '), table.concat(missing_ores, ', ')}
-    log{"", force.name, ' was warned: ', {discard_message, table.concat(discarded_sites, ', '), table.concat(missing_ores, ', ')}}
+    force.print { discard_message, table.concat(discarded_sites, ', '), table.concat(missing_ores, ', ') }
+    log { "", force.name, ' was warned: ', { discard_message, table.concat(discarded_sites, ', '),
+        table.concat(missing_ores, ', ') } }
 end
-
 
 local function position_to_string(entity)
     -- scale it up so (hopefully) any floating point component disappears,
@@ -224,7 +218,6 @@ function resmon.migrate_ore_entities(force_data)
     end
 end
 
-
 function resmon.migrate_ore_sites(force_data)
     for name, site in pairs(force_data.ore_sites) do
         if not site.remaining_permille then
@@ -240,14 +233,13 @@ function resmon.migrate_ore_sites(force_data)
     end
 end
 
-
 local function find_resource_at(surface, position)
     -- The position we get is centered in its tile (e.g., {8.5, 17.5}).
     -- Sometimes, the resource does not cover the center, so search the full tile.
-    local top_left = {x = position.x - 0.5, y = position.y - 0.5}
-    local bottom_right = {x = position.x + 0.5, y = position.y + 0.5}
+    local top_left = { x = position.x - 0.5, y = position.y - 0.5 }
+    local bottom_right = { x = position.x + 0.5, y = position.y + 0.5 }
 
-    local stuff = surface.find_entities_filtered{area={top_left, bottom_right}, type='resource'}
+    local stuff = surface.find_entities_filtered { area = { top_left, bottom_right }, type = 'resource' }
     if #stuff < 1 then return nil end
 
     return stuff[1] -- there should never be another resource at the exact same coordinates
@@ -257,13 +249,13 @@ end
 local function find_center(area)
     local xpos = (area.left + area.right) / 2
     local ypos = (area.top + area.bottom) / 2
-    return {x = xpos, y = ypos}
+    return { x = xpos, y = ypos }
 end
 
 
 local function find_center_tile(area)
     local center = find_center(area)
-    return {x = math.floor(center.x), y = math.floor(center.y)}
+    return { x = math.floor(center.x), y = math.floor(center.y) }
 end
 
 
@@ -274,9 +266,10 @@ function resmon.on_player_selected_area(event)
     local entities = event.entities
 
     if #entities < 1 then
-        entities = {find_resource_at(event.surface, {
-            x = 0.5 + math.floor(( event.area.left_top.x + event.area.right_bottom.x) / 2),
-            y = 0.5 + math.floor(( event.area.left_top.y + event.area.right_bottom.y) / 2) } )}
+        entities = { find_resource_at(event.surface, {
+            x = 0.5 + math.floor((event.area.left_top.x + event.area.right_bottom.x) / 2),
+            y = 0.5 + math.floor((event.area.left_top.y + event.area.right_bottom.y) / 2)
+        }) }
     end
 
     if #entities < 1 then
@@ -302,7 +295,6 @@ function resmon.on_player_selected_area(event)
     -- note: resmon.update_players() (via on_tick) will continue the operation from here
 end
 
-
 function resmon.clear_current_site(player_index)
     local player = game.players[player_index]
     local player_data = global.player_data[player_index]
@@ -313,7 +305,6 @@ function resmon.clear_current_site(player_index)
         table.remove(player_data.overlays).destroy()
     end
 end
-
 
 function resmon.add_resource(player_index, entity)
     local player = game.players[player_index]
@@ -372,7 +363,6 @@ function resmon.add_resource(player_index, entity)
     -- note: resmon.scan_current_site() (via on_tick) will continue the operation from here
 end
 
-
 function resmon.add_single_entity(player_index, entity)
     local player_data = global.player_data[player_index]
     local site = player_data.current_site
@@ -406,40 +396,38 @@ function resmon.add_single_entity(player_index, entity)
     resmon.put_marker_at(entity.surface, entity.position, player_data)
 end
 
-
 function resmon.put_marker_at(surface, pos, player_data)
     if math.floor(pos.x) % settings.global["YARM-overlay-step"].value ~= 0 or
-       math.floor(pos.y) % settings.global["YARM-overlay-step"].value ~= 0 then
+        math.floor(pos.y) % settings.global["YARM-overlay-step"].value ~= 0 then
         return
     end
 
-    local overlay = surface.create_entity{name="rm_overlay",
-                                          force=game.forces.neutral,
-                                          position=pos}
+    local overlay = surface.create_entity { name = "rm_overlay",
+        force = game.forces.neutral,
+        position = pos }
     overlay.minable = false
     overlay.destructible = false
     overlay.operable = false
     table.insert(player_data.overlays, overlay)
 end
 
-
 local function shift_position(position, direction)
     if direction == defines.direction.north then
-        return {x = position.x, y = position.y - 1}
+        return { x = position.x, y = position.y - 1 }
     elseif direction == defines.direction.northeast then
-        return {x = position.x + 1, y = position.y - 1}
+        return { x = position.x + 1, y = position.y - 1 }
     elseif direction == defines.direction.east then
-        return {x = position.x + 1, y = position.y}
+        return { x = position.x + 1, y = position.y }
     elseif direction == defines.direction.southeast then
-        return {x = position.x + 1, y = position.y + 1}
+        return { x = position.x + 1, y = position.y + 1 }
     elseif direction == defines.direction.south then
-        return {x = position.x, y = position.y + 1}
+        return { x = position.x, y = position.y + 1 }
     elseif direction == defines.direction.southwest then
-        return {x = position.x - 1, y = position.y + 1}
+        return { x = position.x - 1, y = position.y + 1 }
     elseif direction == defines.direction.west then
-        return {x = position.x - 1, y = position.y}
+        return { x = position.x - 1, y = position.y }
     elseif direction == defines.direction.northwest then
-        return {x = position.x - 1, y = position.y - 1}
+        return { x = position.x - 1, y = position.y - 1 }
     else
         return position
     end
@@ -471,10 +459,9 @@ function resmon.scan_current_site(player_index)
     end
 end
 
-
 local function format_number(n) -- credit http://richard.warburton.it
-    local left,num,right = string.match(n,'^([^%d]*%d)(%d*)(.-)$')
-    return left..(num:reverse():gsub('(%d%d%d)','%1,'):reverse())..right
+    local left, num, right = string.match(n, '^([^%d]*%d)(%d*)(.-)$')
+    return left .. (num:reverse():gsub('(%d%d%d)', '%1,'):reverse()) .. right
 end
 
 
@@ -494,13 +481,19 @@ end
 
 
 local octant_names = {
-    [0] = "E", [1] = "SE", [2] = "S", [3] = "SW",
-    [4] = "W", [5] = "NW", [6] = "N", [7] = "NE",
+    [0] = "E",
+    [1] = "SE",
+    [2] = "S",
+    [3] = "SW",
+    [4] = "W",
+    [5] = "NW",
+    [6] = "N",
+    [7] = "NE",
 }
 
 local function get_octant_name(vector)
     local radians = math.atan2(vector.y, vector.x)
-    local octant = math.floor( 8 * radians / (2*math.pi) + 8.5 ) % 8
+    local octant = math.floor(8 * radians / (2 * math.pi) + 8.5) % 8
 
     return octant_names[octant]
 end
@@ -522,7 +515,7 @@ function resmon.finalize_site(player_index)
     --[[ don't rename a site we've expanded! (if the site name changes it'll create a new site
          instead of replacing the existing one) ]]
     if not site.is_site_expanding then
-        site.name = string.format("%s %d", get_octant_name(site.center), util.distance({x=0, y=0}, site.center))
+        site.name = string.format("%s %d", get_octant_name(site.center), util.distance({ x = 0, y = 0 }, site.center))
         if settings.global["YARM-site-prefix-with-surface"].value then
             site.name = string.format("%s %s", site.surface.name, site.name)
         end
@@ -530,7 +523,6 @@ function resmon.finalize_site(player_index)
 
     resmon.count_deposits(site, site.added_at % settings.global["YARM-ticks-between-checks"].value)
 end
-
 
 function resmon.update_chart_tag(site)
     local is_chart_tag_enabled = settings.global["YARM-map-markers"].value
@@ -558,7 +550,8 @@ function resmon.update_chart_tag(site)
     local display_value = format_number_si(site.amount)
     if settings.global["YARM-adjust-for-productivity"].value then
         local site_amount = display_value
-        local site_amount_w_productivity = format_number_si(site.amount * (1 + site.force.mining_drill_productivity_bonus))
+        local site_amount_w_productivity = format_number_si(site.amount *
+            (1 + site.force.mining_drill_productivity_bonus))
         if settings.global["YARM-productivity-show-raw-and-adjusted"].value then
             if settings.global["YARM-productivity-parentheses-part-is"].value == "adjusted" then
                 display_value = string.format("%s (%s)", site_amount, site_amount_w_productivity)
@@ -578,7 +571,6 @@ function resmon.update_chart_tag(site)
         resmon.get_rich_text_for_products(entity_prototype))
 end
 
-
 function resmon.get_rich_text_for_products(proto)
     if not proto or not proto.mineable_properties or not proto.mineable_properties.products then
         return '' -- only supporting resource entities...
@@ -586,12 +578,11 @@ function resmon.get_rich_text_for_products(proto)
 
     local result = ''
     for _, product in pairs(proto.mineable_properties.products) do
-        result = result..string.format('[%s=%s]', product.type, product.name)
+        result = result .. string.format('[%s=%s]', product.type, product.name)
     end
 
     return result
 end
-
 
 function resmon.submit_site(player_index)
     local player = game.players[player_index]
@@ -602,15 +593,15 @@ function resmon.submit_site(player_index)
     force_data.ore_sites[site.name] = site
     resmon.clear_current_site(player_index)
     if (site.is_site_expanding) then
-        if(site.has_expanded) then
+        if (site.has_expanded) then
             -- reset statistics, the site didn't actually just grow a bunch of ore in existing tiles
             site.last_ore_check = nil
             site.last_modified_amount = nil
 
             local amount_added = site.amount - site.original_amount
             local sign = amount_added < 0 and '' or '+' -- format_number will handle the negative sign for us (if needed)
-            player.print{"YARM-site-expanded", site.name, format_number(site.amount), site.ore_name,
-                            sign..format_number(amount_added)}
+            player.print { "YARM-site-expanded", site.name, format_number(site.amount), site.ore_name,
+                sign .. format_number(amount_added) }
         end
         --[[ NB: deliberately not outputting anything in the case where the player cancelled (or
              timed out) a site expansion without expanding anything (to avoid console spam) ]]
@@ -619,19 +610,18 @@ function resmon.submit_site(player_index)
             site.chart_tag.destroy()
         end
     else
-        player.print{"YARM-site-submitted", site.name, format_number(site.amount), site.ore_name}
+        player.print { "YARM-site-submitted", site.name, format_number(site.amount), site.ore_name }
     end
     resmon.update_chart_tag(site)
 
     -- clear site expanding state so we can re-expand the same site again (and get sensible numbers!)
-    if(site.is_site_expanding) then
+    if (site.is_site_expanding) then
         site.is_site_expanding = nil
         site.has_expanded = nil
         site.original_amount = nil
     end
     resmon.update_force_members_ui(player)
 end
-
 
 function resmon.is_endless_resource(ent_name, proto)
     if resmon.endless_resources[ent_name] ~= nil then
@@ -713,16 +703,19 @@ function resmon.finish_deposit_count(site)
             site.last_modified_tick = site.last_ore_check --
             site.last_modified_amount = site.amount       --
         end
-        local delta_ore_since_last_change = site.update_amount - site.last_modified_amount -- use final amount and tick to calculate
-        local delta_ticks = game.tick - site.last_modified_tick                            --
-        local new_ore_per_minute = delta_ore_since_last_change * 3600 / delta_ticks          -- ease the per minute value over time
+        local delta_ore_since_last_change = site.update_amount -
+            site
+            .last_modified_amount                                                                    -- use final amount and tick to calculate
+        local delta_ticks = game.tick - site.last_modified_tick                                      --
+        local new_ore_per_minute = delta_ore_since_last_change * 3600 /
+            delta_ticks                                                                              -- ease the per minute value over time
         local diff_step = resmon.smooth_clamp_diff(new_ore_per_minute - site.scanned_ore_per_minute) --
-        site.scanned_ore_per_minute = site.scanned_ore_per_minute + diff_step                                --
+        site.scanned_ore_per_minute = site.scanned_ore_per_minute + diff_step                        --
     end
 
     site.scanned_etd_minutes =
-        ( site.scanned_ore_per_minute ~= 0 and site.amount / (-site.scanned_ore_per_minute) )
-        or ( site.amount == 0 and 0 )
+        (site.scanned_ore_per_minute ~= 0 and site.amount / (-site.scanned_ore_per_minute))
+        or (site.amount == 0 and 0)
         or -1
 
     site.amount = site.update_amount
@@ -733,7 +726,7 @@ function resmon.finish_deposit_count(site)
 
     site.remaining_permille = math.floor(site.amount * 1000 / site.initial_amount)
 
-    local age_minutes = ( game.tick - site.added_at ) / 3600
+    local age_minutes = (game.tick - site.added_at) / 3600
     local depleted = site.initial_amount - site.amount
     site.lifetime_ore_per_minute = -depleted / age_minutes
     site.lifetime_etd_minutes = site.amount / (-site.lifetime_ore_per_minute)
@@ -760,13 +753,13 @@ function resmon.finish_deposit_count(site)
     resmon.update_chart_tag(site)
 
     script.raise_event(on_site_updated, {
-      force_name         = site.force.name,
-      site_name          = site.name,
-      amount             = site.amount,
-      ore_per_minute     = site.ore_per_minute,
-      remaining_permille = site.remaining_permille,
-      ore_type           = site.ore_type,
-      etd_minutes        = site.etd_minutes,
+        force_name         = site.force.name,
+        site_name          = site.name,
+        amount             = site.amount,
+        ore_per_minute     = site.ore_per_minute,
+        remaining_permille = site.remaining_permille,
+        ore_type           = site.ore_type,
+        etd_minutes        = site.etd_minutes,
     })
 end
 
@@ -846,10 +839,10 @@ local function sites_in_player_order(sites, player)
     local order_by = player.mod_settings["YARM-order-by"].value
 
     local comparator =
-           ( order_by == 'ore-type'     and site_comparator_by_ore_type )
-        or ( order_by == 'ore-count'    and site_comparator_by_ore_count )
-        or ( order_by == 'etd'          and site_comparator_by_etd )
-        or ( order_by == 'alphabetical' and site_comparator_by_alpha )
+        (order_by == 'ore-type' and site_comparator_by_ore_type)
+        or (order_by == 'ore-count' and site_comparator_by_ore_count)
+        or (order_by == 'etd' and site_comparator_by_etd)
+        or (order_by == 'alphabetical' and site_comparator_by_alpha)
         or site_comparator_default
 
     return sites_in_order(sites, comparator)
@@ -866,7 +859,7 @@ resmon.filters[FILTER_ALL] = function() return true end
 resmon.filters[FILTER_WARNINGS] = function(site, player)
     local remaining = site.etd_minutes
     local threshold_hours = site.is_summary and "timeleft_totals" or "timeleft"
-    return remaining ~= -1 and remaining <= player.mod_settings["YARM-warn-"..threshold_hours].value * 60
+    return remaining ~= -1 and remaining <= player.mod_settings["YARM-warn-" .. threshold_hours].value * 60
 end
 
 
@@ -877,24 +870,24 @@ function resmon.update_ui(player)
     local frame_flow = mod_gui.get_frame_flow(player)
     local root = frame_flow.YARM_root
     if not root then
-        root = frame_flow.add{type="frame",
-                              name="YARM_root",
-                              direction="horizontal",
-                              style="YARM_outer_frame_no_border"}
+        root = frame_flow.add { type = "frame",
+            name = "YARM_root",
+            direction = "horizontal",
+            style = "YARM_outer_frame_no_border" }
 
-        local buttons = root.add{type="flow",
-                                 name="buttons",
-                                 direction="vertical",
-                                 style="YARM_buttons_v"}
+        local buttons = root.add { type = "flow",
+            name = "buttons",
+            direction = "vertical",
+            style = "YARM_buttons_v" }
 
-        buttons.add{type="button", name="YARM_filter_"..FILTER_NONE, style="YARM_filter_none",
-            tooltip={"YARM-tooltips.filter-none"}}
-        buttons.add{type="button", name="YARM_filter_"..FILTER_WARNINGS, style="YARM_filter_warnings",
-            tooltip={"YARM-tooltips.filter-warnings"}}
-        buttons.add{type="button", name="YARM_filter_"..FILTER_ALL, style="YARM_filter_all",
-            tooltip={"YARM-tooltips.filter-all"}}
-        buttons.add{type="button", name="YARM_toggle_bg", style="YARM_toggle_bg",
-            tooltip={"YARM-tooltips.toggle-bg"}}
+        buttons.add { type = "button", name = "YARM_filter_" .. FILTER_NONE, style = "YARM_filter_none",
+            tooltip = { "YARM-tooltips.filter-none" } }
+        buttons.add { type = "button", name = "YARM_filter_" .. FILTER_WARNINGS, style = "YARM_filter_warnings",
+            tooltip = { "YARM-tooltips.filter-warnings" } }
+        buttons.add { type = "button", name = "YARM_filter_" .. FILTER_ALL, style = "YARM_filter_all",
+            tooltip = { "YARM-tooltips.filter-all" } }
+        buttons.add { type = "button", name = "YARM_toggle_bg", style = "YARM_toggle_bg",
+            tooltip = { "YARM-tooltips.toggle-bg" } }
 
         if not player_data.active_filter then player_data.active_filter = FILTER_WARNINGS end
         resmon.update_ui_filter_buttons(player, player_data.active_filter)
@@ -907,28 +900,30 @@ function resmon.update_ui(player)
     if not force_data or not force_data.ore_sites then return end
 
     local column_count = 9
-    local sites_gui = root.add{type="table", column_count=column_count, name="sites", style="YARM_site_table"}
+    local sites_gui = root.add { type = "table", column_count = column_count, name = "sites", style = "YARM_site_table" }
     sites_gui.style.horizontal_spacing = 5
     local column_alignments = sites_gui.style.column_alignments
-    column_alignments[1] = 'left' -- rename button
-    column_alignments[2] = 'left' -- site name
+    column_alignments[1] = 'left'  -- rename button
+    column_alignments[2] = 'left'  -- site name
     column_alignments[3] = 'right' -- remaining percent
     column_alignments[4] = 'right' -- site amount
-    column_alignments[5] = 'left' -- ore name
+    column_alignments[5] = 'left'  -- ore name
     column_alignments[6] = 'right' -- ore per minute
-    column_alignments[7] = 'left' -- ETD
+    column_alignments[7] = 'left'  -- ETD
     column_alignments[8] = 'right' -- ETD
-    column_alignments[9] = 'left' -- buttons
+    column_alignments[9] = 'left'  -- buttons
 
     local site_filter = resmon.filters[player_data.active_filter] or resmon.filters[FILTER_NONE]
     local summary = resmon.generate_summaries(force_data, player)
     local render_separator
     for summary_site in sites_in_player_order(summary, player) do
         if resmon.print_single_site(site_filter, summary_site, player, sites_gui, player_data)
-            then render_separator = 1 end
+        then
+            render_separator = 1
+        end
     end
     if render_separator then
-        for _ = 1,column_count do sites_gui.add{type="label"}.style.maximal_height = 6 end
+        for _ = 1, column_count do sites_gui.add { type = "label" }.style.maximal_height = 6 end
     end
     for site in sites_in_player_order(force_data.ore_sites, player) do
         resmon.print_single_site(site_filter, site, player, sites_gui, player_data)
@@ -939,14 +934,21 @@ function resmon.generate_summaries(force_data, player)
     local summary = {}
     for site in sites_in_player_order(force_data.ore_sites, player) do
         local is_endless = resmon.is_endless_resource(site.ore_type, game.entity_prototypes[site.ore_type]) and 1 or nil
-        if not summary[site.ore_type] then summary[site.ore_type] = {
-            name = "Total " .. site.ore_type,
-            ore_type = site.ore_type, ore_name = site.ore_name,
-            initial_amount = 0, amount = 0, ore_per_minute = 0,
-            etd_minutes = 0, is_summary = 1, entity_count = 0,
-            remaining_permille = (is_endless and 0 or 1000),
-            site_count = 0,
-        } end
+        if not summary[site.ore_type] then
+            summary[site.ore_type] = {
+                name = "Total " .. site.ore_type,
+                ore_type = site.ore_type,
+                ore_name = site.ore_name,
+                initial_amount = 0,
+                amount = 0,
+                ore_per_minute = 0,
+                etd_minutes = 0,
+                is_summary = 1,
+                entity_count = 0,
+                remaining_permille = (is_endless and 0 or 1000),
+                site_count = 0,
+            }
+        end
 
         local summary_site = summary[site.ore_type]
         summary_site.site_count = summary_site.site_count + 1
@@ -958,8 +960,8 @@ function resmon.generate_summaries(force_data, player)
         summary_site.entity_count = summary_site.entity_count + site.entity_count
 
         summary_site.etd_minutes =
-            ( summary_site.ore_per_minute ~= 0 and summary_site.amount / (-summary_site.ore_per_minute) )
-            or ( summary_site.amount == 0 and 0 )
+            (summary_site.ore_per_minute ~= 0 and summary_site.amount / (-summary_site.ore_per_minute))
+            or (summary_site.amount == 0 and 0)
             or -1
     end
     return summary
@@ -977,7 +979,6 @@ function resmon.on_click.set_filter(event)
     resmon.update_ui(player)
 end
 
-
 function resmon.update_ui_filter_buttons(player, active_filter)
     -- rarely, it might be possible to arrive here before the YARM GUI gets created
     local root = mod_gui.get_frame_flow(player).YARM_root
@@ -988,7 +989,7 @@ function resmon.update_ui_filter_buttons(player, active_filter)
     for filter_name, _ in pairs(resmon.filters) do
         local is_active_filter = filter_name == active_filter
 
-        local button = buttons_container["YARM_filter_"..filter_name]
+        local button = buttons_container["YARM_filter_" .. filter_name]
         if button and button.valid then
             local style_name = button.style.name
             local is_active_style = style_name:ends_with("_on")
@@ -1001,7 +1002,6 @@ function resmon.update_ui_filter_buttons(player, active_filter)
         end
     end
 end
-
 
 function resmon.print_single_site(site_filter, site, player, sites_gui, player_data)
     if not site_filter(site, player) then return end
@@ -1018,32 +1018,33 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
 
     if not site.is_summary then
         if player_data.renaming_site == site.name then
-            sites_gui.add{type="button",
-                            name="YARM_rename_site_"..site.name,
-                            tooltip={"YARM-tooltips.rename-site-cancel"},
-                            style="YARM_rename_site_cancel"}
+            sites_gui.add { type = "button",
+                name = "YARM_rename_site_" .. site.name,
+                tooltip = { "YARM-tooltips.rename-site-cancel" },
+                style = "YARM_rename_site_cancel" }
         else
-            sites_gui.add{type="button",
-                            name="YARM_rename_site_"..site.name,
-                            tooltip={"YARM-tooltips.rename-site-named", site.name},
-                            style="YARM_rename_site"}
+            sites_gui.add { type = "button",
+                name = "YARM_rename_site_" .. site.name,
+                tooltip = { "YARM-tooltips.rename-site-named", site.name },
+                style = "YARM_rename_site" }
         end
 
-        el = sites_gui.add{type="label", name="YARM_label_site_"..site.name, caption=site.name}
+        el = sites_gui.add { type = "label", name = "YARM_label_site_" .. site.name, caption = site.name }
         el.style.font_color = color
     else
-        sites_gui.add{type="label", caption=""}
-        sites_gui.add{type="label", caption=""}
+        sites_gui.add { type = "label", caption = "" }
+        sites_gui.add { type = "label", caption = "" }
     end
 
-    el = sites_gui.add{type="label", name="YARM_label_percent_"..site.name,
-        caption=string.format("%.1f%%", site.remaining_permille / 10)}
+    el = sites_gui.add { type = "label", name = "YARM_label_percent_" .. site.name,
+        caption = string.format("%.1f%%", site.remaining_permille / 10) }
     el.style.font_color = color
 
     local display_amount = format_number(site.amount)
     if settings.global["YARM-adjust-for-productivity"].value then
         local site_amount = display_amount
-        local site_amount_w_productivity = format_number(math.floor(site.amount * (1 + player.force.mining_drill_productivity_bonus)))
+        local site_amount_w_productivity = format_number(math.floor(site.amount *
+            (1 + player.force.mining_drill_productivity_bonus)))
         if settings.global["YARM-productivity-show-raw-and-adjusted"].value then
             if settings.global["YARM-productivity-parentheses-part-is"].value == "adjusted" then
                 display_amount = string.format("%s (%s)", site_amount, site_amount_w_productivity)
@@ -1058,110 +1059,107 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
 
     local entity_prototype = game.entity_prototypes[site.ore_type]
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
-        display_amount = {"YARM-infinite-entity-count", format_number(site.entity_count)}
+        display_amount = { "YARM-infinite-entity-count", format_number(site.entity_count) }
     end
-    el = sites_gui.add{type="label", name="YARM_label_amount_"..site.name,
-        caption=display_amount}
+    el = sites_gui.add { type = "label", name = "YARM_label_amount_" .. site.name,
+        caption = display_amount }
     el.style.font_color = color
 
-    el = sites_gui.add{type="label", name="YARM_label_ore_name_"..site.name,
-        caption={"", resmon.get_rich_text_for_products(entity_prototype), " ", site.ore_name}}
+    el = sites_gui.add { type = "label", name = "YARM_label_ore_name_" .. site.name,
+        caption = { "", resmon.get_rich_text_for_products(entity_prototype), " ", site.ore_name } }
     el.style.font_color = color
 
-    el = sites_gui.add{type="label", name="YARM_label_ore_per_minute_"..site.name,
-        caption=resmon.render_speed(site)}
+    el = sites_gui.add { type = "label", name = "YARM_label_ore_per_minute_" .. site.name,
+        caption = resmon.render_speed(site) }
     el.style.font_color = color
 
     if not site.is_summary then
         local etd_icon = site.etd_is_lifetime == 1 and "[img=quantity-time]" or "[img=utility/played_green]"
-        el = sites_gui.add{type="label", name="YARM_label_etd_header_"..site.name,
-            caption={"YARM-time-to-deplete", etd_icon}}
+        el = sites_gui.add { type = "label", name = "YARM_label_etd_header_" .. site.name,
+            caption = { "YARM-time-to-deplete", etd_icon } }
         el.style.font_color = color
     else
-        sites_gui.add{type="label", caption=""}
+        sites_gui.add { type = "label", caption = "" }
     end
 
-    el = sites_gui.add{type="label", name="YARM_label_etd_"..site.name,
-        caption=resmon.time_to_deplete(site)}
+    el = sites_gui.add { type = "label", name = "YARM_label_etd_" .. site.name,
+        caption = resmon.time_to_deplete(site) }
     el.style.font_color = color
 
 
-    local site_buttons = sites_gui.add{type="flow", name="YARM_site_buttons_"..site.name,
-        direction="horizontal", style="YARM_buttons_h"}
+    local site_buttons = sites_gui.add { type = "flow", name = "YARM_site_buttons_" .. site.name,
+        direction = "horizontal", style = "YARM_buttons_h" }
 
     if not site.is_summary then
-        site_buttons.add{type="button",
-            name="YARM_goto_site_"..site.name,
-            tooltip={"YARM-tooltips.goto-site"},
-            style="YARM_goto_site"}
+        site_buttons.add { type = "button",
+            name = "YARM_goto_site_" .. site.name,
+            tooltip = { "YARM-tooltips.goto-site" },
+            style = "YARM_goto_site" }
 
         if site.deleting_since then
-            site_buttons.add{type="button",
-                name="YARM_delete_site_"..site.name,
-                tooltip={"YARM-tooltips.delete-site-confirm"},
-                style="YARM_delete_site_confirm"}
+            site_buttons.add { type = "button",
+                name = "YARM_delete_site_" .. site.name,
+                tooltip = { "YARM-tooltips.delete-site-confirm" },
+                style = "YARM_delete_site_confirm" }
         else
-            site_buttons.add{type="button",
-                name="YARM_delete_site_"..site.name,
-                tooltip={"YARM-tooltips.delete-site"},
-                style="YARM_delete_site"}
+            site_buttons.add { type = "button",
+                name = "YARM_delete_site_" .. site.name,
+                tooltip = { "YARM-tooltips.delete-site" },
+                style = "YARM_delete_site" }
         end
 
         if site.is_site_expanding then
-            site_buttons.add{type="button",
-                name="YARM_expand_site_"..site.name,
-                tooltip={"YARM-tooltips.expand-site-cancel"},
-                style="YARM_expand_site_cancel"}
+            site_buttons.add { type = "button",
+                name = "YARM_expand_site_" .. site.name,
+                tooltip = { "YARM-tooltips.expand-site-cancel" },
+                style = "YARM_expand_site_cancel" }
         else
-            site_buttons.add{type="button",
-                name="YARM_expand_site_"..site.name,
-                tooltip={"YARM-tooltips.expand-site"},
-                style="YARM_expand_site"}
+            site_buttons.add { type = "button",
+                name = "YARM_expand_site_" .. site.name,
+                tooltip = { "YARM-tooltips.expand-site" },
+                style = "YARM_expand_site" }
         end
     end
 
     return 1
 end
 
-
 function resmon.time_to_deplete(site)
     local minutes = site.etd_minutes or -1
 
-    if minutes == -1 or minutes == math.huge then return {"YARM-etd-never"} end
+    if minutes == -1 or minutes == math.huge then return { "YARM-etd-never" } end
 
     local hours = math.floor(minutes / 60)
     local days = math.floor(hours / 24)
     hours = hours % 60
     minutes = minutes % 60
-    local time_frag = {"YARM-etd-hour-fragment",
-        {"", string.format("%02d", hours), ":", string.format("%02d", math.floor(minutes))}}
+    local time_frag = { "YARM-etd-hour-fragment",
+        { "", string.format("%02d", hours), ":", string.format("%02d", math.floor(minutes)) } }
 
     if days > 0 then
-        return {"", {"YARM-etd-day-fragment", days}, " ", time_frag}
+        return { "", { "YARM-etd-day-fragment", days }, " ", time_frag }
     elseif minutes > 0 then
         return time_frag
     elseif site.amount == 0 then
-        return {"YARM-etd-now"}
+        return { "YARM-etd-now" }
     else
-        return {"YARM-etd-under-1m"}
+        return { "YARM-etd-under-1m" }
     end
 end
 
-
 function resmon.render_speed(site)
     if site.ore_per_minute < -0.1 then
-        return {"YARM-ore-per-minute", string.format("%.1f", site.ore_per_minute)}
+        return { "YARM-ore-per-minute", string.format("%.1f", site.ore_per_minute) }
     elseif site.ore_per_minute < 0 then
-        return {"YARM-ore-per-minute", {"", "<", string.format("%.1f", -0.1)}}
+        return { "YARM-ore-per-minute", { "", "<", string.format("%.1f", -0.1) } }
     else
         return ""
     end
 end
 
-
 function resmon.site_color(site, player)
     local threshold_type = site.is_summary and "timeleft_totals" or "timeleft"
-    local threshold = player.mod_settings["YARM-warn-"..threshold_type].value * 60
+    local threshold = player.mod_settings["YARM-warn-" .. threshold_type].value * 60
     local minutes = site.etd_minutes
     if minutes == -1 then minutes = threshold end
     local factor = (threshold == 0 and 1) or (minutes / threshold)
@@ -1178,16 +1176,21 @@ function resmon.hsv2rgb(h, s, v)
     local q = v * (1 - f * s);
     local t = v * (1 - (1 - f) * s);
     i = i % 6
-    if i == 0 then r, g, b = v, t, p
-    elseif i == 1 then r, g, b = q, v, p
-    elseif i == 2 then r, g, b = p, v, t
-    elseif i == 3 then r, g, b = p, q, v
-    elseif i == 4 then r, g, b = t, p, v
-    elseif i == 5 then r, g, b = v, p, q
+    if i == 0 then
+        r, g, b = v, t, p
+    elseif i == 1 then
+        r, g, b = q, v, p
+    elseif i == 2 then
+        r, g, b = p, v, t
+    elseif i == 3 then
+        r, g, b = p, q, v
+    elseif i == 4 then
+        r, g, b = t, p, v
+    elseif i == 5 then
+        r, g, b = v, p, q
     end
     return { r = r, g = g, b = b }
 end
-
 
 function resmon.on_click.YARM_rename_confirm(event)
     local player = game.players[event.player_index]
@@ -1198,7 +1201,7 @@ function resmon.on_click.YARM_rename_confirm(event)
     local new_name = player.gui.center.YARM_site_rename.new_name.text
 
     if string.len(new_name) > MAX_SITE_NAME_LENGTH then
-        player.print{'YARM-err-site-name-too-long', MAX_SITE_NAME_LENGTH}
+        player.print { 'YARM-err-site-name-too-long', MAX_SITE_NAME_LENGTH }
         return
     end
 
@@ -1215,7 +1218,6 @@ function resmon.on_click.YARM_rename_confirm(event)
     resmon.update_force_members_ui(player)
 end
 
-
 function resmon.on_click.YARM_rename_cancel(event)
     local player = game.players[event.player_index]
     local player_data = global.player_data[event.player_index]
@@ -1225,7 +1227,6 @@ function resmon.on_click.YARM_rename_cancel(event)
 
     resmon.update_force_members_ui(player)
 end
-
 
 function resmon.on_click.rename_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_rename_site_"))
@@ -1239,20 +1240,19 @@ function resmon.on_click.rename_site(event)
     end
 
     player_data.renaming_site = site_name
-    local root = player.gui.center.add{type="frame",
-                                       name="YARM_site_rename",
-                                       caption={"YARM-site-rename-title", site_name},
-                                       direction="horizontal"}
+    local root = player.gui.center.add { type = "frame",
+        name = "YARM_site_rename",
+        caption = { "YARM-site-rename-title", site_name },
+        direction = "horizontal" }
 
-    root.add{type="textfield", name="new_name"}.text = site_name
-    root.add{type="button", name="YARM_rename_confirm", caption={"YARM-site-rename-confirm"}}
-    root.add{type="button", name="YARM_rename_cancel", caption={"YARM-site-rename-cancel"}}
+    root.add { type = "textfield", name = "new_name" }.text = site_name
+    root.add { type = "button", name = "YARM_rename_confirm", caption = { "YARM-site-rename-confirm" } }
+    root.add { type = "button", name = "YARM_rename_cancel", caption = { "YARM-site-rename-cancel" } }
 
     player.opened = root
 
     resmon.update_force_members_ui(player)
 end
-
 
 function resmon.on_gui_closed(event)
     if event.gui_type ~= defines.gui_type.custom then return end
@@ -1261,7 +1261,6 @@ function resmon.on_gui_closed(event)
 
     resmon.on_click.YARM_rename_cancel(event)
 end
-
 
 function resmon.on_click.remove_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_delete_site_"))
@@ -1291,21 +1290,28 @@ function resmon.on_click.goto_site(event)
     local site = force_data.ore_sites[site_name]
 
     if game.active_mods["space-exploration"] ~= nil then
-        local zone = remote.call("space-exploration", "get_zone_from_surface_index", { surface_index = site.surface.index })
+        local zone = remote.call("space-exploration", "get_zone_from_surface_index",
+            { surface_index = site.surface.index })
         if not zone then
             -- the zone is not available for some reason.
             player.print { "YARM-spaceexploration-zone-unavailable" }
             log("YARM: Unavailable to view SE zone at " .. serpent.line(site.center) .. " on surface " .. site.surface)
             return
         end -- TODO: need to show some error logs for this
-        remote.call("space-exploration", "remote_view_start", { player = player, zone_name = zone.name, position = site.center, location_name = site.name, freeze_history = true })
+        remote.call("space-exploration", "remote_view_start",
+            {
+                player = player,
+                zone_name = zone.name,
+                position = site.center,
+                location_name = site.name,
+                freeze_history = true
+            })
     else
         player.open_map(site.center)
     end
 
     resmon.update_force_members_ui(player)
 end
-
 
 -- one button handler for both the expand_site and expand_site_cancel buttons
 function resmon.on_click.expand_site(event)
@@ -1347,7 +1353,7 @@ function resmon.on_click.toggle_bg(event)
     local root = mod_gui.get_frame_flow(player).YARM_root
     if not root then return end
     root.style = (root.style.name == "YARM_outer_frame_no_border_bg")
-      and "YARM_outer_frame_no_border" or "YARM_outer_frame_no_border_bg"
+        and "YARM_outer_frame_no_border" or "YARM_outer_frame_no_border_bg"
     resmon.update_ui(player)
 end
 
@@ -1359,14 +1365,12 @@ function resmon.pull_YARM_item_to_cursor_if_possible(player_index)
         player.clear_cursor() -- and it's not a selector tool, so Q it away
     end
 
-    player.cursor_stack.set_stack{name="yarm-selector-tool"}
+    player.cursor_stack.set_stack { name = "yarm-selector-tool" }
 end
-
 
 function resmon.on_get_selection_tool(event)
     resmon.pull_YARM_item_to_cursor_if_possible(event.player_index)
 end
-
 
 function resmon.start_recreate_overlay_existing_site(player_index)
     local site = global.player_data[player_index].current_site
@@ -1443,7 +1447,6 @@ function resmon.end_overlay_creation_for_existing_site(player_index)
     site.is_overlay_being_created = false
     site.finalizing = true
     site.finalizing_since = game.tick
-
 end
 
 function resmon.update_force_members_ui(player)
@@ -1469,7 +1472,6 @@ function resmon.on_gui_click(event)
         resmon.on_click.toggle_bg(event)
     end
 end
-
 
 function resmon.update_players(event)
     -- At tick 0 on an MP server initial join, on_init may not have run
@@ -1513,7 +1515,6 @@ function resmon.update_players(event)
     end
 end
 
-
 function resmon.update_forces(event)
     -- At tick 0 on an MP server initial join, on_init may not have run
     if not global.force_data then return end
@@ -1525,17 +1526,15 @@ function resmon.update_forces(event)
         if not force_data then
             resmon.init_force(force)
         elseif force_data and force_data.ore_sites then
-
             for _, site in pairs(force_data.ore_sites) do
                 resmon.count_deposits(site, update_cycle)
             end
-
         end
     end
 end
 
 local function profiler_output(message, stopwatch)
-    local output = {"", message, " - ", stopwatch}
+    local output = { "", message, " - ", stopwatch }
 
     log(output)
     for _, player in pairs(game.players) do
@@ -1585,7 +1584,6 @@ function resmon.on_tick(event)
         on_tick_internal(event)
     end
 end
-
 
 function resmon.on_load()
     ore_tracker.on_load()

@@ -16,8 +16,8 @@
 
     Requires an `on_load` and `on_tick`, and relies on the setting
     'YARM-entities-per-tick' to control the rate of updates.
-
-]]--
+]]
+--
 
 ore_tracker = {
     -- Used for the entity updates spread over multiple ticks
@@ -50,7 +50,6 @@ function ore_tracker.has_entity(entity)
 
     return false
 end
-
 
 --*f Add an entity to the ore tracker
 --*r Returns the entity's tracker index;
@@ -95,13 +94,11 @@ function ore_tracker.add_entity(entity)
     return next_index
 end
 
-
 function ore_tracker.get_entity_cache()
     if not global.ore_tracker then return nil end
 
     return global.ore_tracker.entities
 end
-
 
 function ore_tracker.on_load()
     if not global.ore_tracker or not global.ore_tracker.entities then return end
@@ -111,7 +108,6 @@ function ore_tracker.on_load()
         ore_tracker.position_cache[key] = tracker_index
     end
 end
-
 
 local function update_entities_this_tick()
     if not global.ore_tracker or not global.ore_tracker.entities then return end
