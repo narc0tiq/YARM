@@ -937,7 +937,7 @@ function resmon.generate_summaries(force_data, player)
     for site in sites_in_player_order(force_data.ore_sites, player) do
         local is_endless = resmon.is_endless_resource(site.ore_type, game.entity_prototypes[site.ore_type]) and 1 or nil
         if not summary[site.ore_type] then summary[site.ore_type] = {
-            name = "Total " .. resmon.get_rich_text_for_products(game.entity_prototypes[site.ore_type]),
+            name = "Total " .. site.ore_type,
             ore_type = site.ore_type, ore_name = site.ore_name,
             initial_amount = 0, amount = 0, ore_per_minute = 0,
             etd_minutes = 0, is_summary = 1, entity_count = 0,
