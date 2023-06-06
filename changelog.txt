@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.9.7
+Date: 2023-06-06
+  Bugfixes:
+    - Update zh-CN translation (@luaotix)
+    - Remove some magic variables and make releasing/contributing easier (@mithaldu/@wchristian)
+---------------------------------------------------------------------------------------------------
 Version: 0.9.6
 Date: 2023-06-01
   Bugfixes:
