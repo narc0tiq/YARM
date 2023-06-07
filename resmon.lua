@@ -899,34 +899,39 @@ function resmon.update_ui(player)
 
     if not force_data or not force_data.ore_sites then return end
 
-    local column_count = 9
+    local column_count = 10
     local sites_gui = root.add { type = "table", column_count = column_count, name = "sites", style = "YARM_site_table" }
     sites_gui.style.horizontal_spacing = 5
     local column_alignments = sites_gui.style.column_alignments
-    column_alignments[1] = 'left'  -- rename button
-    column_alignments[2] = 'left'  -- site name
-    column_alignments[3] = 'right' -- remaining percent
-    column_alignments[4] = 'right' -- site amount
-    column_alignments[5] = 'left'  -- ore name
-    column_alignments[6] = 'right' -- ore per minute
-    column_alignments[7] = 'left'  -- ETD
-    column_alignments[8] = 'right' -- ETD
-    column_alignments[9] = 'left'  -- buttons
+    column_alignments[1] = 'left'  -- category labels
+    column_alignments[2] = 'left'  -- rename button
+    column_alignments[3] = 'left'  -- site name
+    column_alignments[4] = 'right' -- remaining percent
+    column_alignments[5] = 'right' -- site amount
+    column_alignments[6] = 'left'  -- ore name
+    column_alignments[7] = 'right' -- ore per minute
+    column_alignments[8] = 'left'  -- ETD
+    column_alignments[9] = 'right' -- ETD
+    column_alignments[10] = 'left' -- buttons
 
     local site_filter = resmon.filters[player_data.active_filter] or resmon.filters[FILTER_NONE]
     local summary = resmon.generate_summaries(force_data, player)
     local render_separator
+    local row = 1
     for summary_site in sites_in_player_order(summary, player) do
-        if resmon.print_single_site(site_filter, summary_site, player, sites_gui, player_data)
+        if resmon.print_single_site(site_filter, summary_site, player, sites_gui, player_data, row, column_count)
         then
             render_separator = 1
+            row = row + 1
         end
     end
     if render_separator then
         for _ = 1, column_count do sites_gui.add { type = "label" }.style.maximal_height = 6 end
     end
+    row = 1
     for site in sites_in_player_order(force_data.ore_sites, player) do
-        resmon.print_single_site(site_filter, site, player, sites_gui, player_data)
+        resmon.print_single_site(site_filter, site, player, sites_gui, player_data, row, column_count)
+        row = row + 1
     end
 end
 
@@ -1003,8 +1008,11 @@ function resmon.update_ui_filter_buttons(player, active_filter)
     end
 end
 
-function resmon.print_single_site(site_filter, site, player, sites_gui, player_data)
+function resmon.print_single_site(site_filter, site, player, sites_gui, player_data, row, column_count)
     if not site_filter(site, player) then return end
+
+    local caption = row ~= 1 and "" or { "YARM-category-" .. (site.is_summary and "totals" or "sites") }
+    sites_gui.add { type = "label", caption = caption }
 
     -- TODO: This shouldn't be part of printing the site! It cancels the deletion
     -- process after 2 seconds pass.
@@ -1014,7 +1022,6 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
 
     local color = resmon.site_color(site, player)
     local el = nil
-
 
     if not site.is_summary then
         if player_data.renaming_site == site.name then
@@ -1032,8 +1039,8 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
         el = sites_gui.add { type = "label", name = "YARM_label_site_" .. site.name, caption = site.name }
         el.style.font_color = color
     else
-        sites_gui.add { type = "label", caption = "" }
-        sites_gui.add { type = "label", caption = "" }
+        sites_gui.add { type = "label" }
+        sites_gui.add { type = "label" }
     end
 
     el = sites_gui.add { type = "label", name = "YARM_label_percent_" .. site.name,
