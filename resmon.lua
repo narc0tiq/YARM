@@ -230,6 +230,7 @@ function resmon.migrate_ore_sites(force_data)
         if not site.scanned_etd_minutes then site.scanned_etd_minutes = -1 end
         if not site.lifetime_etd_minutes then site.lifetime_etd_minutes = 1 / 0 end
         if not site.etd_is_lifetime then site.etd_is_lifetime = 1 end
+        if not site.etd_minutes_delta then site.etd_minutes_delta = 0 end
     end
 end
 
@@ -347,7 +348,7 @@ function resmon.add_resource(player_index, entity)
             etd_is_lifetime = 1,
             last_ore_check = nil,       -- used for ETD easing; initialized when needed,
             last_modified_amount = nil, -- but I wanted to _show_ that they can exist.
-
+            etd_minutes_delta = 0,
         }
     end
 
@@ -731,6 +732,7 @@ function resmon.finish_deposit_count(site)
     site.lifetime_ore_per_minute = -depleted / age_minutes
     site.lifetime_etd_minutes = site.amount / (-site.lifetime_ore_per_minute)
 
+    local old_etd_minutes = site.etd_minutes
     if site.scanned_etd_minutes == -1 or site.lifetime_etd_minutes < site.scanned_etd_minutes then
         site.ore_per_minute = site.lifetime_ore_per_minute
         site.etd_minutes = site.lifetime_etd_minutes
@@ -740,6 +742,7 @@ function resmon.finish_deposit_count(site)
         site.etd_minutes = site.scanned_etd_minutes
         site.etd_is_lifetime = 0
     end
+    site.etd_minutes_delta = site.etd_minutes - old_etd_minutes
 
     local entity_prototype = game.entity_prototypes[site.ore_type]
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
@@ -899,20 +902,21 @@ function resmon.update_ui(player)
 
     if not force_data or not force_data.ore_sites then return end
 
-    local column_count = 10
+    local column_count = 11
     local sites_gui = root.add { type = "table", column_count = column_count, name = "sites", style = "YARM_site_table" }
     sites_gui.style.horizontal_spacing = 5
     local column_alignments = sites_gui.style.column_alignments
-    column_alignments[1] = 'left'  -- category labels
-    column_alignments[2] = 'left'  -- rename button
-    column_alignments[3] = 'left'  -- site name
-    column_alignments[4] = 'right' -- remaining percent
-    column_alignments[5] = 'right' -- site amount
-    column_alignments[6] = 'left'  -- ore name
-    column_alignments[7] = 'right' -- ore per minute
-    column_alignments[8] = 'left'  -- ETD
-    column_alignments[9] = 'right' -- ETD
-    column_alignments[10] = 'left' -- buttons
+    column_alignments[1] = 'left'   -- category labels
+    column_alignments[2] = 'left'   -- rename button
+    column_alignments[3] = 'left'   -- site name
+    column_alignments[4] = 'right'  -- remaining percent
+    column_alignments[5] = 'right'  -- site amount
+    column_alignments[6] = 'left'   -- ore name
+    column_alignments[7] = 'right'  -- ore per minute
+    column_alignments[8] = 'left'   -- ETD
+    column_alignments[9] = 'right'  -- ETD
+    column_alignments[10] = 'right' -- ETD
+    column_alignments[11] = 'left'  -- buttons
 
     local site_filter = resmon.filters[player_data.active_filter] or resmon.filters[FILTER_NONE]
     local summary = resmon.generate_summaries(force_data, player)
@@ -952,6 +956,7 @@ function resmon.generate_summaries(force_data, player)
                 entity_count = 0,
                 remaining_permille = (is_endless and 0 or 1000),
                 site_count = 0,
+                etd_minutes_delta = 0,
             }
         end
 
@@ -968,6 +973,7 @@ function resmon.generate_summaries(force_data, player)
             (summary_site.ore_per_minute ~= 0 and summary_site.amount / (-summary_site.ore_per_minute))
             or (summary_site.amount == 0 and 0)
             or -1
+        summary_site.etd_minutes_delta = summary_site.etd_minutes_delta + (site.etd_minutes_delta or 0)
     end
     return summary
 end
@@ -1093,6 +1099,12 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
         caption = resmon.time_to_deplete(site) }
     el.style.font_color = color
 
+    local percent_delta = (100 * (site.etd_minutes_delta or 0) / (site.etd_minutes or 0)) / 5
+    local hue = percent_delta >= 0 and (1 / 3) or 0
+    local saturation = math.min(math.abs(percent_delta), 1)
+    local value = math.min(0.5 + math.abs(percent_delta / 2), 1)
+    el = sites_gui.add { type = "label", caption = (site.etd_minutes_delta or 0) >= 0 and "⬆" or "⬇" }
+    el.style.font_color = resmon.hsv2rgb(hue, saturation, value)
 
     local site_buttons = sites_gui.add { type = "flow", name = "YARM_site_buttons_" .. site.name,
         direction = "horizontal", style = "YARM_buttons_h" }
