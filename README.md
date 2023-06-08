@@ -22,10 +22,11 @@ ore entity in a patch (like using a blueprint).
         * Sites can be renamed at any time! The default name is just a
         suggestion.
 
-By default, YARM shows only sites that are about to expire (i.e., less than 10%
-of their initial amount remaining). There are buttons available to change the
-filter to either "no sites" (which never shows any sites at all!) or "all
-sites" (which never hides them).
+By default, YARM shows only sites that are about to expire, i.e. less than
+X hours runtime remaining. (Estimated through a combination of current speed and
+lifetime depletion.) In the mod settings this can be tuned. There are buttons
+available to change the filter to either "no sites" (which never shows any sites
+at all!) or "all sites" (which never hides them).
 
 Each site has some buttons associated with it:
 
