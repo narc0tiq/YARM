@@ -743,6 +743,7 @@ function resmon.finish_deposit_count(site)
         site.etd_is_lifetime = 0
     end
     site.etd_minutes_delta = site.etd_minutes - old_etd_minutes
+    site.etd_minutes_delta = (site.etd_minutes_delta ~= site.etd_minutes_delta) and 0 or site.etd_minutes_delta
 
     local entity_prototype = game.entity_prototypes[site.ore_type]
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
