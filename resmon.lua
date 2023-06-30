@@ -4,7 +4,7 @@ require "libs/ore_tracker"
 local mod_gui = require("mod-gui")
 local v = require "semver"
 
-local mod_version = "0.9.10"
+local mod_version = "0.9.11"
 
 -- Sanity: site names aren't allowed to be longer than this, to prevent them
 -- kicking the buttons off the right edge of the screen
