@@ -1151,7 +1151,7 @@ function resmon.time_to_deplete(site)
 
     local hours = math.floor(minutes / 60)
     local days = math.floor(hours / 24)
-    hours = hours % 60
+    hours = hours % 24
     minutes = minutes % 60
     local time_frag = { "YARM-etd-hour-fragment",
         { "", string.format("%02d", hours), ":", string.format("%02d", math.floor(minutes)) } }
