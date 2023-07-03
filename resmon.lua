@@ -870,6 +870,7 @@ end
 function resmon.update_ui(player)
     local player_data = global.player_data[player.index]
     local force_data = global.force_data[player.force.name]
+    local show_sites_summary = player.mod_settings["YARM-show-sites-summary"].value
 
     local frame_flow = mod_gui.get_frame_flow(player)
     local root = frame_flow.YARM_root
@@ -920,14 +921,16 @@ function resmon.update_ui(player)
     column_alignments[11] = 'left'  -- buttons
 
     local site_filter = resmon.filters[player_data.active_filter] or resmon.filters[FILTER_NONE]
-    local summary = resmon.generate_summaries(force_data, player)
     local render_separator
     local row = 1
-    for summary_site in sites_in_player_order(summary, player) do
-        if resmon.print_single_site(site_filter, summary_site, player, sites_gui, player_data, row, column_count)
-        then
-            render_separator = 1
-            row = row + 1
+    if show_sites_summary then
+        local summary = resmon.generate_summaries(force_data, player)
+        for summary_site in sites_in_player_order(summary, player) do
+            if resmon.print_single_site(site_filter, summary_site, player, sites_gui, player_data, row, column_count)
+            then
+                render_separator = 1
+                row = row + 1
+            end
         end
     end
     if render_separator then
