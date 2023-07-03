@@ -116,4 +116,11 @@ data:extend({
         default_value = "etd",
         allowed_values = { "alphabetical", "percent-remaining", "ore-type", "ore-count", "etd" }
     },
+    {
+        type = "bool-setting",
+        name = "YARM-show-sites-summary",
+        setting_type = "runtime-per-user",
+        order = "d",
+        default_value = true
+    }
 })
