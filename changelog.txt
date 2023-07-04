@@ -1,8 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.9.13
+Date: 2023-07-04
+  Changes:
+    - Added settings to show/hide sites summary (@MatrixDJ96 / Mattia Rombi)
+---------------------------------------------------------------------------------------------------
 Version: 0.9.12
 Date: 2023-07-02
   Changes:
-    - fix display of hours when time left is > 1 day
+    - fix display of hours when time left is > 1 day (@mithaldu/@wchristian)
 ---------------------------------------------------------------------------------------------------
 Version: 0.9.11
 Date: 2023-06-30
