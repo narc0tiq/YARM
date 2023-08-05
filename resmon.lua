@@ -548,28 +548,32 @@ function resmon.update_chart_tag(site)
         if not site.chart_tag then return end -- may fail if chunk is not currently charted accd. to @Bilka
     end
 
-    local display_value = format_number_si(site.amount)
-    if settings.global["YARM-adjust-for-productivity"].value then
-        local site_amount = display_value
-        local site_amount_w_productivity = format_number_si(site.amount *
-            (1 + site.force.mining_drill_productivity_bonus))
-        if settings.global["YARM-productivity-show-raw-and-adjusted"].value then
-            if settings.global["YARM-productivity-parentheses-part-is"].value == "adjusted" then
-                display_value = string.format("%s (%s)", site_amount, site_amount_w_productivity)
-            else
-                display_value = string.format("%s (%s)", site_amount_w_productivity, site_amount)
-            end
-        else
-            display_value = site_amount_w_productivity
-        end
-    end
-    local entity_prototype = game.entity_prototypes[site.ore_type]
-    if resmon.is_endless_resource(site.ore_type, entity_prototype) then
-        display_value = string.format("%.1f%%", site.remaining_permille / 10)
+    local display_value = resmon.generate_display_site_amount(site, nil, 1)
+    local prototype = game.entity_prototypes[site.ore_type]
+    site.chart_tag.text =
+        string.format('%s - %s %s', site.name, display_value, resmon.get_rich_text_for_products(prototype))
+    return
+end
+
+function resmon.generate_display_site_amount(site, player, short)
+    local format_func = short and format_number_si or format_number
+    if resmon.is_endless_resource(site.ore_type, game.entity_prototypes[site.ore_type]) then
+        return format_number(string.format("%.1f%%", site.remaining_permille / 10))
     end
 
-    site.chart_tag.text = string.format('%s - %s %s', site.name, display_value,
-        resmon.get_rich_text_for_products(entity_prototype))
+    local amount_display = format_func(site.amount)
+    if not settings.global["YARM-adjust-for-productivity"].value then return amount_display end
+
+    local amount_prod_display =
+        format_func(math.floor(site.amount * (1 + (player or site).force.mining_drill_productivity_bonus)))
+
+    if not settings.global["YARM-productivity-show-raw-and-adjusted"].value then
+        return amount_prod_display
+    elseif settings.global["YARM-productivity-parentheses-part-is"].value == "adjusted" then
+        return string.format("%s (%s)", amount_display, amount_prod_display)
+    else
+        return string.format("%s (%s)", amount_prod_display, amount_display)
+    end
 end
 
 function resmon.get_rich_text_for_products(proto)
@@ -1057,31 +1061,12 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
         caption = string.format("%.1f%%", site.remaining_permille / 10) }
     el.style.font_color = color
 
-    local display_amount = format_number(site.amount)
-    if settings.global["YARM-adjust-for-productivity"].value then
-        local site_amount = display_amount
-        local site_amount_w_productivity = format_number(math.floor(site.amount *
-            (1 + player.force.mining_drill_productivity_bonus)))
-        if settings.global["YARM-productivity-show-raw-and-adjusted"].value then
-            if settings.global["YARM-productivity-parentheses-part-is"].value == "adjusted" then
-                display_amount = string.format("%s (%s)", site_amount, site_amount_w_productivity)
-            else
-                display_amount = string.format("%s (%s)", site_amount_w_productivity, site_amount)
-            end
-        else
-            display_amount = site_amount_w_productivity
-        end
-        -- FIXME: honor the "show both" setting
-    end
-
-    local entity_prototype = game.entity_prototypes[site.ore_type]
-    if resmon.is_endless_resource(site.ore_type, entity_prototype) then
-        display_amount = { "YARM-infinite-entity-count", format_number(site.entity_count) }
-    end
+    local display_amount = resmon.generate_display_site_amount(site, player, nil)
     el = sites_gui.add { type = "label", name = "YARM_label_amount_" .. site.name,
         caption = display_amount }
     el.style.font_color = color
 
+    local entity_prototype = game.entity_prototypes[site.ore_type]
     el = sites_gui.add { type = "label", name = "YARM_label_ore_name_" .. site.name,
         caption = { "", resmon.get_rich_text_for_products(entity_prototype), " ", site.ore_name } }
     el.style.font_color = color
