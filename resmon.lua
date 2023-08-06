@@ -1072,7 +1072,7 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
     el.style.font_color = color
 
     el = sites_gui.add { type = "label", name = "YARM_label_ore_per_minute_" .. site.name,
-        caption = resmon.render_speed(site) }
+        caption = resmon.render_speed(site, player) }
     el.style.font_color = color
 
     if not site.is_summary then
@@ -1155,13 +1155,27 @@ function resmon.time_to_deplete(site)
     end
 end
 
-function resmon.render_speed(site)
-    if site.ore_per_minute < -0.1 then
-        return { "YARM-ore-per-minute", string.format("%.1f", site.ore_per_minute) }
-    elseif site.ore_per_minute < 0 then
-        return { "YARM-ore-per-minute", { "", "<", string.format("%.1f", -0.1) } }
+function resmon.render_speed(site, player)
+    local speed = site.ore_per_minute
+    local speed_display =
+        speed < -0.1 and format_number(string.format("%.1f", speed)) or
+        speed < 0 and { "", "<", string.format("%.1f", -0.1) } or ""
+
+    if not settings.global["YARM-adjust-for-productivity"].value then
+        return { "YARM-ore-per-minute", speed_display }
+    end
+
+    local speed_prod = speed * (1 + (player or site).force.mining_drill_productivity_bonus)
+    local speed_prod_display =
+        speed_prod < -0.1 and format_number(string.format("%.1f", speed_prod)) or
+        speed_prod < 0 and { "", "<", string.format("%.1f", -0.1) } or ""
+
+    if not settings.global["YARM-productivity-show-raw-and-adjusted"].value then
+        return { "YARM-ore-per-minute", speed_prod_display }
+    elseif settings.global["YARM-productivity-parentheses-part-is"].value == "adjusted" then
+        return { "", speed_display, " (", speed_prod_display, ")" }
     else
-        return ""
+        return { "", speed_prod_display, " (", speed_display, ")" }
     end
 end
 
