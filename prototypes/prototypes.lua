@@ -160,6 +160,7 @@ end
 make_filter_buttons('YARM_filter_none', 48)
 make_filter_buttons('YARM_filter_warnings', 16)
 make_filter_buttons('YARM_filter_all', 32)
+make_filter_buttons('YARM_toggle_surfacesplit', 64)
 make_filter_buttons('YARM_toggle_bg', 80)
 
 default_gui.YARM_overlay_site = {
