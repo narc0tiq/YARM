@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.10.1
+Date: 2023-08-06
+  Changes:
+    - add a button to split sites by surface
+    - update background toggle button style when clicking
+---------------------------------------------------------------------------------------------------
 Version: 0.10.0
 Date: 2023-08-06
   Changes:
