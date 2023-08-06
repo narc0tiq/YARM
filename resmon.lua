@@ -557,8 +557,10 @@ end
 
 function resmon.generate_display_site_amount(site, player, short)
     local format_func = short and format_number_si or format_number
-    if resmon.is_endless_resource(site.ore_type, game.entity_prototypes[site.ore_type]) then
-        return format_number(string.format("%.1f%%", site.remaining_permille / 10))
+    local entity_prototype = game.entity_prototypes[site.ore_type]
+    if resmon.is_endless_resource(site.ore_type, entity_prototype) then
+        local val = 100 * site.amount / (entity_prototype.normal_resource_amount * site.entity_count)
+        return site.entity_count .. " x " .. format_number(string.format("%.1f%%", val))
     end
 
     local amount_display = format_func(site.amount)
@@ -715,26 +717,36 @@ function resmon.finish_deposit_count(site)
         site.scanned_ore_per_minute = site.scanned_ore_per_minute + diff_step                        --
     end
 
+    local entity_prototype = game.entity_prototypes[site.ore_type]
+    local is_endless = resmon.is_endless_resource(site.ore_type, entity_prototype)
+    local minimum = is_endless and (site.entity_count * entity_prototype.minimum_resource_amount) or 0
+    local amount_left = site.amount - minimum
+
     site.scanned_etd_minutes =
-        (site.scanned_ore_per_minute ~= 0 and site.amount / (-site.scanned_ore_per_minute))
-        or (site.amount == 0 and 0)
+        (site.scanned_ore_per_minute ~= 0 and amount_left / (-site.scanned_ore_per_minute))
+        or (amount_left == 0 and 0)
         or -1
 
     site.amount = site.update_amount
+    amount_left = site.amount - minimum
+    site.amount_left = amount_left
     if settings.global["YARM-adjust-over-percentage-sites"].value then
         site.initial_amount = math.max(site.initial_amount, site.amount)
     end
     site.last_ore_check = game.tick
 
-    site.remaining_permille = math.floor(site.amount * 1000 / site.initial_amount)
+    site.remaining_permille = resmon.calc_remaining_permille(site)
 
     local age_minutes = (game.tick - site.added_at) / 3600
     local depleted = site.initial_amount - site.amount
     site.lifetime_ore_per_minute = -depleted / age_minutes
-    site.lifetime_etd_minutes = site.amount / (-site.lifetime_ore_per_minute)
+    site.lifetime_etd_minutes =
+        (site.lifetime_ore_per_minute ~= 0 and amount_left / (-site.lifetime_ore_per_minute))
+        or (amount_left == 0 and 0)
+        or -1
 
     local old_etd_minutes = site.etd_minutes
-    if site.scanned_etd_minutes == -1 or site.lifetime_etd_minutes < site.scanned_etd_minutes then
+    if site.scanned_etd_minutes == -1 or site.lifetime_etd_minutes <= site.scanned_etd_minutes then
         site.ore_per_minute = site.lifetime_ore_per_minute
         site.etd_minutes = site.lifetime_etd_minutes
         site.etd_is_lifetime = 1
@@ -745,16 +757,6 @@ function resmon.finish_deposit_count(site)
     end
     site.etd_minutes_delta = site.etd_minutes - old_etd_minutes
     site.etd_minutes_delta = (site.etd_minutes_delta ~= site.etd_minutes_delta) and 0 or site.etd_minutes_delta
-
-    local entity_prototype = game.entity_prototypes[site.ore_type]
-    if resmon.is_endless_resource(site.ore_type, entity_prototype) then
-        local normal_resource_amount = entity_prototype.normal_resource_amount
-
-        local site_normal = site.entity_count * normal_resource_amount
-        local average_yield_permille = site.amount * 1000 / site_normal
-
-        site.remaining_permille = math.floor(site.entity_count * average_yield_permille)
-    end
     resmon.update_chart_tag(site)
 
     script.raise_event(on_site_updated, {
@@ -766,6 +768,15 @@ function resmon.finish_deposit_count(site)
         ore_type           = site.ore_type,
         etd_minutes        = site.etd_minutes,
     })
+end
+
+function resmon.calc_remaining_permille(site)
+    local entity_prototype = game.entity_prototypes[site.ore_type]
+    local minimum = resmon.is_endless_resource(site.ore_type, entity_prototype)
+        and (site.entity_count * entity_prototype.minimum_resource_amount) or 0
+    local amount_left = site.amount - minimum
+    local initial_amount_available = site.initial_amount - minimum
+    return initial_amount_available > 0 and math.floor(amount_left * 1000 / initial_amount_available) or 0
 end
 
 local function site_comparator_default(left, right)
@@ -947,7 +958,8 @@ end
 function resmon.generate_summaries(force_data, player)
     local summary = {}
     for site in sites_in_player_order(force_data.ore_sites, player) do
-        local is_endless = resmon.is_endless_resource(site.ore_type, game.entity_prototypes[site.ore_type]) and 1 or nil
+        local entity_prototype = game.entity_prototypes[site.ore_type]
+        local is_endless = resmon.is_endless_resource(site.ore_type, entity_prototype) and 1 or nil
         if not summary[site.ore_type] then
             summary[site.ore_type] = {
                 name = "Total " .. site.ore_type,
@@ -970,13 +982,13 @@ function resmon.generate_summaries(force_data, player)
         summary_site.initial_amount = summary_site.initial_amount + site.initial_amount
         summary_site.amount = summary_site.amount + site.amount
         summary_site.ore_per_minute = summary_site.ore_per_minute + site.ore_per_minute
-        summary_site.remaining_permille = is_endless and (summary_site.remaining_permille + site.remaining_permille)
-            or math.floor(1000 * summary_site.amount / summary_site.initial_amount)
         summary_site.entity_count = summary_site.entity_count + site.entity_count
-
+        summary_site.remaining_permille = resmon.calc_remaining_permille(summary_site)
+        local minimum = is_endless and (summary_site.entity_count * entity_prototype.minimum_resource_amount) or 0
+        local amount_left = summary_site.amount - minimum
         summary_site.etd_minutes =
-            (summary_site.ore_per_minute ~= 0 and summary_site.amount / (-summary_site.ore_per_minute))
-            or (summary_site.amount == 0 and 0)
+            (summary_site.ore_per_minute ~= 0 and amount_left / (-summary_site.ore_per_minute))
+            or (amount_left == 0 and 0)
             or -1
         summary_site.etd_minutes_delta = summary_site.etd_minutes_delta + (site.etd_minutes_delta or 0)
     end
@@ -1145,7 +1157,7 @@ function resmon.time_to_deplete(site)
         return { "", { "YARM-etd-day-fragment", days }, " ", time_frag }
     elseif minutes > 0 then
         return time_frag
-    elseif site.amount == 0 then
+    elseif site.amount_left == 0 then
         return { "YARM-etd-now" }
     else
         return { "YARM-etd-under-1m" }
@@ -1153,27 +1165,36 @@ function resmon.time_to_deplete(site)
 end
 
 function resmon.render_speed(site, player)
+    local entity_prototype = game.entity_prototypes[site.ore_type]
+    if resmon.is_endless_resource(site.ore_type, entity_prototype) then
+        local speed_display = (100 * site.ore_per_minute) / (site.entity_count * entity_prototype.normal_resource_amount)
+        return resmon.speed_to_human("%.3f%%", speed_display, -0.001)
+    end
+
     local speed = site.ore_per_minute
-    local speed_display =
-        speed < -0.1 and format_number(string.format("%.1f", speed)) or
-        speed < 0 and { "", "<", string.format("%.1f", -0.1) } or ""
+    local speed_display = resmon.speed_to_human("%.1f", speed, -0.1)
 
     if not settings.global["YARM-adjust-for-productivity"].value then
-        return { "YARM-ore-per-minute", speed_display }
+        return speed_display
     end
 
     local speed_prod = speed * (1 + (player or site).force.mining_drill_productivity_bonus)
-    local speed_prod_display =
-        speed_prod < -0.1 and format_number(string.format("%.1f", speed_prod)) or
-        speed_prod < 0 and { "", "<", string.format("%.1f", -0.1) } or ""
+    local speed_prod_display = resmon.speed_to_human("%.1f", speed_prod, -0.1)
 
     if not settings.global["YARM-productivity-show-raw-and-adjusted"].value then
-        return { "YARM-ore-per-minute", speed_prod_display }
+        return speed_prod_display
     elseif settings.global["YARM-productivity-parentheses-part-is"].value == "adjusted" then
         return { "", speed_display, " (", speed_prod_display, ")" }
     else
         return { "", speed_prod_display, " (", speed_display, ")" }
     end
+end
+
+function resmon.speed_to_human(format, speed, limit)
+    local speed_display =
+        speed < limit and { "YARM-ore-per-minute", format_number(string.format(format, speed)) } or
+        speed < 0 and { "YARM-ore-per-minute", { "", "<", string.format(format, -0.1) } } or ""
+    return speed_display
 end
 
 function resmon.site_color(site, player)
