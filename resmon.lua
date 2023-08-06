@@ -1394,6 +1394,8 @@ function resmon.on_click.toggle_bg(event)
     if not root then return end
     root.style = (root.style.name == "YARM_outer_frame_no_border_bg")
         and "YARM_outer_frame_no_border" or "YARM_outer_frame_no_border_bg"
+    local button = root.buttons.YARM_toggle_bg
+    button.style = button.style.name == "YARM_toggle_bg" and "YARM_toggle_bg_on" or "YARM_toggle_bg"
     resmon.update_ui(player)
 end
 
