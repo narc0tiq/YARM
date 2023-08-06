@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.10.0
+Date: 2023-08-06
+  Changes:
+    - integrate prodictivity adjustment into speed rendering (@mithaldu/@wchristian)
+    - rework display of infinite sources (@mithaldu/@wchristian)
+---------------------------------------------------------------------------------------------------
 Version: 0.9.13
 Date: 2023-07-04
   Changes:
