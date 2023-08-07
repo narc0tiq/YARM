@@ -88,6 +88,15 @@ data:extend({
         order = "g",
         default_value = "false",
     },
+    {
+        type = "double-setting",
+        name = "YARM-nominal-ups",
+        setting_type = "runtime-global",
+        order = "h",
+        default_value = 60,
+        minimum_value = 0,
+        maximum_value = 10000000,
+    },
 
     -- Per user settings
     {

@@ -1197,7 +1197,8 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
 end
 
 function resmon.time_to_deplete(site)
-    local minutes = site.etd_minutes or -1
+    local ups_adjust = settings.global["YARM-nominal-ups"].value / 60
+    local minutes = (site.etd_minutes and (site.etd_minutes / ups_adjust)) or -1
 
     if minutes == -1 or minutes == math.huge then return { "YARM-etd-never" } end
 
@@ -1220,13 +1221,15 @@ function resmon.time_to_deplete(site)
 end
 
 function resmon.render_speed(site, player)
+    local ups_adjust = settings.global["YARM-nominal-ups"].value / 60
+    local speed = ups_adjust * site.ore_per_minute
+
     local entity_prototype = game.entity_prototypes[site.ore_type]
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
-        local speed_display = (100 * site.ore_per_minute) / (site.entity_count * entity_prototype.normal_resource_amount)
+        local speed_display = (100 * speed) / (site.entity_count * entity_prototype.normal_resource_amount)
         return resmon.speed_to_human("%.3f%%", speed_display, -0.001)
     end
 
-    local speed = site.ore_per_minute
     local speed_display = resmon.speed_to_human("%.1f", speed, -0.1)
 
     if not settings.global["YARM-adjust-for-productivity"].value then
