@@ -928,23 +928,22 @@ function resmon.update_ui(player)
 
     if not force_data or not force_data.ore_sites then return end
 
-    local column_count = 13
+    local column_count = 12
     local sites_gui = root.add { type = "table", column_count = column_count, name = "sites", style = "YARM_site_table" }
     sites_gui.style.horizontal_spacing = 5
     local column_alignments = sites_gui.style.column_alignments
-    column_alignments[1] = 'left'   -- category labels
-    column_alignments[2] = 'left'   -- rename button
-    column_alignments[3] = 'left'   -- surface name
-    column_alignments[4] = 'left'   -- site name
-    column_alignments[5] = 'right'  -- remaining percent
-    column_alignments[6] = 'right'  -- site amount
-    column_alignments[7] = 'left'   -- ore name
-    column_alignments[8] = 'right'  -- ore per minute
-    column_alignments[9] = 'left'   -- ETD
-    column_alignments[10] = 'right' -- ETD
-    column_alignments[11] = 'left'  -- ETD
-    column_alignments[12] = 'left'  -- ETD
-    column_alignments[13] = 'left'  -- buttons
+    column_alignments[1] = 'left'    -- rename button
+    column_alignments[2] = 'left'    -- surface name
+    column_alignments[3] = 'left'    -- site name
+    column_alignments[4] = 'right'   -- remaining percent
+    column_alignments[5] = 'right'   -- site amount
+    column_alignments[6] = 'left'    -- ore name
+    column_alignments[7] = 'right'   -- ore per minute
+    column_alignments[8] = 'left'    -- ETD
+    column_alignments[9] = 'right'   -- ETD
+    column_alignments[10] = 'left'   -- ETD
+    column_alignments[11] = 'center' -- ETD
+    column_alignments[12] = 'left'   -- buttons
 
     local site_filter = resmon.filters[player_data.active_filter] or resmon.filters[FILTER_NONE]
     local surface_filters = { false }
@@ -957,32 +956,39 @@ function resmon.update_ui(player)
     for _, surface_filter in pairs(surface_filters) do
         local sites = resmon.get_sites_on_surface(force_data, player, surface_filter)
         if next(sites) then
-            surface_num = surface_num + 1
-            if surface_num > 1 and rendered_last then
-                for _ = 1, column_count do sites_gui.add { type = "line" } end
-                for _ = 1, column_count do sites_gui.add { type = "line" } end
-                for _ = 1, column_count do sites_gui.add { type = "line" } end
-            end
-            rendered_last = false
-
-            local render_separator
-            local row = 1
+            local will_render_sites
+            local will_render_totals
             local summary = show_sites_summary and resmon.generate_summaries(player, sites) or {}
             for summary_site in sites_in_player_order(summary, player) do
+                if site_filter(summary_site, player) then will_render_totals = true end
+            end
+            for _, site in pairs(sites) do
+                if site_filter(site, player) then will_render_sites = true end
+            end
+
+            surface_num = surface_num + 1
+            if surface_num > 1 and rendered_last and will_render_totals and will_render_sites then
+                for _ = 1, column_count do sites_gui.add { type = "line" } end
+                for _ = 1, column_count do sites_gui.add { type = "line" } end
+                for _ = 1, column_count do sites_gui.add { type = "line" } end
+            end
+            rendered_last = will_render_totals and will_render_sites
+
+            local row = 1
+            for summary_site in sites_in_player_order(summary, player) do
                 if resmon.print_single_site(site_filter, summary_site, player, sites_gui, player_data, row) then
-                    render_separator = 1
                     row = row + 1
-                    rendered_last = true
                 end
             end
-            if render_separator then
-                for _ = 1, column_count do sites_gui.add { type = "label" }.style.maximal_height = 5 end
+            if will_render_totals and will_render_sites then
+                for _ = 1, 2 do sites_gui.add { type = "label" }.style.maximal_height = 5 end
+                sites_gui.add { type = "label", caption = { "YARM-category-sites" } }
+                for _ = 4, column_count do sites_gui.add { type = "label" }.style.maximal_height = 5 end
             end
             row = 1
             for _, site in pairs(sites) do
                 if resmon.print_single_site(site_filter, site, player, sites_gui, player_data, row) then
                     row = row + 1
-                    rendered_last = true
                 end
             end
         end
@@ -1094,9 +1100,6 @@ end
 function resmon.print_single_site(site_filter, site, player, sites_gui, player_data, row)
     if not site_filter(site, player) then return end
 
-    local caption = row ~= 1 and "" or { "YARM-category-" .. (site.is_summary and "totals" or "sites") }
-    sites_gui.add { type = "label", caption = caption }
-
     -- TODO: This shouldn't be part of printing the site! It cancels the deletion
     -- process after 2 seconds pass.
     if site.deleting_since and site.deleting_since + 120 < game.tick then
@@ -1129,10 +1132,11 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
         el.style.font_color = color
     else
         sites_gui.add { type = "label" }
-        sites_gui.add { type = "label", caption =
-            (root.buttons.YARM_toggle_surfacesplit.style.name == "YARM_toggle_surfacesplit_on" and row == 1 and site.surface.name) or
-            "" }
-        sites_gui.add { type = "label" }
+        local surface = (root.buttons.YARM_toggle_surfacesplit.style.name == "YARM_toggle_surfacesplit_on" and row == 1)
+            and site.surface.name or ""
+        sites_gui.add { type = "label", caption = surface }
+        local totals = row == 1 and { "YARM-category-totals" } or ""
+        sites_gui.add { type = "label", caption = totals }
     end
 
     el = sites_gui.add { type = "label", name = "YARM_label_percent_" .. site.name,
