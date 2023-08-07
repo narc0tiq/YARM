@@ -76,8 +76,8 @@ function resmon.init_player(player_index)
     if root and root.buttons.YARM_expando then root.destroy() end
 
     -- migration v0.TBD: add toggle bg button
-    if root and not root.buttons.YARM_toggle_bg then root.destroy() end
-    if root and not root.buttons.YARM_toggle_surfacesplit then root.destroy() end
+    if root and root.buttons and not root.buttons.YARM_toggle_bg then root.destroy() end
+    if root and root.buttons and not root.buttons.YARM_toggle_surfacesplit then root.destroy() end
 
     if not global.player_data then global.player_data = {} end
 
