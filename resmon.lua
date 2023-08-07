@@ -942,33 +942,49 @@ function resmon.update_ui(player)
         surface_filters = resmon.surface_filters()
     end
     local surface_num = 0
+    local rendered_last = false
 
     for _, surface_filter in pairs(surface_filters) do
-        local render_separator
-        local row = 1
-        surface_num = surface_num + 1
-        local summary = show_sites_summary and resmon.generate_summaries(force_data, player, surface_filter) or {}
-        if surface_num > 1 and next(summary) ~= nil then
-            for _ = 1, column_count do sites_gui.add { type = "line" }.style.maximal_height = 6 end
-        end
-        for summary_site in sites_in_player_order(summary, player) do
-            if resmon.print_single_site(site_filter, summary_site, player, sites_gui, player_data, row, column_count)
-            then
-                render_separator = 1
-                row = row + 1
+        local sites = resmon.get_sites_on_surface(force_data, player, surface_filter)
+        if next(sites) then
+            surface_num = surface_num + 1
+            if surface_num > 1 and rendered_last then
+                for _ = 1, column_count do sites_gui.add { type = "line" }.style.maximal_height = 6 end
             end
-        end
-        if render_separator then
-            for _ = 1, column_count do sites_gui.add { type = "label" }.style.maximal_height = 6 end
-        end
-        row = 1
-        for site in sites_in_player_order(force_data.ore_sites, player) do
-            if resmon.site_is_on_surface(site, surface_filter) then
-                resmon.print_single_site(site_filter, site, player, sites_gui, player_data, row, column_count)
-                row = row + 1
+            rendered_last = false
+
+            local render_separator
+            local row = 1
+            local summary = show_sites_summary and resmon.generate_summaries(player, sites) or {}
+            for summary_site in sites_in_player_order(summary, player) do
+                if resmon.print_single_site(site_filter, summary_site, player, sites_gui, player_data, row) then
+                    render_separator = 1
+                    row = row + 1
+                    rendered_last = true
+                end
+            end
+            if render_separator then
+                for _ = 1, column_count do sites_gui.add { type = "label" }.style.maximal_height = 6 end
+            end
+            row = 1
+            for _, site in pairs(sites) do
+                if resmon.print_single_site(site_filter, site, player, sites_gui, player_data, row) then
+                    row = row + 1
+                    rendered_last = true
+                end
             end
         end
     end
+end
+
+function resmon.get_sites_on_surface(force_data, player, surface_filter)
+    local filtered_sites = {}
+    for site in sites_in_player_order(force_data.ore_sites, player) do
+        if resmon.site_is_on_surface(site, surface_filter) then
+            table.insert(filtered_sites, site)
+        end
+    end
+    return filtered_sites
 end
 
 function resmon.surface_filters()
@@ -978,52 +994,49 @@ function resmon.surface_filters()
 end
 
 function resmon.site_is_on_surface(site, surface_filter)
-    local show = (not surface_filter and true) or (site.surface.name == surface_filter and true or false)
-    return show
+    return not surface_filter or site.surface.name == surface_filter
 end
 
-function resmon.generate_summaries(force_data, player, surface_filter)
+function resmon.generate_summaries(player, sites)
     local summary = {}
-    for site in sites_in_player_order(force_data.ore_sites, player) do
-        if resmon.site_is_on_surface(site, surface_filter) then
-            local entity_prototype = game.entity_prototypes[site.ore_type]
-            local is_endless = resmon.is_endless_resource(site.ore_type, entity_prototype) and 1 or nil
-            local root = mod_gui.get_frame_flow(player).YARM_root
-            local summary_id = site.ore_type ..
-                (root.buttons.YARM_toggle_surfacesplit.style.name == "YARM_toggle_surfacesplit_on" and site.surface.name or "")
-            if not summary[summary_id] then
-                summary[summary_id] = {
-                    name = "Total " .. summary_id,
-                    ore_type = site.ore_type,
-                    ore_name = site.ore_name,
-                    initial_amount = 0,
-                    amount = 0,
-                    ore_per_minute = 0,
-                    etd_minutes = 0,
-                    is_summary = 1,
-                    entity_count = 0,
-                    remaining_permille = (is_endless and 0 or 1000),
-                    site_count = 0,
-                    etd_minutes_delta = 0,
-                    surface = site.surface,
-                }
-            end
-
-            local summary_site = summary[summary_id]
-            summary_site.site_count = summary_site.site_count + 1
-            summary_site.initial_amount = summary_site.initial_amount + site.initial_amount
-            summary_site.amount = summary_site.amount + site.amount
-            summary_site.ore_per_minute = summary_site.ore_per_minute + site.ore_per_minute
-            summary_site.entity_count = summary_site.entity_count + site.entity_count
-            summary_site.remaining_permille = resmon.calc_remaining_permille(summary_site)
-            local minimum = is_endless and (summary_site.entity_count * entity_prototype.minimum_resource_amount) or 0
-            local amount_left = summary_site.amount - minimum
-            summary_site.etd_minutes =
-                (summary_site.ore_per_minute ~= 0 and amount_left / (-summary_site.ore_per_minute))
-                or (amount_left == 0 and 0)
-                or -1
-            summary_site.etd_minutes_delta = summary_site.etd_minutes_delta + (site.etd_minutes_delta or 0)
+    for _, site in pairs(sites) do
+        local entity_prototype = game.entity_prototypes[site.ore_type]
+        local is_endless = resmon.is_endless_resource(site.ore_type, entity_prototype) and 1 or nil
+        local root = mod_gui.get_frame_flow(player).YARM_root
+        local summary_id = site.ore_type ..
+            (root.buttons.YARM_toggle_surfacesplit.style.name == "YARM_toggle_surfacesplit_on" and site.surface.name or "")
+        if not summary[summary_id] then
+            summary[summary_id] = {
+                name = "Total " .. summary_id,
+                ore_type = site.ore_type,
+                ore_name = site.ore_name,
+                initial_amount = 0,
+                amount = 0,
+                ore_per_minute = 0,
+                etd_minutes = 0,
+                is_summary = 1,
+                entity_count = 0,
+                remaining_permille = (is_endless and 0 or 1000),
+                site_count = 0,
+                etd_minutes_delta = 0,
+                surface = site.surface,
+            }
         end
+
+        local summary_site = summary[summary_id]
+        summary_site.site_count = summary_site.site_count + 1
+        summary_site.initial_amount = summary_site.initial_amount + site.initial_amount
+        summary_site.amount = summary_site.amount + site.amount
+        summary_site.ore_per_minute = summary_site.ore_per_minute + site.ore_per_minute
+        summary_site.entity_count = summary_site.entity_count + site.entity_count
+        summary_site.remaining_permille = resmon.calc_remaining_permille(summary_site)
+        local minimum = is_endless and (summary_site.entity_count * entity_prototype.minimum_resource_amount) or 0
+        local amount_left = summary_site.amount - minimum
+        summary_site.etd_minutes =
+            (summary_site.ore_per_minute ~= 0 and amount_left / (-summary_site.ore_per_minute))
+            or (amount_left == 0 and 0)
+            or -1
+        summary_site.etd_minutes_delta = summary_site.etd_minutes_delta + (site.etd_minutes_delta or 0)
     end
     return summary
 end
@@ -1064,7 +1077,7 @@ function resmon.update_ui_filter_buttons(player, active_filter)
     end
 end
 
-function resmon.print_single_site(site_filter, site, player, sites_gui, player_data, row, column_count)
+function resmon.print_single_site(site_filter, site, player, sites_gui, player_data, row)
     if not site_filter(site, player) then return end
 
     local caption = row ~= 1 and "" or { "YARM-category-" .. (site.is_summary and "totals" or "sites") }
@@ -1180,7 +1193,7 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
         end
     end
 
-    return 1
+    return true
 end
 
 function resmon.time_to_deplete(site)
