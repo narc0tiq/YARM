@@ -232,6 +232,7 @@ function resmon.migrate_ore_sites(force_data)
         if not site.lifetime_etd_minutes then site.lifetime_etd_minutes = 1 / 0 end
         if not site.etd_is_lifetime then site.etd_is_lifetime = 1 end
         if not site.etd_minutes_delta then site.etd_minutes_delta = 0 end
+        if not site.ore_per_minute_delta then site.ore_per_minute_delta = 0 end
     end
 end
 
@@ -350,6 +351,7 @@ function resmon.add_resource(player_index, entity)
             last_ore_check = nil,       -- used for ETD easing; initialized when needed,
             last_modified_amount = nil, -- but I wanted to _show_ that they can exist.
             etd_minutes_delta = 0,
+            ore_per_minute_delta = 0,
         }
     end
 
@@ -747,6 +749,7 @@ function resmon.finish_deposit_count(site)
         or -1
 
     local old_etd_minutes = site.etd_minutes
+    local old_ore_per_minute = site.ore_per_minute
     if site.scanned_etd_minutes == -1 or site.lifetime_etd_minutes <= site.scanned_etd_minutes then
         site.ore_per_minute = site.lifetime_ore_per_minute
         site.etd_minutes = site.lifetime_etd_minutes
@@ -757,7 +760,13 @@ function resmon.finish_deposit_count(site)
         site.etd_is_lifetime = 0
     end
     site.etd_minutes_delta = site.etd_minutes - old_etd_minutes
+    site.ore_per_minute_delta = site.ore_per_minute - old_ore_per_minute
+
+    -- these are just to prevent errant NaNs
     site.etd_minutes_delta = (site.etd_minutes_delta ~= site.etd_minutes_delta) and 0 or site.etd_minutes_delta
+    site.ore_per_minute_delta =
+        (site.ore_per_minute_delta ~= site.ore_per_minute_delta) and 0 or site.ore_per_minute_delta
+
     resmon.update_chart_tag(site)
 
     script.raise_event(on_site_updated, {
@@ -919,7 +928,7 @@ function resmon.update_ui(player)
 
     if not force_data or not force_data.ore_sites then return end
 
-    local column_count = 12
+    local column_count = 13
     local sites_gui = root.add { type = "table", column_count = column_count, name = "sites", style = "YARM_site_table" }
     sites_gui.style.horizontal_spacing = 5
     local column_alignments = sites_gui.style.column_alignments
@@ -933,8 +942,9 @@ function resmon.update_ui(player)
     column_alignments[8] = 'right'  -- ore per minute
     column_alignments[9] = 'left'   -- ETD
     column_alignments[10] = 'right' -- ETD
-    column_alignments[11] = 'right' -- ETD
-    column_alignments[12] = 'left'  -- buttons
+    column_alignments[11] = 'left'  -- ETD
+    column_alignments[12] = 'left'  -- ETD
+    column_alignments[13] = 'left'  -- buttons
 
     local site_filter = resmon.filters[player_data.active_filter] or resmon.filters[FILTER_NONE]
     local surface_filters = { false }
@@ -949,7 +959,9 @@ function resmon.update_ui(player)
         if next(sites) then
             surface_num = surface_num + 1
             if surface_num > 1 and rendered_last then
-                for _ = 1, column_count do sites_gui.add { type = "line" }.style.maximal_height = 6 end
+                for _ = 1, column_count do sites_gui.add { type = "line" } end
+                for _ = 1, column_count do sites_gui.add { type = "line" } end
+                for _ = 1, column_count do sites_gui.add { type = "line" } end
             end
             rendered_last = false
 
@@ -964,7 +976,7 @@ function resmon.update_ui(player)
                 end
             end
             if render_separator then
-                for _ = 1, column_count do sites_gui.add { type = "label" }.style.maximal_height = 6 end
+                for _ = 1, column_count do sites_gui.add { type = "label" }.style.maximal_height = 5 end
             end
             row = 1
             for _, site in pairs(sites) do
@@ -1019,6 +1031,7 @@ function resmon.generate_summaries(player, sites)
                 remaining_permille = (is_endless and 0 or 1000),
                 site_count = 0,
                 etd_minutes_delta = 0,
+                ore_per_minute_delta = 0,
                 surface = site.surface,
             }
         end
@@ -1037,6 +1050,7 @@ function resmon.generate_summaries(player, sites)
             or (amount_left == 0 and 0)
             or -1
         summary_site.etd_minutes_delta = summary_site.etd_minutes_delta + (site.etd_minutes_delta or 0)
+        summary_site.ore_per_minute_delta = summary_site.ore_per_minute_delta + (site.ore_per_minute_delta or 0)
     end
     return summary
 end
@@ -1139,6 +1153,14 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
         caption = resmon.render_speed(site, player) }
     el.style.font_color = color
 
+    resmon.render_arrow_for_percent_delta(sites_gui, -1 * site.ore_per_minute_delta, site.ore_per_minute)
+
+    el = sites_gui.add { type = "label", name = "YARM_label_etd_" .. site.name,
+        caption = resmon.time_to_deplete(site) }
+    el.style.font_color = color
+
+    resmon.render_arrow_for_percent_delta(sites_gui, site.etd_minutes_delta, site.etd_minutes)
+
     if not site.is_summary then
         local etd_icon = site.etd_is_lifetime == 1 and "[img=quantity-time]" or "[img=utility/played_green]"
         el = sites_gui.add { type = "label", name = "YARM_label_etd_header_" .. site.name,
@@ -1147,17 +1169,6 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
     else
         sites_gui.add { type = "label", caption = "" }
     end
-
-    el = sites_gui.add { type = "label", name = "YARM_label_etd_" .. site.name,
-        caption = resmon.time_to_deplete(site) }
-    el.style.font_color = color
-
-    local percent_delta = (100 * (site.etd_minutes_delta or 0) / (site.etd_minutes or 0)) / 5
-    local hue = percent_delta >= 0 and (1 / 3) or 0
-    local saturation = math.min(math.abs(percent_delta), 1)
-    local value = math.min(0.5 + math.abs(percent_delta / 2), 1)
-    el = sites_gui.add { type = "label", caption = (site.etd_minutes_delta or 0) >= 0 and "⬆" or "⬇" }
-    el.style.font_color = resmon.hsv2rgb(hue, saturation, value)
 
     local site_buttons = sites_gui.add { type = "flow", name = "YARM_site_buttons_" .. site.name,
         direction = "horizontal", style = "YARM_buttons_h" }
@@ -1194,6 +1205,15 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
     end
 
     return true
+end
+
+function resmon.render_arrow_for_percent_delta(sites_gui, delta, amount)
+    local percent_delta = (100 * (delta or 0) / (amount or 0)) / 5
+    local hue = percent_delta >= 0 and (1 / 3) or 0
+    local saturation = math.min(math.abs(percent_delta), 1)
+    local value = math.min(0.5 + math.abs(percent_delta / 2), 1)
+    sites_gui.add({ type = "label", caption = (amount == 0 and "") or (delta or 0) >= 0 and "⬆" or "⬇" }).style.font_color =
+        resmon.hsv2rgb(hue, saturation, value)
 end
 
 function resmon.time_to_deplete(site)
