@@ -71,13 +71,16 @@ function resmon.init_player(player_index)
     local old_root = player.gui.left.YARM_root
     if old_root and old_root.valid then old_root.destroy() end
 
-    -- migration v0.8.0: expando now a set of filter buttons, destroy the root and recreate later
     local root = mod_gui.get_frame_flow(player).YARM_root
-    if root and root.buttons.YARM_expando then root.destroy() end
-
-    -- migration v0.TBD: add toggle bg button
-    if root and root.buttons and not root.buttons.YARM_toggle_bg then root.destroy() end
-    if root and root.buttons and not root.buttons.YARM_toggle_surfacesplit then root.destroy() end
+    if root and root.buttons and (
+        -- migration v0.8.0: expando now a set of filter buttons, destroy the root and recreate later
+            root.buttons.YARM_expando
+            -- migration v0.TBD: add toggle bg button
+            or not root.buttons.YARM_toggle_bg
+            or not root.buttons.YARM_toggle_surfacesplit)
+    then
+        root.destroy()
+    end
 
     if not global.player_data then global.player_data = {} end
 
