@@ -970,12 +970,12 @@ function resmon.update_ui(player)
             end
 
             surface_num = surface_num + 1
-            if surface_num > 1 and rendered_last and will_render_totals and will_render_sites then
+            if surface_num > 1 and rendered_last and (will_render_totals or will_render_sites) then
                 for _ = 1, column_count do sites_gui.add { type = "line" } end
                 for _ = 1, column_count do sites_gui.add { type = "line" } end
                 for _ = 1, column_count do sites_gui.add { type = "line" } end
             end
-            rendered_last = will_render_totals and will_render_sites
+            rendered_last = rendered_last or will_render_totals or will_render_sites
 
             local row = 1
             for summary_site in sites_in_player_order(summary, player) do
