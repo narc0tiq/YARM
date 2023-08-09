@@ -935,7 +935,7 @@ function resmon.update_ui(player)
     if not force_data or not force_data.ore_sites then return end
 
     local is_full = root.buttons.YARM_toggle_lite.style.name ~= "YARM_toggle_lite_on"
-    local column_count = is_full and 12 or 6
+    local column_count = is_full and 12 or 5
     local sites_gui = root.add { type = "table", column_count = column_count, name = "sites", style = "YARM_site_table" }
     sites_gui.style.horizontal_spacing = 5
     local column_alignments = sites_gui.style.column_alignments
@@ -953,12 +953,11 @@ function resmon.update_ui(player)
         column_alignments[11] = 'center' -- ETD
         column_alignments[12] = 'left'   -- buttons
     else
-        column_alignments[1] = 'left'    -- rename button
-        column_alignments[2] = 'left'    -- surface name
-        column_alignments[3] = 'left'    -- site name
-        column_alignments[4] = 'left'    -- ore name
-        column_alignments[5] = 'right'   -- ETD
-        column_alignments[6] = 'left'    -- buttons
+        column_alignments[1] = 'left'    -- surface name
+        column_alignments[2] = 'left'    -- site name
+        column_alignments[3] = 'left'    -- ore name
+        column_alignments[4] = 'right'   -- ETD
+        column_alignments[5] = 'left'    -- buttons
     end
 
     local site_filter = resmon.filters[player_data.active_filter] or resmon.filters[FILTER_NONE]
@@ -997,9 +996,13 @@ function resmon.update_ui(player)
                 end
             end
             if will_render_totals and will_render_sites then
-                for _ = 1, 2 do sites_gui.add { type = "label" }.style.maximal_height = 5 end
+                if is_full then
+                    sites_gui.add { type = "label" }.style.maximal_height = 5
+                end
+                sites_gui.add { type = "label" }.style.maximal_height = 5
                 sites_gui.add { type = "label", caption = { "YARM-category-sites" } }
-                for _ = 4, column_count do sites_gui.add { type = "label" }.style.maximal_height = 5 end
+                local start = is_full and 4 or 3
+                for _ = start, column_count do sites_gui.add { type = "label" }.style.maximal_height = 5 end
             end
             row = 1
             for _, site in pairs(sites) do
@@ -1127,16 +1130,18 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
     local root = mod_gui.get_frame_flow(player).YARM_root
 
     if not site.is_summary then
-        if player_data.renaming_site == site.name then
-            sites_gui.add { type = "button",
-                name = "YARM_rename_site_" .. site.name,
-                tooltip = { "YARM-tooltips.rename-site-cancel" },
-                style = "YARM_rename_site_cancel" }
-        else
-            sites_gui.add { type = "button",
-                name = "YARM_rename_site_" .. site.name,
-                tooltip = { "YARM-tooltips.rename-site-named", site.name },
-                style = "YARM_rename_site" }
+        if is_full then
+            if player_data.renaming_site == site.name then
+                sites_gui.add { type = "button",
+                    name = "YARM_rename_site_" .. site.name,
+                    tooltip = { "YARM-tooltips.rename-site-cancel" },
+                    style = "YARM_rename_site_cancel" }
+            else
+                sites_gui.add { type = "button",
+                    name = "YARM_rename_site_" .. site.name,
+                    tooltip = { "YARM-tooltips.rename-site-named", site.name },
+                    style = "YARM_rename_site" }
+            end
         end
 
         local surf_name = root.buttons.YARM_toggle_surfacesplit.style.name == "YARM_toggle_surfacesplit_on"
@@ -1147,7 +1152,9 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
         el = sites_gui.add { type = "label", name = "YARM_label_site_" .. site.name, caption = site.name }
         el.style.font_color = color
     else
-        sites_gui.add { type = "label" }
+        if is_full then
+            sites_gui.add { type = "label" }
+        end
         local surface = (root.buttons.YARM_toggle_surfacesplit.style.name == "YARM_toggle_surfacesplit_on" and row == 1)
             and site.surface.name or ""
         sites_gui.add { type = "label", caption = surface }
@@ -1206,28 +1213,30 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
             tooltip = { "YARM-tooltips.goto-site" },
             style = "YARM_goto_site" }
 
-        if site.deleting_since then
-            site_buttons.add { type = "button",
-                name = "YARM_delete_site_" .. site.name,
-                tooltip = { "YARM-tooltips.delete-site-confirm" },
-                style = "YARM_delete_site_confirm" }
-        else
-            site_buttons.add { type = "button",
-                name = "YARM_delete_site_" .. site.name,
-                tooltip = { "YARM-tooltips.delete-site" },
-                style = "YARM_delete_site" }
-        end
+        if is_full then
+            if site.deleting_since then
+                site_buttons.add { type = "button",
+                    name = "YARM_delete_site_" .. site.name,
+                    tooltip = { "YARM-tooltips.delete-site-confirm" },
+                    style = "YARM_delete_site_confirm" }
+            else
+                site_buttons.add { type = "button",
+                    name = "YARM_delete_site_" .. site.name,
+                    tooltip = { "YARM-tooltips.delete-site" },
+                    style = "YARM_delete_site" }
+            end
 
-        if site.is_site_expanding then
-            site_buttons.add { type = "button",
-                name = "YARM_expand_site_" .. site.name,
-                tooltip = { "YARM-tooltips.expand-site-cancel" },
-                style = "YARM_expand_site_cancel" }
-        else
-            site_buttons.add { type = "button",
-                name = "YARM_expand_site_" .. site.name,
-                tooltip = { "YARM-tooltips.expand-site" },
-                style = "YARM_expand_site" }
+            if site.is_site_expanding then
+                site_buttons.add { type = "button",
+                    name = "YARM_expand_site_" .. site.name,
+                    tooltip = { "YARM-tooltips.expand-site-cancel" },
+                    style = "YARM_expand_site_cancel" }
+            else
+                site_buttons.add { type = "button",
+                    name = "YARM_expand_site_" .. site.name,
+                    tooltip = { "YARM-tooltips.expand-site" },
+                    style = "YARM_expand_site" }
+            end
         end
     end
 
