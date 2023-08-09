@@ -162,6 +162,7 @@ make_filter_buttons('YARM_filter_warnings', 16)
 make_filter_buttons('YARM_filter_all', 32)
 make_filter_buttons('YARM_toggle_surfacesplit', 64)
 make_filter_buttons('YARM_toggle_bg', 80)
+make_filter_buttons('YARM_toggle_lite', 208)
 
 default_gui.YARM_overlay_site = {
     type = 'button_style',
