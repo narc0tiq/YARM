@@ -1,4 +1,12 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.10.12
+Date: 2023-08-09
+  Changes:
+    - remove some more buttons in lite mode (@mithaldu/@wchristian)
+    - add lite mode tooltip (@mithaldu/@wchristian)
+    - recommend GUI_Unifyer (@mithaldu/@wchristian)
+    - document authorship situation in info.json (@mithaldu/@wchristian)
+---------------------------------------------------------------------------------------------------
 Version: 0.10.11
 Date: 2023-08-09
   Changes:
