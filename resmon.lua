@@ -566,8 +566,8 @@ function resmon.generate_display_site_amount(site, player, short)
     local format_func = short and format_number_si or format_number
     local entity_prototype = game.entity_prototypes[site.ore_type]
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
-        local val = (site.entity_count == 0 and 0)
-            or (100 * site.amount / (entity_prototype.normal_resource_amount * site.entity_count))
+        local normal_site_amount = entity_prototype.normal_resource_amount * site.entity_count
+        local val = (normal_site_amount == 0 and 0) or (100 * site.amount / normal_site_amount)
         return site.entity_count .. " x " .. format_number(string.format("%.1f%%", val))
     end
 
@@ -791,7 +791,7 @@ function resmon.calc_remaining_permille(site)
         and (site.entity_count * entity_prototype.minimum_resource_amount) or 0
     local amount_left = site.amount - minimum
     local initial_amount_available = site.initial_amount - minimum
-    return initial_amount_available > 0 and math.floor(amount_left * 1000 / initial_amount_available) or 0
+    return initial_amount_available <= 0 and 0 or math.floor(amount_left * 1000 / initial_amount_available)
 end
 
 local function site_comparator_default(left, right)
@@ -1283,8 +1283,8 @@ function resmon.render_speed(site, player)
 
     local entity_prototype = game.entity_prototypes[site.ore_type]
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
-        local speed_display = (site.entity_count == 0 and 0)
-            or (100 * speed) / (site.entity_count * entity_prototype.normal_resource_amount)
+        local normal_site_amount = entity_prototype.normal_resource_amount * site.entity_count
+        local speed_display = (normal_site_amount == 0 and 0) or (100 * speed) / normal_site_amount
         return resmon.speed_to_human("%.3f%%", speed_display, -0.001)
     end
 
