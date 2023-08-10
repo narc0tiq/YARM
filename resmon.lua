@@ -566,7 +566,8 @@ function resmon.generate_display_site_amount(site, player, short)
     local format_func = short and format_number_si or format_number
     local entity_prototype = game.entity_prototypes[site.ore_type]
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
-        local val = 100 * site.amount / (entity_prototype.normal_resource_amount * site.entity_count)
+        local val = (site.entity_count == 0 and 0)
+            or (100 * site.amount / (entity_prototype.normal_resource_amount * site.entity_count))
         return site.entity_count .. " x " .. format_number(string.format("%.1f%%", val))
     end
 
@@ -1282,7 +1283,8 @@ function resmon.render_speed(site, player)
 
     local entity_prototype = game.entity_prototypes[site.ore_type]
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
-        local speed_display = (100 * speed) / (site.entity_count * entity_prototype.normal_resource_amount)
+        local speed_display = (site.entity_count == 0 and 0)
+            or (100 * speed) / (site.entity_count * entity_prototype.normal_resource_amount)
         return resmon.speed_to_human("%.3f%%", speed_display, -0.001)
     end
 
