@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.10.14
+Date: 2023-09-18
+  Changes:
+    - make some divisions a bit more safe and clear (@mithaldu/@wchristian)
+    - prevent a crash when adding an entity that has become invalid (@mithaldu/@wchristian)
+---------------------------------------------------------------------------------------------------
 Version: 0.10.13
 Date: 2023-08-10
   Changes:
