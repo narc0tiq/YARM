@@ -314,6 +314,7 @@ function resmon.clear_current_site(player_index)
 end
 
 function resmon.add_resource(player_index, entity)
+    if not entity.valid then return end
     local player = game.players[player_index]
     local player_data = global.player_data[player_index]
 
