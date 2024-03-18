@@ -1455,6 +1455,7 @@ function resmon.on_click.goto_site(event)
             log("YARM: Unavailable to view SE zone at " .. serpent.line(site.center) .. " on surface " .. site.surface)
             return
         end -- TODO: need to show some error logs for this
+        player.close_map()
         remote.call("space-exploration", "remote_view_start",
             {
                 player = player,
