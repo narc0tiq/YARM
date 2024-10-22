@@ -14,27 +14,10 @@ data:extend(
             action = 'spawn-item',
             item_to_spawn = 'yarm-selector-tool',
             style = 'green',
-            icon = {
-                filename = '__YARM__/graphics/resource-monitor-x32-white.png',
-                priority = 'extra-high-no-scale',
-                size = 32,
-                scale = 1,
-                flags = { 'icon' },
-            },
-            small_icon = {
-                filename = '__YARM__/graphics/resource-monitor-x24.png',
-                priority = 'extra-high-no-scale',
-                size = 24,
-                scale = 1,
-                flags = { 'icon' },
-            },
-            disabled_small_icon = {
-                filename = '__YARM__/graphics/resource-monitor-x24-white.png',
-                priority = 'extra-high-no-scale',
-                size = 24,
-                scale = 1,
-                flags = { 'icon' },
-            },
+            icon = '__YARM__/graphics/resource-monitor-x32-white.png',
+            icon_size = 32,
+            small_icon = '__YARM__/graphics/resource-monitor-x24.png',
+            small_icon_size = 24,
         },
 
         {
@@ -42,17 +25,22 @@ data:extend(
             name = 'yarm-selector-tool',
             icon = '__YARM__/graphics/resource-monitor.png',
             icon_size = 32,
-            flags = { 'only-in-cursor', 'hidden', 'spawnable' },
+            flags = { 'only-in-cursor', 'spawnable' },
             stack_size = 1,
             stackable = false,
-            selection_color = { g = 1 },
-            selection_mode = 'any-entity',
-            alt_selection_color = { g = 1, b = 1 },
-            alt_selection_mode = { 'nothing' },
-            selection_cursor_box_type = 'copy',
-            alt_selection_cursor_box_type = 'copy',
             entity_filter_mode = 'whitelist',
             entity_type_filters = { 'resource' },
+            hidden = true,
+            select = {
+                border_color = { g = 1 },
+                cursor_box_type = 'copy',
+                mode = 'any-entity',
+            },
+            alt_select = {
+                border_color = { g = 1, b = 1 },
+                cursor_box_type = 'copy',
+                mode = 'nothing',
+            },
         },
 
         {
@@ -65,7 +53,7 @@ data:extend(
             max_health = 1,
             order = 'z[resource-monitor]',
 
-            collision_mask = { 'resource-layer' },
+            collision_mask = { layers = { resource = true } },
             collision_box = { { -0.35, -0.35 }, { 0.35, 0.35 } },
 
             selection_box = { { -0.5, -0.5 }, { 0.5, 0.5 } },

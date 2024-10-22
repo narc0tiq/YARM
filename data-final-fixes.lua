@@ -4,7 +4,7 @@ for name, proto in pairs(data.raw.resource) do
     ore_items[#ore_items + 1] = {
         type = 'item',
         stack_size = 1,
-        flags = { 'hidden' },
+        hidden = true,
 
         name = 'YARM-fake-' .. proto.name,
         icon = proto.icon or nil,

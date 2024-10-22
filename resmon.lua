@@ -83,9 +83,9 @@ function resmon.init_player(player_index)
         root.destroy()
     end
 
-    if not global.player_data then global.player_data = {} end
+    if not storage.player_data then storage.player_data = {} end
 
-    local player_data = global.player_data[player_index]
+    local player_data = storage.player_data[player_index]
     if not player_data then player_data = {} end
 
     if not player_data.gui_update_ticks or player_data.gui_update_ticks == 60 then player_data.gui_update_ticks = 300 end
@@ -94,13 +94,13 @@ function resmon.init_player(player_index)
 
     if player_data.viewing_site then migrate_remove_remote_viewer(player, player_data) end
 
-    global.player_data[player_index] = player_data
+    storage.player_data[player_index] = player_data
 end
 
 function resmon.init_force(force)
-    if not global.force_data then global.force_data = {} end
+    if not storage.force_data then storage.force_data = {} end
 
-    local force_data = global.force_data[force.name]
+    local force_data = storage.force_data[force.name]
     if not force_data then force_data = {} end
 
     if not force_data.ore_sites then
@@ -114,7 +114,7 @@ function resmon.init_force(force)
 
     migrate_remove_minimum_resource_amount(force_data)
 
-    global.force_data[force.name] = force_data
+    storage.force_data[force.name] = force_data
 end
 
 local function table_contains(haystack, needle)
@@ -133,7 +133,7 @@ function resmon.sanity_check_sites(force, force_data)
     local missing_ores = {}
 
     for name, site in pairs(force_data.ore_sites) do
-        local entity_prototype = game.entity_prototypes[site.ore_type]
+        local entity_prototype = prototypes.entity[site.ore_type]
         if not entity_prototype or not entity_prototype.valid then
             discarded_sites[#discarded_sites + 1] = name
             if not table_contains(missing_ores, site.ore_type) then
@@ -269,7 +269,7 @@ end
 function resmon.on_player_selected_area(event)
     if event.item ~= 'yarm-selector-tool' then return end
 
-    local player_data = global.player_data[event.player_index]
+    local player_data = storage.player_data[event.player_index]
     local entities = event.entities
 
     if #entities < 1 then
@@ -304,7 +304,7 @@ end
 
 function resmon.clear_current_site(player_index)
     local player = game.players[player_index]
-    local player_data = global.player_data[player_index]
+    local player_data = storage.player_data[player_index]
 
     player_data.current_site = nil
 
@@ -316,7 +316,7 @@ end
 function resmon.add_resource(player_index, entity)
     if not entity.valid then return end
     local player = game.players[player_index]
-    local player_data = global.player_data[player_index]
+    local player_data = storage.player_data[player_index]
 
     if player_data.current_site and player_data.current_site.ore_type ~= entity.name then
         if player_data.current_site.finalizing then
@@ -373,7 +373,7 @@ function resmon.add_resource(player_index, entity)
 end
 
 function resmon.add_single_entity(player_index, entity)
-    local player_data = global.player_data[player_index]
+    local player_data = storage.player_data[player_index]
     local site = player_data.current_site
     local tracker_index = ore_tracker.add_entity(entity)
 
@@ -444,7 +444,7 @@ end
 
 
 function resmon.scan_current_site(player_index)
-    local site = global.player_data[player_index].current_site
+    local site = storage.player_data[player_index].current_site
 
     local to_scan = math.min(30, #site.next_to_scan)
     local max_dist = settings.global["YARM-grow-limit"].value
@@ -510,7 +510,7 @@ end
 
 function resmon.finalize_site(player_index)
     local player = game.players[player_index]
-    local player_data = global.player_data[player_index]
+    local player_data = storage.player_data[player_index]
 
     local site = player_data.current_site
     site.finalizing = true
@@ -557,7 +557,7 @@ function resmon.update_chart_tag(site)
     end
 
     local display_value = resmon.generate_display_site_amount(site, nil, 1)
-    local prototype = game.entity_prototypes[site.ore_type]
+    local prototype = prototypes.entity[site.ore_type]
     site.chart_tag.text =
         string.format('%s - %s %s', site.name, display_value, resmon.get_rich_text_for_products(prototype))
     return
@@ -565,7 +565,7 @@ end
 
 function resmon.generate_display_site_amount(site, player, short)
     local format_func = short and format_number_si or format_number
-    local entity_prototype = game.entity_prototypes[site.ore_type]
+    local entity_prototype = prototypes.entity[site.ore_type]
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
         local normal_site_amount = entity_prototype.normal_resource_amount * site.entity_count
         local val = (normal_site_amount == 0 and 0) or (100 * site.amount / normal_site_amount)
@@ -602,8 +602,8 @@ end
 
 function resmon.submit_site(player_index)
     local player = game.players[player_index]
-    local player_data = global.player_data[player_index]
-    local force_data = global.force_data[player.force.name]
+    local player_data = storage.player_data[player_index]
+    local force_data = storage.force_data[player.force.name]
     local site = player_data.current_site
 
     force_data.ore_sites[site.name] = site
@@ -726,7 +726,7 @@ function resmon.finish_deposit_count(site)
         site.scanned_ore_per_minute = site.scanned_ore_per_minute + diff_step                        --
     end
 
-    local entity_prototype = game.entity_prototypes[site.ore_type]
+    local entity_prototype = prototypes.entity[site.ore_type]
     local is_endless = resmon.is_endless_resource(site.ore_type, entity_prototype)
     local minimum = is_endless and (site.entity_count * entity_prototype.minimum_resource_amount) or 0
     local amount_left = site.amount - minimum
@@ -787,7 +787,7 @@ function resmon.finish_deposit_count(site)
 end
 
 function resmon.calc_remaining_permille(site)
-    local entity_prototype = game.entity_prototypes[site.ore_type]
+    local entity_prototype = prototypes.entity[site.ore_type]
     local minimum = resmon.is_endless_resource(site.ore_type, entity_prototype)
         and (site.entity_count * entity_prototype.minimum_resource_amount) or 0
     local amount_left = site.amount - minimum
@@ -896,8 +896,8 @@ end
 
 
 function resmon.update_ui(player)
-    local player_data = global.player_data[player.index]
-    local force_data = global.force_data[player.force.name]
+    local player_data = storage.player_data[player.index]
+    local force_data = storage.force_data[player.force.name]
     local show_sites_summary = player.mod_settings["YARM-show-sites-summary"].value
 
     local frame_flow = mod_gui.get_frame_flow(player)
@@ -1039,7 +1039,7 @@ end
 function resmon.generate_summaries(player, sites)
     local summary = {}
     for _, site in pairs(sites) do
-        local entity_prototype = game.entity_prototypes[site.ore_type]
+        local entity_prototype = prototypes.entity[site.ore_type]
         local is_endless = resmon.is_endless_resource(site.ore_type, entity_prototype) and 1 or nil
         local root = mod_gui.get_frame_flow(player).YARM_root
         local summary_id = site.ore_type ..
@@ -1085,7 +1085,7 @@ end
 function resmon.on_click.set_filter(event)
     local new_filter = string.sub(event.element.name, 1 + string.len("YARM_filter_"))
     local player = game.players[event.player_index]
-    local player_data = global.player_data[event.player_index]
+    local player_data = storage.player_data[event.player_index]
 
     player_data.active_filter = new_filter
 
@@ -1175,7 +1175,7 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
         el.style.font_color = color
     end
 
-    local entity_prototype = game.entity_prototypes[site.ore_type]
+    local entity_prototype = prototypes.entity[site.ore_type]
     el = sites_gui.add { type = "label", name = "YARM_label_ore_name_" .. site.name,
         caption = is_full and { "", resmon.get_rich_text_for_products(entity_prototype), " ", site.ore_name }
             or resmon.get_rich_text_for_products(entity_prototype) }
@@ -1282,7 +1282,7 @@ function resmon.render_speed(site, player)
     local ups_adjust = settings.global["YARM-nominal-ups"].value / 60
     local speed = ups_adjust * site.ore_per_minute
 
-    local entity_prototype = game.entity_prototypes[site.ore_type]
+    local entity_prototype = prototypes.entity[site.ore_type]
     if resmon.is_endless_resource(site.ore_type, entity_prototype) then
         local normal_site_amount = entity_prototype.normal_resource_amount * site.entity_count
         local speed_display = (normal_site_amount == 0 and 0) or (100 * speed) / normal_site_amount
@@ -1351,8 +1351,8 @@ end
 
 function resmon.on_click.YARM_rename_confirm(event)
     local player = game.players[event.player_index]
-    local player_data = global.player_data[event.player_index]
-    local force_data = global.force_data[player.force.name]
+    local player_data = storage.player_data[event.player_index]
+    local force_data = storage.force_data[player.force.name]
 
     local old_name = player_data.renaming_site
     local new_name = player.gui.center.YARM_site_rename.new_name.text
@@ -1377,7 +1377,7 @@ end
 
 function resmon.on_click.YARM_rename_cancel(event)
     local player = game.players[event.player_index]
-    local player_data = global.player_data[event.player_index]
+    local player_data = storage.player_data[event.player_index]
 
     player_data.renaming_site = nil
     player.gui.center.YARM_site_rename.destroy()
@@ -1389,7 +1389,7 @@ function resmon.on_click.rename_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_rename_site_"))
 
     local player = game.players[event.player_index]
-    local player_data = global.player_data[event.player_index]
+    local player_data = storage.player_data[event.player_index]
 
     if player.gui.center.YARM_site_rename then
         resmon.on_click.YARM_rename_cancel(event)
@@ -1423,7 +1423,7 @@ function resmon.on_click.remove_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_delete_site_"))
 
     local player = game.players[event.player_index]
-    local force_data = global.force_data[player.force.name]
+    local force_data = storage.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
 
     if site.deleting_since then
@@ -1443,10 +1443,10 @@ function resmon.on_click.goto_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_goto_site_"))
 
     local player = game.players[event.player_index]
-    local force_data = global.force_data[player.force.name]
+    local force_data = storage.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
 
-    if game.active_mods["space-exploration"] ~= nil then
+    if script.active_mods["space-exploration"] ~= nil then
         local zone = remote.call("space-exploration", "get_zone_from_surface_index",
             { surface_index = site.surface.index })
         if not zone then
@@ -1464,7 +1464,7 @@ function resmon.on_click.goto_site(event)
                 freeze_history = true
             })
     else
-        player.open_map(site.center)
+        player.set_controller({type = defines.controllers.remote, position = site.center})
     end
 
     resmon.update_force_members_ui(player)
@@ -1475,8 +1475,8 @@ function resmon.on_click.expand_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_expand_site_"))
 
     local player = game.players[event.player_index]
-    local player_data = global.player_data[event.player_index]
-    local force_data = global.force_data[player.force.name]
+    local player_data = storage.player_data[event.player_index]
+    local force_data = storage.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
     local are_we_cancelling_expand = site.is_site_expanding
 
@@ -1552,7 +1552,7 @@ function resmon.on_get_selection_tool(event)
 end
 
 function resmon.start_recreate_overlay_existing_site(player_index)
-    local site = global.player_data[player_index].current_site
+    local site = storage.player_data[player_index].current_site
     site.is_overlay_being_created = true
 
     -- forcible cleanup in case we got interrupted during a previous background overlay attempt
@@ -1575,7 +1575,7 @@ function resmon.start_recreate_overlay_existing_site(player_index)
 end
 
 function resmon.process_overlay_for_existing_site(player_index)
-    local player_data = global.player_data[player_index]
+    local player_data = storage.player_data[player_index]
     local site = player_data.current_site
 
     if site.next_to_overlay_count == 0 then
@@ -1622,7 +1622,7 @@ function resmon.process_overlay_for_existing_site(player_index)
 end
 
 function resmon.end_overlay_creation_for_existing_site(player_index)
-    local site = global.player_data[player_index].current_site
+    local site = storage.player_data[player_index].current_site
     site.is_overlay_being_created = false
     site.finalizing = true
     site.finalizing_since = game.tick
@@ -1658,10 +1658,10 @@ end
 
 function resmon.update_players(event)
     -- At tick 0 on an MP server initial join, on_init may not have run
-    if not global.player_data then return end
+    if not storage.player_data then return end
 
     for index, player in pairs(game.players) do
-        local player_data = global.player_data[index]
+        local player_data = storage.player_data[index]
 
         if not player_data then
             resmon.init_player(index)
@@ -1700,11 +1700,11 @@ end
 
 function resmon.update_forces(event)
     -- At tick 0 on an MP server initial join, on_init may not have run
-    if not global.force_data then return end
+    if not storage.force_data then return end
 
     local update_cycle = event.tick % settings.global["YARM-ticks-between-checks"].value
     for _, force in pairs(game.forces) do
-        local force_data = global.force_data[force.name]
+        local force_data = storage.force_data[force.name]
 
         if not force_data then
             resmon.init_force(force)

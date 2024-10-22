@@ -58,8 +58,8 @@ end
 function ore_tracker.add_entity(entity)
     if not entity or not entity.valid or entity.type ~= "resource" then return nil end
 
-    if not global.ore_tracker or not global.ore_tracker.entities then
-        global.ore_tracker = {
+    if not storage.ore_tracker or not storage.ore_tracker.entities then
+        storage.ore_tracker = {
             entities = {},
         }
     end
@@ -71,7 +71,7 @@ function ore_tracker.add_entity(entity)
         -- We're accessing the entity.position anyway, let's also use this
         -- opportunity to update the tracker values (and be 1000% certain
         -- that it's tracking the right entity).
-        local tracking_data = global.ore_tracker.entities[its_index]
+        local tracking_data = storage.ore_tracker.entities[its_index]
         tracking_data.entity = entity
         tracking_data.valid = entity.valid
         tracking_data.position = entity.position
@@ -81,7 +81,7 @@ function ore_tracker.add_entity(entity)
     end
 
     -- Otherwise, create the tracking data and store it, including position_cache
-    local entities = global.ore_tracker.entities
+    local entities = storage.ore_tracker.entities
     local next_index = #entities + 1
     entities[next_index] = {
         entity = entity,
@@ -95,44 +95,44 @@ function ore_tracker.add_entity(entity)
 end
 
 function ore_tracker.get_entity_cache()
-    if not global.ore_tracker then return nil end
+    if not storage.ore_tracker then return nil end
 
-    return global.ore_tracker.entities
+    return storage.ore_tracker.entities
 end
 
 function ore_tracker.on_load()
-    if not global.ore_tracker or not global.ore_tracker.entities then return end
+    if not storage.ore_tracker or not storage.ore_tracker.entities then return end
 
-    for tracker_index, tracking_data in pairs(global.ore_tracker.entities) do
+    for tracker_index, tracking_data in pairs(storage.ore_tracker.entities) do
         local key = position_to_string(tracking_data.position)
         ore_tracker.position_cache[key] = tracker_index
     end
 end
 
 local function update_entities_this_tick()
-    if not global.ore_tracker or not global.ore_tracker.entities then return end
+    if not storage.ore_tracker or not storage.ore_tracker.entities then return end
     local entities_per_tick = settings.global['YARM-entities-per-tick'].value
 
     if not ore_tracker.iterator_func then
         local possible_key = nil
         ore_tracker.iterator_func, ore_tracker.iterator_state, possible_key =
-            pairs(global.ore_tracker.entities)
+            pairs(storage.ore_tracker.entities)
 
         -- NB: A client joining the server will find iterator_key already set,
         -- and we super-want it to resume from that synchronized key.
-        if not global.ore_tracker.iterator_key then
-            global.ore_tracker.iterator_key = possible_key
+        if not storage.ore_tracker.iterator_key then
+            storage.ore_tracker.iterator_key = possible_key
         end
     end
 
-    local key = global.ore_tracker.iterator_key
+    local key = storage.ore_tracker.iterator_key
     local state = ore_tracker.iterator_state
     local iterator = ore_tracker.iterator_func
     local tracking_data = nil
     for i = 1, entities_per_tick do
         key, tracking_data = iterator(state, key)
         if key == nil then
-            global.ore_tracker.iterator_key = nil
+            storage.ore_tracker.iterator_key = nil
             ore_tracker.iterator_state = nil
             ore_tracker.iterator_func = nil
             return
@@ -147,7 +147,7 @@ local function update_entities_this_tick()
         end
     end
 
-    global.ore_tracker.iterator_key = key
+    storage.ore_tracker.iterator_key = key
     ore_tracker.iterator_state = state
     ore_tracker.iterator_func = iterator
 end

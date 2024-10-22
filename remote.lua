@@ -5,7 +5,7 @@ local interface = {}
 
 function interface.how_many_entities_tracked(player_name_or_index)
     local player = game.players[player_name_or_index]
-    player.print({ "", "Tracking ", #global.ore_tracker.entities, " entities" })
+    player.print({ "", "Tracking ", #storage.ore_tracker.entities, " entities" })
 end
 
 function interface.reset_ui(player_name_or_index)
@@ -17,7 +17,7 @@ end
 
 function interface.reset_player(player_name_or_index)
     local player = game.players[player_name_or_index]
-    local player_data = global.player_data[player.index]
+    local player_data = storage.player_data[player.index]
 
     player.character = player.selected
     player_data.viewing_site = nil
@@ -27,14 +27,14 @@ end
 
 function interface.get_current_filter(player_name_or_index)
     local player = game.players[player_name_or_index]
-    local player_data = global.player_data[player.index]
+    local player_data = storage.player_data[player.index]
 
     return player_data.active_filter or 'none'
 end
 
 function interface.set_filter(player_name_or_index, new_filter)
     local player = game.players[player_name_or_index]
-    local player_data = global.player_data[player.index]
+    local player_data = storage.player_data[player.index]
     local old_filter = player_data.active_filter
 
     -- TODO Could use some validation here... what values are actually allowed, that kind of thing.
@@ -61,7 +61,7 @@ function interface.get_on_site_updated_event_id()
 end
 
 function interface.get_global_data()
-    return global
+    return storage
 end
 
 remote.add_interface("YARM", interface)
