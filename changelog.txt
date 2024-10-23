@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.11.1
+Date: 2024-10-23
+  Changes:
+    - readability: font borders, better background blending, less brightness (thanks to jrossignol)
+---------------------------------------------------------------------------------------------------
 Version: 0.11.0
 Date: 2024-10-22
   Changes:
