@@ -67,6 +67,15 @@ data:extend(
                 shift = { 0.0, 0.0 }
             }
         },
+
+        {
+            type = 'font',
+            name = 'yarm-gui-font',
+            size = 14,
+            from = 'default-bold',
+            border = true,
+            border_color = { 0, 0, 0 },
+        },
     })
 
 local default_gui = data.raw['gui-style'].default
@@ -102,9 +111,9 @@ default_gui.YARM_outer_frame_no_border = {
 default_gui.YARM_outer_frame_no_border_bg = {
     type = 'frame_style',
     parent = 'outer_frame',
-    graphical_set = arb_graphics(3, 3, 1)
+    graphical_set = arb_graphics(1, 15, 1)
 }
-default_gui.YARM_outer_frame_no_border_bg.graphical_set.blend_mode = 'multiplicative'
+default_gui.YARM_outer_frame_no_border_bg.graphical_set.blend_mode = 'multiplicative-with-alpha'
 
 default_gui.YARM_button_with_icon = {
     type = 'button_style',

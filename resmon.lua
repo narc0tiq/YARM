@@ -1002,7 +1002,8 @@ function resmon.update_ui(player)
                     sites_gui.add { type = "label" }.style.maximal_height = 5
                 end
                 sites_gui.add { type = "label" }.style.maximal_height = 5
-                sites_gui.add { type = "label", caption = { "YARM-category-sites" } }
+                local el = sites_gui.add { type = "label", caption = { "YARM-category-sites" } }
+                el.style.font = "yarm-gui-font"
                 local start = is_full and 4 or 3
                 for _ = start, column_count do sites_gui.add { type = "label" }.style.maximal_height = 5 end
             end
@@ -1150,9 +1151,11 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
             and site.surface.name or ""
         el = sites_gui.add { type = "label", name = "YARM_label_surface_" .. site.name, caption = surf_name }
         el.style.font_color = color
+        el.style.font = "yarm-gui-font"
 
         el = sites_gui.add { type = "label", name = "YARM_label_site_" .. site.name, caption = site.name }
         el.style.font_color = color
+        el.style.font = "yarm-gui-font"
     else
         if is_full then
             sites_gui.add { type = "label" }
@@ -1161,18 +1164,21 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
             and site.surface.name or ""
         sites_gui.add { type = "label", caption = surface }
         local totals = row == 1 and { "YARM-category-totals" } or ""
-        sites_gui.add { type = "label", caption = totals }
+        el = sites_gui.add { type = "label", caption = totals }
+        el.style.font = "yarm-gui-font"
     end
 
     if is_full then
         el = sites_gui.add { type = "label", name = "YARM_label_percent_" .. site.name,
             caption = string.format("%.1f%%", site.remaining_permille / 10) }
         el.style.font_color = color
+        el.style.font = "yarm-gui-font"
 
         local display_amount = resmon.generate_display_site_amount(site, player, nil)
         el = sites_gui.add { type = "label", name = "YARM_label_amount_" .. site.name,
             caption = display_amount }
         el.style.font_color = color
+        el.style.font = "yarm-gui-font"
     end
 
     local entity_prototype = prototypes.entity[site.ore_type]
@@ -1180,11 +1186,13 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
         caption = is_full and { "", resmon.get_rich_text_for_products(entity_prototype), " ", site.ore_name }
             or resmon.get_rich_text_for_products(entity_prototype) }
     el.style.font_color = color
+    el.style.font = "yarm-gui-font"
 
     if is_full then
         el = sites_gui.add { type = "label", name = "YARM_label_ore_per_minute_" .. site.name,
             caption = resmon.render_speed(site, player) }
         el.style.font_color = color
+        el.style.font = "yarm-gui-font"
 
         resmon.render_arrow_for_percent_delta(sites_gui, -1 * site.ore_per_minute_delta, site.ore_per_minute)
     end
@@ -1192,6 +1200,7 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
     el = sites_gui.add { type = "label", name = "YARM_label_etd_" .. site.name,
         caption = resmon.time_to_deplete(site) }
     el.style.font_color = color
+    el.style.font = "yarm-gui-font"
 
     if is_full then
         resmon.render_arrow_for_percent_delta(sites_gui, site.etd_minutes_delta, site.etd_minutes)
@@ -1201,6 +1210,7 @@ function resmon.print_single_site(site_filter, site, player, sites_gui, player_d
             el = sites_gui.add { type = "label", name = "YARM_label_etd_header_" .. site.name,
                 caption = { "YARM-time-to-deplete", etd_icon } }
             el.style.font_color = color
+            el.style.font = "yarm-gui-font"
         else
             sites_gui.add { type = "label", caption = "" }
         end
@@ -1322,7 +1332,7 @@ function resmon.site_color(site, player)
     local factor = (threshold == 0 and 1) or (minutes / threshold)
     if factor > 1 then factor = 1 end
     local hue = factor / 3
-    return resmon.hsv2rgb(hue, 1, 1)
+    return resmon.hsv2rgb(hue, 1, 0.9)
 end
 
 function resmon.hsv2rgb(h, s, v)
