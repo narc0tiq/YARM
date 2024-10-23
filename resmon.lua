@@ -14,6 +14,7 @@ resmon = {
     on_click = {},
     endless_resources = {},
     filters = {},
+    site_iterators = {},
 
     -- updated `on_tick` to contain `ore_tracker.get_entity_cache()`
     entity_cache = nil,
@@ -59,6 +60,15 @@ end
 local function migrate_remove_minimum_resource_amount(force_data)
     for _, site in pairs(force_data.ore_sites) do
         if site.minimum_resource_amount then site.minimum_resource_amount = nil end
+    end
+end
+
+local function migrate_remove_iter_fn(force_data)
+    for _, site in pairs(force_data.ore_sites) do
+        if site.iter_fn then
+            resmon.site_iterators[site.name] = site.iter_fn
+            site.iter_fn = nil
+        end
     end
 end
 
@@ -113,6 +123,7 @@ function resmon.init_force(force)
     end
 
     migrate_remove_minimum_resource_amount(force_data)
+    migrate_remove_iter_fn(force_data)
 
     storage.force_data[force.name] = force_data
 end
@@ -656,17 +667,24 @@ function resmon.is_endless_resource(ent_name, proto)
 end
 
 function resmon.count_deposits(site, update_cycle)
-    if site.iter_fn then
+    if not resmon.site_iterators[site.name] then
+        resmon.site_iterators[site.name] = pairs(site.tracker_indices)
+    end
+
+    -- the site is currently being iterated so just continue iterating
+    if site.iter_key or site.iter_state then
         resmon.tick_deposit_count(site)
         return
     end
 
+    -- the site is not being iterated; is it time to do so?
     local site_update_cycle = site.added_at % settings.global["YARM-ticks-between-checks"].value
     if site_update_cycle ~= update_cycle then
         return
     end
 
-    site.iter_fn, site.iter_state, site.iter_key = pairs(site.tracker_indices)
+    -- yes, it's time to iterate it; set up the state and get it going!
+    _, site.iter_state, site.iter_key = pairs(site.tracker_indices)
     site.update_amount = 0
 end
 
@@ -674,7 +692,8 @@ function resmon.tick_deposit_count(site)
     local index = site.iter_key
 
     for _ = 1, 1000 do
-        index = site.iter_fn(site.iter_state, index)
+        local iterator = resmon.site_iterators[site.name]
+        index = iterator(site.iter_state, index)
         if index == nil then
             resmon.finish_deposit_count(site)
             return
@@ -706,7 +725,6 @@ end
 
 function resmon.finish_deposit_count(site)
     site.iter_key = nil
-    site.iter_fn = nil
     site.iter_state = nil
 
     if site.last_ore_check then
