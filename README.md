@@ -2,18 +2,20 @@ This is a [Factorio](http://www.factorio.com/) mod. It lets you keep track of
 your mining sites and warns you when they're starting to run low.
 
 
-## How? ##
+## How does it work? ##
 
 Once the mod is installed, using it is relatively simple:
 
 * Use the shortcut button "Resource monitor marker" to drag-select at least one
 ore entity in a patch (like using a blueprint).
+    * _Can't find the shortcut button? You may need to add it to the [shortcut
+    bar](https://wiki.factorio.com/Shortcut_bar)._
     * If everything went well, you should now see a blue overlay showing up on
     top of the ore(s) you clicked, and growing as YARM finds their neighbours,
-    and their neighbours, until the entire ore patch has been scanned.
+    and their neighbours, etc., until the entire ore patch has been scanned.
     * After the scan, you have 2 seconds to select another ore of the same kind,
     which will be added to the same site.
-        * If you tap the ground instead, you will cancel the site.
+        * If you tap the ground instead, you will cancel the site creation.
         * If you tap a different kind of ore instead, you will instantly create
         the site and start a new one on the other ore.
     * Upon the expiry of those 2 seconds, the site will be created and a
@@ -33,8 +35,7 @@ Each site has some buttons associated with it:
 * The 'ab|' button allows you to rename the site. This can be useful to prevent
 auto-naming from overwriting one of your sites with another.
     * Note: Names may not be longer than 50 characters!
-* The 'eye' button opens the map to the center of the ore, and zooms to world
-if there is radar coverage.
+* The 'eye' button opens the map to the center of the ore site.
 * The 'X' button allows you to delete the site. When first clicked, it turns
 red; click it again within 2 seconds to confirm deletion, or leave it alone to
 cancel it.
@@ -54,10 +55,10 @@ Sites are bound to forces (i.e., teams), so any sites you add will be visible
 to your teammates.
 
 Endless resources (by default, oil, but mods exist for others) are supported;
-the percentage full is therein calculated based on how much more than the
-minimum amount is present in the ore entities. This is minimally informative,
-and time to depletion is probably going to be quite wrong, but it's the best we
-can do with what we have.
+they are displayed as "entities x yield percentage" where the yield is an
+average of all the entities on the site. The depletion indicates how much this
+average yield goes down per minute. The estimated time indicates when the
+average yield is expected to hit its minimum value.
 
 
 ## Many thanks for ##
@@ -105,6 +106,7 @@ members of the #factorio IRC on espernet.
 YARM's remote interface is grown as needed; there are only a few functions currently:
 
 - `remote.call("YARM", "reset_player", player_name_or_index)`: sets the target player's character to be whatever the player has selected (if it's of a compatible type, of course) and clears out internal data relative to the player.
+    - Note: this is considered deprecated, as the player character is no longer (since v0.8) being changed to allow remote viewing.
 - `remote.call("YARM", "reset_ui", player_name_or_index)`: destroys the target player's YARM UI, forcing it to be recreated (hopefully correctly) at the next UI update cycle (about every 5 seconds).
 - `remote.call("YARM", "set_filter", player_name_or_index, new_filter)`: provides programmatic hooks to change the active filter. The filter value may be 'none', 'warnings', or 'all' -- other values are unsupported. The previously active filter is returned.
 - `remote.call("YARM", "get_on_site_updated_event_id")`: returns the identifier for the `on_site_updated` event, detailed below. You should probably call this every time mods are initialized, as it is set in the main `control.lua` runtime.
@@ -114,11 +116,11 @@ Additionally, there is one event:
 - `on_site_updated` is periodically raised whenever a site's ore count and stats are brought up to date. The event contains:
     - `force_name`, the name of the force owning this site
     - `site_name`, the name of the site that just finished updating; site names are unique within a force
+    - `ore_type`, the entity.name of the resource entities tracked in this site (e.g., `crude-oil` or `iron-ore`)
     - `amount`, the number of ore units remaining in the site
     - `ore_per_minute`, the number of ore units mined in a minute on this site, based on the number mined since the last update
     - `remaining_permille`, the ratio of ore remaining versus the initial amount from when the site was created
-        - permille is analogous to percent, but multiplied by 1000 instead of 100; its symbol is ‰
-    - `ore_type`, the entity.name of the resource entities tracked in this site (e.g., `crude-oil` or `iron-ore`)
+        - NB: permille is analogous to percent, but multiplied by 1000 instead of 100; its symbol is ‰
 
 
 ## License ##
