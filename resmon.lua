@@ -1492,7 +1492,7 @@ function resmon.on_click.goto_site(event)
                 freeze_history = true
             })
     else
-        player.set_controller({type = defines.controllers.remote, position = site.center})
+        player.set_controller({type = defines.controllers.remote, position = site.center, surface = site.surface})
     end
 
     resmon.update_force_members_ui(player)
