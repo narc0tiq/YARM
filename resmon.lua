@@ -422,12 +422,14 @@ function resmon.put_marker_at(surface, pos, player_data)
         return
     end
 
-    local overlay = surface.create_entity { name = "rm_overlay",
-        force = game.forces.neutral,
-        position = pos }
-    overlay.minable = false
-    overlay.destructible = false
-    overlay.operable = false
+    local overlay = rendering.draw_rectangle {
+        left_top = { math.floor(pos.x), math.floor(pos.y) },
+        right_bottom = { math.floor(pos.x+1), math.floor(pos.y+1) },
+        filled = true,
+        color = { 0, 0, 0.5, 0.4 },
+        surface = surface,
+        draw_on_ground = true,
+    }
     table.insert(player_data.overlays, overlay)
 end
 
@@ -461,18 +463,20 @@ function resmon.scan_current_site(player_index)
     local max_dist = settings.global["YARM-grow-limit"].value
     for i = 1, to_scan do
         local entity = table.remove(site.next_to_scan, 1)
-        local entity_position = entity.position
-        local surface = entity.surface
-        site.first_center = site.first_center or find_center(site.extents)
+        if entity and entity.valid then
+            local entity_position = entity.position
+            local surface = entity.surface
+            site.first_center = site.first_center or find_center(site.extents)
 
-        -- Look in every direction around this entity...
-        for _, dir in pairs(defines.direction) do
-            -- ...and if there's a resource, add it
-            local search_pos = shift_position(entity_position, dir)
-            if max_dist < 0 or util.distance(search_pos, site.first_center) < max_dist then
-                local found = find_resource_at(surface, search_pos)
-                if found and found.name == site.ore_type then
-                    resmon.add_single_entity(player_index, found)
+            -- Look in every direction around this entity...
+            for _, dir in pairs(defines.direction) do
+                -- ...and if there's a resource, add it
+                local search_pos = shift_position(entity_position, dir)
+                if max_dist < 0 or util.distance(search_pos, site.first_center) < max_dist then
+                    local found = find_resource_at(surface, search_pos)
+                    if found and found.name == site.ore_type then
+                        resmon.add_single_entity(player_index, found)
+                    end
                 end
             end
         end
@@ -616,6 +620,8 @@ function resmon.submit_site(player_index)
     local player_data = storage.player_data[player_index]
     local force_data = storage.force_data[player.force.name]
     local site = player_data.current_site
+
+    if not site then return end
 
     force_data.ore_sites[site.name] = site
     resmon.clear_current_site(player_index)
@@ -1512,7 +1518,7 @@ function resmon.on_click.expand_site(event)
          site cleans up the expansion-related variables on the site) or if we were adding a new site
          and decide to expand an existing one
     --]]
-    if are_we_cancelling_expand or player_data.current_site then
+    if are_we_cancelling_expand and player_data.current_site then
         resmon.submit_site(event.player_index)
     end
 
