@@ -461,18 +461,20 @@ function resmon.scan_current_site(player_index)
     local max_dist = settings.global["YARM-grow-limit"].value
     for i = 1, to_scan do
         local entity = table.remove(site.next_to_scan, 1)
-        local entity_position = entity.position
-        local surface = entity.surface
-        site.first_center = site.first_center or find_center(site.extents)
+        if entity and entity.valid then
+            local entity_position = entity.position
+            local surface = entity.surface
+            site.first_center = site.first_center or find_center(site.extents)
 
-        -- Look in every direction around this entity...
-        for _, dir in pairs(defines.direction) do
-            -- ...and if there's a resource, add it
-            local search_pos = shift_position(entity_position, dir)
-            if max_dist < 0 or util.distance(search_pos, site.first_center) < max_dist then
-                local found = find_resource_at(surface, search_pos)
-                if found and found.name == site.ore_type then
-                    resmon.add_single_entity(player_index, found)
+            -- Look in every direction around this entity...
+            for _, dir in pairs(defines.direction) do
+                -- ...and if there's a resource, add it
+                local search_pos = shift_position(entity_position, dir)
+                if max_dist < 0 or util.distance(search_pos, site.first_center) < max_dist then
+                    local found = find_resource_at(surface, search_pos)
+                    if found and found.name == site.ore_type then
+                        resmon.add_single_entity(player_index, found)
+                    end
                 end
             end
         end
