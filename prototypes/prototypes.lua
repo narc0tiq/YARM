@@ -27,14 +27,13 @@ data:extend(
             icon_size = 32,
             flags = { 'only-in-cursor', 'spawnable' },
             stack_size = 1,
-            stackable = false,
-            entity_filter_mode = 'whitelist',
-            entity_type_filters = { 'resource' },
             hidden = true,
             select = {
                 border_color = { g = 1 },
                 cursor_box_type = 'copy',
                 mode = 'any-entity',
+                entity_filter_mode = 'whitelist',
+                entity_type_filters = { 'resource' },
             },
             alt_select = {
                 border_color = { g = 1, b = 1 },

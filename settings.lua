@@ -132,4 +132,10 @@ data:extend({
         order = "d",
         default_value = true
     },
+    {
+        type = "bool-setting",
+        name = "YARM-make-fake-ores",
+        setting_type = "startup",
+        default_value = false
+    }
 })
