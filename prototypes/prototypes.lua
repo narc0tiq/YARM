@@ -44,31 +44,6 @@ data:extend(
         },
 
         {
-            type = 'container',
-            name = 'rm_overlay',
-            flags = { 'placeable-neutral', 'player-creation', 'not-repairable' },
-            icon = '__YARM__/graphics/rm_Overlay.png',
-            icon_size = 32,
-
-            max_health = 1,
-            order = 'z[resource-monitor]',
-
-            collision_mask = { layers = { resource = true } },
-            collision_box = { { -0.35, -0.35 }, { 0.35, 0.35 } },
-
-            selection_box = { { -0.5, -0.5 }, { 0.5, 0.5 } },
-            inventory_size = 1,
-            picture =
-            {
-                filename = '__YARM__/graphics/rm_Overlay.png',
-                priority = 'extra-high',
-                width = 32,
-                height = 32,
-                shift = { 0.0, 0.0 }
-            }
-        },
-
-        {
             type = 'font',
             name = 'yarm-gui-font',
             size = 14,
