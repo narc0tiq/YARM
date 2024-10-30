@@ -422,12 +422,14 @@ function resmon.put_marker_at(surface, pos, player_data)
         return
     end
 
-    local overlay = surface.create_entity { name = "rm_overlay",
-        force = game.forces.neutral,
-        position = pos }
-    overlay.minable = false
-    overlay.destructible = false
-    overlay.operable = false
+    local overlay = rendering.draw_rectangle {
+        left_top = { math.floor(pos.x), math.floor(pos.y) },
+        right_bottom = { math.floor(pos.x+1), math.floor(pos.y+1) },
+        filled = true,
+        color = { 0, 0, 0.5, 0.4 },
+        surface = surface,
+        draw_on_ground = true,
+    }
     table.insert(player_data.overlays, overlay)
 end
 
