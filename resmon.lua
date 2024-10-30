@@ -617,6 +617,8 @@ function resmon.submit_site(player_index)
     local force_data = storage.force_data[player.force.name]
     local site = player_data.current_site
 
+    if not site then return end
+
     force_data.ore_sites[site.name] = site
     resmon.clear_current_site(player_index)
     if (site.is_site_expanding) then
@@ -1512,7 +1514,7 @@ function resmon.on_click.expand_site(event)
          site cleans up the expansion-related variables on the site) or if we were adding a new site
          and decide to expand an existing one
     --]]
-    if are_we_cancelling_expand or player_data.current_site then
+    if are_we_cancelling_expand and player_data.current_site then
         resmon.submit_site(event.player_index)
     end
 
