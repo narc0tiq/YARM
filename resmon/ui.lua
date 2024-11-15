@@ -6,7 +6,22 @@ local ui_module = {
     FILTER_NONE = "none",
     FILTER_WARNINGS = "warnings",
     FILTER_ALL = "all",
+
+    -- Sanity: site names aren't allowed to be longer than this, to prevent them
+    -- kicking the buttons off the right edge of the screen
+    MAX_SITE_NAME_LENGTH = 64, -- I like square numbers
 }
+
+---Update the UI of all of a given force's members
+---@param force LuaForce|string|integer
+function ui_module.update_force_members(force)
+    if not force.players then
+        force = game.forces[force]
+    end
+    for _, p in pairs(force.players) do
+        resmon.ui.update_player(p)
+    end
+end
 
 ---Update the given player's UI elements (buttons, sites, etc.). Should be called
 ---periodically (e.g., on_nth_tick) for each player in the game.
@@ -243,7 +258,7 @@ function ui_module.render_single_site(site_filter, site, player, sites_gui, play
         el.style.font_color = color
         el.style.font = "yarm-gui-font"
 
-        local display_amount = resmon.generate_display_site_amount(site, player, nil)
+        local display_amount = resmon.locale.site_amount(site, resmon.locale.format_number)
         el = sites_gui.add { type = "label", name = "YARM_label_amount_" .. site.name,
             caption = display_amount }
         el.style.font_color = color
@@ -252,8 +267,9 @@ function ui_module.render_single_site(site_filter, site, player, sites_gui, play
 
     local entity_prototype = prototypes.entity[site.ore_type]
     el = sites_gui.add { type = "label", name = "YARM_label_ore_name_" .. site.name,
-        caption = is_full and { "", resmon.get_rich_text_for_products(entity_prototype), " ", site.ore_name }
-            or resmon.get_rich_text_for_products(entity_prototype) }
+        caption = is_full
+            and { "", resmon.locale.get_rich_text_for_products(entity_prototype), " ", site.ore_name }
+            or resmon.locale.get_rich_text_for_products(entity_prototype) }
     el.style.font_color = color
     el.style.font = "yarm-gui-font"
 
@@ -401,5 +417,37 @@ function ui_module.migrate_player_data(player)
         player_data.active_filter = nil
     end
 end
+
+---Update the given site's chart tag (map marker) with the current name and ore count
+---@param site yarm_site
+function ui_module.update_chart_tag(site)
+    local is_chart_tag_enabled = settings.global["YARM-map-markers"].value
+
+    if not is_chart_tag_enabled then
+        if site.chart_tag and site.chart_tag.valid then
+            -- chart tags were just disabled, so remove them from the world
+            site.chart_tag.destroy()
+            site.chart_tag = nil
+        end
+        return
+    end
+
+    if not site.chart_tag or not site.chart_tag.valid then
+        if not site.force or not site.force.valid or not site.surface.valid then return end
+
+        local chart_tag = {
+            position = site.center,
+            text = site.name,
+        }
+        site.chart_tag = site.force.add_chart_tag(site.surface, chart_tag)
+        if not site.chart_tag then return end -- may fail if chunk is not currently charted accd. to @Bilka
+    end
+
+    local display_value = resmon.locale.site_amount(site, resmon.locale.format_number_si)
+    local ore_prototype = prototypes.entity[site.ore_type]
+    site.chart_tag.text =
+        string.format('%s - %s %s', site.name, display_value, resmon.locale.get_rich_text_for_products(ore_prototype))
+end
+
 
 return ui_module

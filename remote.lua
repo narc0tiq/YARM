@@ -37,11 +37,14 @@ function interface.set_filter(player_name_or_index, new_filter)
     local player_data = storage.player_data[player.index]
     local old_filter = player_data.active_filter
 
-    -- TODO Could use some validation here... what values are actually allowed, that kind of thing.
-    player_data.active_filter = new_filter or 'none'
+    if not resmon.sites.filters[new_filter] then
+        log(string.format("Warning: YARM does not have a filter named '%s'", new_filter))
+        return old_filter
+    end
 
-    resmon.update_ui_filter_buttons(player, player_data.active_filter)
-    resmon.update_ui(player)
+    player_data.active_filter = new_filter
+    resmon.ui.update_filter_buttons(player)
+    resmon.ui.update_player(player)
 
     return old_filter
 end
