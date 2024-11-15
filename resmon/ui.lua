@@ -171,7 +171,7 @@ local function update_active_style_name(button, should_be_active)
     if is_active_style and not should_be_active then
         button.style = string.sub(style_name, 1, string.len(style_name) - 3) -- trim "_on"
     elseif should_be_active and not is_active_style then
-        button.style = style_name.."_on"
+        button.style = style_name .. "_on"
     end
 end
 
@@ -187,7 +187,7 @@ function ui_module.update_filter_buttons(player)
     local root = ui_module.get_or_create_hud(player)
     local active_filter = player_data.ui.active_filter
     for filter_name, _ in pairs(resmon.sites.filters) do
-        local button = root.buttons["YARM_filter_"..filter_name]
+        local button = root.buttons["YARM_filter_" .. filter_name]
         if button and button.valid then
             update_active_style_name(button, filter_name == active_filter)
         end
@@ -204,7 +204,15 @@ end
 ---@param is_full boolean Whether we're rendering the full width display (12 columns) or the compact view (5 columns)
 ---@param is_split_by_surface boolean Whether we're splitting the display by surface (which is when row 1 is special)
 ---@return boolean Whether we rendered anything or not
-function ui_module.render_single_site(site_filter, site, player, sites_gui, player_data, row, is_full, is_split_by_surface)
+function ui_module.render_single_site(
+    site_filter,
+    site,
+    player,
+    sites_gui,
+    player_data,
+    row,
+    is_full,
+    is_split_by_surface)
     if not site_filter(site, player) then
         return false
     end
@@ -453,6 +461,5 @@ function ui_module.update_chart_tag(site)
     site.chart_tag.text =
         string.format('%s - %s %s', site.name, display_value, resmon.locale.get_rich_text_for_products(ore_prototype))
 end
-
 
 return ui_module
