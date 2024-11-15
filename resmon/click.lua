@@ -1,3 +1,4 @@
+---@class click_module
 local click_module = {
     handlers = {}
 }
