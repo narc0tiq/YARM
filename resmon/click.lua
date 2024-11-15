@@ -86,7 +86,7 @@ function click_module.goto_site(event)
     local force_data = storage.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
 
-    player.set_controller({type = defines.controllers.remote, position = site.center, surface = site.surface})
+    player.set_controller { type = defines.controllers.remote, position = site.center, surface = site.surface }
 
     resmon.ui.update_force_members(player.force)
 end
@@ -205,7 +205,9 @@ function handlers.YARM_toggle_surfacesplit(event)
     end
 
     local button = root.buttons.YARM_toggle_surfacesplit
-    button.style = button.style.name == "YARM_toggle_surfacesplit" and "YARM_toggle_surfacesplit_on" or "YARM_toggle_surfacesplit"
+    button.style = button.style.name == "YARM_toggle_surfacesplit"
+        and "YARM_toggle_surfacesplit_on"
+        or "YARM_toggle_surfacesplit"
     resmon.ui.update_player(player)
 end
 
