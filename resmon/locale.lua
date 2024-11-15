@@ -81,16 +81,22 @@ function locale_module.depletion_rate_to_human(rate, is_infinite)
 end
 
 ---Add thousands separators to a number given as a string
----@param n string The number to be formatted (may be integer or decimal)
+---@param n string|number The number to be formatted (may be integer or decimal or a string containing same)
 ---@return string The prettily-formatted number (e.g., "123,456.7")
 -- Note: I am aware of util.format_number, but that expects a _number_, whereas here I am working with strings
-function locale_module.format_number(n) -- credit http://richard.warburton.it
+function locale_module.format_number(n)
+    -- credit http://richard.warburton.it
     local left, num, right = string.match(n, '^([^%d]*%d)(%d*)(.-)$')
     return left .. (num:reverse():gsub('(%d%d%d)', '%1,'):reverse()) .. right
 end
 
 local si_prefixes = { '', ' k', ' M', ' G' }
 
+---Reduce a number to the an SI-prefixed single significant digit, e.g., "2.1 M" for abbreviated display
+---(e.g., chart tag). Maxes out at a prefix of T (terra-, or 10^12)
+---@param n number The raw number to be reduced (e.g., 2123456)
+---@return string
+-- Note: I am aware of util.format_number, but I want the extra significant decimal
 function locale_module.format_number_si(n)
     for i = 1, #si_prefixes do
         if n < 1000 then
@@ -101,6 +107,52 @@ function locale_module.format_number_si(n)
 
     -- 1,234.5 T resources? I guess we should support it...
     return string.format('%s T', locale_module.format_number(string.format('%.1f', n)))
+end
+
+---Format the amount of resources in a site for display. May include mining productivity, according to user settings.
+---@param site yarm_site
+---@param format_func function A number formatting function, e.g. resmon.locale.format_number
+---@return string The formatted number containing the resource amount, e.g. "2,123,456" or "2.1 M"
+function locale_module.site_amount(site, format_func)
+    local entity_prototype = prototypes.entity[site.ore_type]
+    -- Special case: infinite resources show "N x 123.4%", which is more useful than the raw amount
+    if entity_prototype.infinite_resource then
+        local normal_site_amount = entity_prototype.normal_resource_amount * site.entity_count
+        local val = (normal_site_amount == 0 and 0) or (100 * site.amount / normal_site_amount)
+        return site.entity_count .. " x " .. locale_module.format_number(string.format("%.1f%%", val))
+    end
+
+    local raw_display = format_func(site.amount)
+    if not settings.global["YARM-adjust-for-productivity"].value then
+        return raw_display
+    end
+
+    local prod_amount = math.floor(site.amount * (1 + site.force.mining_drill_productivity_bonus))
+    local prod_display = format_func(prod_amount)
+
+    if not settings.global["YARM-productivity-show-raw-and-adjusted"].value then
+        return prod_display
+    elseif settings.global["YARM-productivity-parentheses-part-is"].value == "adjusted" then
+        return string.format("%s (%s)", raw_display, prod_display)
+    else
+        return string.format("%s (%s)", prod_display, raw_display)
+    end
+end
+
+---Create a rich text string (e.g., "[item=iron-ore]") from the given resource prototype's mining products
+---@param proto LuaEntityPrototype
+---@return string
+function locale_module.get_rich_text_for_products(proto)
+    if not proto or not proto.mineable_properties or not proto.mineable_properties.products then
+        return '' -- This entity doesn't produce anything
+    end
+
+    local result = ''
+    for _, product in pairs(proto.mineable_properties.products) do
+        result = result .. string.format('[%s=%s]', product.type, product.name)
+    end
+
+    return result
 end
 
 return locale_module
