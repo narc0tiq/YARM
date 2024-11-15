@@ -18,8 +18,9 @@ script.on_load(resmon.on_load)
 
 script.on_event(defines.events.on_player_created, resmon.on_player_created)
 script.on_event(defines.events.on_tick, resmon.on_tick)
-script.on_event(defines.events.on_gui_click, resmon.on_gui_click)
+script.on_event(defines.events.on_gui_click, resmon.click.on_gui_click)
 script.on_event(defines.events.on_gui_closed, resmon.on_gui_closed)
+script.on_event(defines.events.on_gui_confirmed, resmon.on_gui_confirmed)
 script.on_event("get-yarm-selector", resmon.on_get_selection_tool)
 script.on_event(defines.events.on_player_selected_area, resmon.on_player_selected_area)
 
