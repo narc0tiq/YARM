@@ -37,6 +37,10 @@ function ui_module.update_player(player)
     local root = ui_module.get_or_create_hud(player)
     local show_sites_summary = player.mod_settings["YARM-show-sites-summary"].value or false
 
+    if root.sites and root.sites.valid then
+        root.sites.destroy()
+    end
+
     -- TODO Refactor this large clump into something more reasonable
     local is_full = root.buttons.YARM_toggle_lite.style.name ~= "YARM_toggle_lite_on"
     local column_count = is_full and 12 or 5
