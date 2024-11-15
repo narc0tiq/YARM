@@ -1,7 +1,18 @@
-local sites_module = {
-    comparators = {}
-}
+local ui_module = require("resmon.ui")
 
+---@class sites_module
+local sites_module = {
+    comparators = {},
+    filters = {
+        [ui_module.FILTER_NONE] = function() return false end,
+        [ui_module.FILTER_ALL] = function() return true end,
+        [ui_module.FILTER_WARNINGS] = function(site, player)
+            local remaining = site.etd_minutes
+            local threshold_hours = site.is_summary and "timeleft_totals" or "timeleft"
+            return remaining ~= -1 and remaining <= player.mod_settings["YARM-warn-" .. threshold_hours].value * 60
+        end,
+    },
+}
 
 sites_module.comparators["default"] = function (left, right)
     if left.remaining_permille ~= right.remaining_permille then
@@ -79,7 +90,7 @@ end
 function sites_module.on_surface(player, target_surface)
     local force_data = storage.force_data[player.force.name]
     local filtered_sites = {}
-    for site in sites_module.in_pr_order(force_data.ore_sites, player) do
+    for site in sites_module.in_player_order(force_data.ore_sites, player) do
         if not target_surface or site.surface.name == target_surface then
             table.insert(filtered_sites, site)
         end
