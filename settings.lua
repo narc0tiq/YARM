@@ -124,6 +124,7 @@ data:extend({
         order = "c",
         default_value = "etd",
         allowed_values = { "alphabetical", "percent-remaining", "ore-type", "ore-count", "etd" }
+        ---@alias order_by_enum "default"|"alphabetical"|"percent-remaining"|"ore-type"|"ore-count"|"etd"
     },
     {
         type = "bool-setting",

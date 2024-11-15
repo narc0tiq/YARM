@@ -3,7 +3,7 @@ Version: 0.11.2
 Date: 2024-10-24
   Changes:
     - fix a spurious crash on saving (narc)
-	- enable looking at sites on other surfaces (mithaldu)
+    - enable looking at sites on other surfaces (mithaldu)
 ---------------------------------------------------------------------------------------------------
 Version: 0.11.1
 Date: 2024-10-23
