@@ -6,6 +6,7 @@ local v = require "semver"
 
 local mod_version = "0.11.2"
 
+---@class resmon_base
 resmon = {
     on_click = {},
     site_iterators = {},

@@ -1,3 +1,4 @@
+---@class locale_module
 local locale_module = {}
 
 ---Return a localized string with the estimated time until amount reaches 0

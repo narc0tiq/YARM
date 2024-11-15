@@ -1,5 +1,6 @@
 local get_frame_flow = require("mod-gui").get_frame_flow
 
+---@class ui_module
 local ui_module = {
     -- NB: filter names should be single words with optional underscores (_)
     -- They will be used for naming GUI elements
