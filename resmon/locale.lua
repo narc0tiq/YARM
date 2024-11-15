@@ -103,7 +103,7 @@ function locale_module.format_number_si(n)
         if n < 1000 then
             return string.format('%.1f%s', n, si_prefixes[i])
         end
-        n = math.floor(n / 100)/10 -- keep 1 significant decimal
+        n = math.floor(n / 100) / 10 -- keep 1 significant decimal
     end
 
     -- 1,234.5 T resources? I guess we should support it...

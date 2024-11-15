@@ -14,7 +14,7 @@ local sites_module = {
     },
 }
 
-sites_module.comparators["default"] = function (left, right)
+sites_module.comparators["default"] = function(left, right)
     if left.remaining_permille ~= right.remaining_permille then
         return left.remaining_permille < right.remaining_permille
     elseif left.added_at ~= right.added_at then
@@ -26,7 +26,7 @@ end
 
 sites_module.comparators["percent-remaining"] = sites_module.comparators.default
 
-sites_module.comparators["ore-type"] = function (left, right)
+sites_module.comparators["ore-type"] = function(left, right)
     if left.ore_type == right.ore_type then
         return sites_module.comparators.default(left, right)
     end
@@ -34,7 +34,7 @@ sites_module.comparators["ore-type"] = function (left, right)
     return left.ore_type < right.ore_type
 end
 
-sites_module.comparators["ore-count"] = function (left, right)
+sites_module.comparators["ore-count"] = function(left, right)
     if left.amount == right.amount then
         return sites_module.comparators.default(left, right)
     end
@@ -42,7 +42,7 @@ sites_module.comparators["ore-count"] = function (left, right)
     return left.amount < right.amount
 end
 
-sites_module.comparators["etd"] = function (left, right)
+sites_module.comparators["etd"] = function(left, right)
     if left.amount == right.amount then
         return sites_module.comparators.default(left, right)
     end
@@ -59,7 +59,7 @@ sites_module.comparators["etd"] = function (left, right)
     return left.etd_minutes < right.etd_minutes
 end
 
-sites_module.comparators["alphabetical"] = function (left, right)
+sites_module.comparators["alphabetical"] = function(left, right)
     return left.name < right.name
 end
 
