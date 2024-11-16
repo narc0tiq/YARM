@@ -68,7 +68,7 @@ function ui_module.update_player(player)
         column_alignments[5] = 'left'    -- buttons
     end
 
-    local site_filter = resmon.sites.filters[player_data.active_filter] or resmon.sites.filters[ui_module.FILTER_NONE]
+    local site_filter = resmon.sites.filters[player_data.ui.active_filter] or resmon.sites.filters[ui_module.FILTER_NONE]
     local surface_names = { false }
     local is_split_by_surface = root.buttons.YARM_toggle_surfacesplit.style.name == "YARM_toggle_surfacesplit_on"
     if is_split_by_surface then
