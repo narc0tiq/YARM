@@ -35,6 +35,7 @@ function ui_module.update_player(player)
     end
 
     local root = ui_module.get_or_create_hud(player)
+    root.style = player_data.ui.enable_hud_background and "YARM_outer_frame_no_border_bg" or "YARM_outer_frame_no_border"
     local show_sites_summary = player.mod_settings["YARM-show-sites-summary"].value or false
 
     if root.sites and root.sites.valid then
@@ -42,7 +43,7 @@ function ui_module.update_player(player)
     end
 
     -- TODO Refactor this large clump into something more reasonable
-    local is_full = root.buttons.YARM_toggle_lite.style.name ~= "YARM_toggle_lite_on"
+    local is_full = not player_data.ui.show_compact_columns
     local column_count = is_full and 12 or 5
     local sites_gui = root.add { type = "table", column_count = column_count, name = "sites", style = "YARM_site_table" }
     sites_gui.style.horizontal_spacing = 5
@@ -70,7 +71,7 @@ function ui_module.update_player(player)
 
     local site_filter = resmon.sites.filters[player_data.ui.active_filter] or resmon.sites.filters[ui_module.FILTER_NONE]
     local surface_names = { false }
-    local is_split_by_surface = root.buttons.YARM_toggle_surfacesplit.style.name == "YARM_toggle_surfacesplit_on"
+    local is_split_by_surface = player_data.ui.split_by_surface
     if is_split_by_surface then
         surface_names = resmon.surface_names()
     end
@@ -161,10 +162,12 @@ function ui_module.get_or_create_hud(player)
     return root
 end
 
----Set the button style to ON or OFF if necessary. Will not disturb the style if already correct
+---Set the button style to ON or OFF if necessary. Will not disturb the style if already correct.
+---Relies on the fact that toggle button styles have predictable names: the "on" state's name is
+---the same as the "off" state, but with "_on" appended.
 ---@param button LuaGuiElement The button being targeted
 ---@param should_be_active boolean Should the button be set to ON or OFF?
-local function update_active_style_name(button, should_be_active)
+function ui_module.update_button_active_style(button, should_be_active)
     local style_name = button.style.name
     local is_active_style = style_name:ends_with("_on")
 
@@ -189,7 +192,7 @@ function ui_module.update_filter_buttons(player)
     for filter_name, _ in pairs(resmon.sites.filters) do
         local button = root.buttons["YARM_filter_" .. filter_name]
         if button and button.valid then
-            update_active_style_name(button, filter_name == active_filter)
+            ui_module.update_button_active_style(button, filter_name == active_filter)
         end
     end
 end
@@ -420,8 +423,13 @@ function ui_module.migrate_player_data(player)
 
     -- v0.12.0: player UI data moved into own namespace
     if not player_data.ui then
+        local root = ui_module.get_or_create_hud(player)
+
         player_data.ui = {
             active_filter = ui_module.FILTER_WARNINGS,
+            enable_hud_background = root.style == "YARM_outer_frame_no_border_bg",
+            split_by_surface = root.YARM_toggle_surfacesplit.style.name:ends_with("_on"),
+            show_compact_columns = root.YARM_toggle_lite.style.name:ends_with("_on"),
         }
     end
 

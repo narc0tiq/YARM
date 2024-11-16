@@ -94,7 +94,17 @@ function resmon.init_player(player_index)
     if not storage.player_data then storage.player_data = {} end
 
     local player_data = storage.player_data[player_index]
-    if not player_data then player_data = {} end
+    if not player_data then
+        ---@class player_data
+        player_data = {
+            ui = {
+                active_filter = resmon.ui.FILTER_WARNINGS,
+                enable_hud_background = false,
+                split_by_surface = false,
+                show_compact_columns = false,
+            },
+        }
+    end
 
     if not player_data.gui_update_ticks or player_data.gui_update_ticks == 60 then player_data.gui_update_ticks = 300 end
 

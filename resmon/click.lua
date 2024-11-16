@@ -181,46 +181,35 @@ function handlers.YARM_rename_cancel(event)
     resmon.ui.update_force_members(player.force)
 end
 
-function handlers.YARM_toggle_bg(event)
-    local player = game.players[event.player_index]
-    local root = resmon.ui.get_or_create_hud(player)
-    if not root then
-        return
+---Create an event handler for a toggle button that toggles a UI setting.
+---@param ui_setting_name string Which `player_data.ui` setting are we toggling?
+---@param button_name string Which button reflects the UI setting name?
+---@return function handler An event handler that can be dispatched then the toggle button is clicked
+local function create_toggle_button_method(button_name, ui_setting_name)
+    ---@param event EventData.on_gui_click The click event to be handled
+    return function(event)
+        local player = game.players[event.player_index]
+        local player_data = storage.player_data[event.player_index]
+        local root = resmon.ui.get_or_create_hud(player)
+        if not root then
+            return
+        end
+
+        player_data.ui[ui_setting_name] = not player_data.ui[ui_setting_name]
+        local setting_is_on = player_data.ui[ui_setting_name]
+        resmon.ui.update_button_active_style(root.buttons[button_name], setting_is_on)
+        resmon.ui.update_player(player)
     end
-
-    local has_bg = root.style.name == "YARM_outer_frame_no_border_bg"
-
-    root.style = has_bg and "YARM_outer_frame_no_border" or "YARM_outer_frame_no_border_bg"
-    local button = root.buttons.YARM_toggle_bg
-    button.style = has_bg and "YARM_toggle_bg_on" or "YARM_toggle_bg"
-
-    resmon.ui.update_player(player)
 end
 
-function handlers.YARM_toggle_surfacesplit(event)
-    local player = game.players[event.player_index]
-    local root = resmon.ui.get_or_create_hud(player)
-    if not root then
-        return
-    end
+local toggle_buttons = {
+    ["YARM_toggle_bg"] = "enable_hud_background",
+    ["YARM_toggle_surfacesplit"] = "split_by_surface",
+    ["YARM_toggle_lite"] = "show_compact_columns",
+}
 
-    local button = root.buttons.YARM_toggle_surfacesplit
-    button.style = button.style.name == "YARM_toggle_surfacesplit"
-        and "YARM_toggle_surfacesplit_on"
-        or "YARM_toggle_surfacesplit"
-    resmon.ui.update_player(player)
-end
-
-function handlers.YARM_toggle_lite(event)
-    local player = game.players[event.player_index]
-    local root = resmon.ui.get_or_create_hud(player)
-    if not root then
-        return
-    end
-
-    local button = root.buttons.YARM_toggle_lite
-    button.style = button.style.name == "YARM_toggle_lite" and "YARM_toggle_lite_on" or "YARM_toggle_lite"
-    resmon.ui.update_player(player)
+for button_name, setting_name in pairs(toggle_buttons) do
+    handlers[button_name] = create_toggle_button_method(button_name, setting_name)
 end
 
 return click_module
