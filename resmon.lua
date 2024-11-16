@@ -519,8 +519,7 @@ local function get_octant_name(vector)
 end
 
 function resmon.finalize_site(player_index)
-    local player = game.players[player_index]
-    local player_data = storage.player_data[player.name]
+    local player_data = storage.player_data[player_index]
 
     ---@type yarm_site
     local site = player_data.current_site
@@ -546,7 +545,7 @@ end
 
 function resmon.submit_site(player_index)
     local player = game.players[player_index]
-    local player_data = storage.player_data[player.name]
+    local player_data = storage.player_data[player_index]
     local force_data = storage.force_data[player.force.name]
     local site = player_data.current_site
 
