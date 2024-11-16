@@ -82,7 +82,7 @@ function ui_module.update_player(player)
         if next(sites) then
             local will_render_sites
             local will_render_totals
-            local summary = show_sites_summary and resmon.sites.generate_summaries(player, sites) or {}
+            local summary = show_sites_summary and resmon.sites.generate_summaries(sites, is_split_by_surface) or {}
             for summary_site in resmon.sites.in_player_order(summary, player) do
                 if site_filter(summary_site, player) then will_render_totals = true end
             end
@@ -299,7 +299,7 @@ function ui_module.render_single_site(
     end
 
     el = sites_gui.add { type = "label", name = "YARM_label_etd_" .. site.name,
-        caption = resmon.locale.time_to_deplete(site.etd_minutes, site.amount_left) }
+        caption = resmon.locale.time_to_deplete(site.etd_minutes, site.amount_left or site.amount) }
     el.style.font_color = color
     el.style.font = "yarm-gui-font"
 
