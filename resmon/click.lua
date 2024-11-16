@@ -27,7 +27,7 @@ function click_module.set_filter(event)
     local player = game.players[event.player_index]
     local player_data = storage.player_data[event.player_index]
 
-    player_data.active_filter = new_filter
+    player_data.ui.active_filter = new_filter
 
     resmon.ui.update_filter_buttons(player)
     resmon.ui.update_player(player)

@@ -29,20 +29,20 @@ function interface.get_current_filter(player_name_or_index)
     local player = game.players[player_name_or_index]
     local player_data = storage.player_data[player.index]
 
-    return player_data.active_filter or 'none'
+    return player_data.ui.active_filter or 'none'
 end
 
 function interface.set_filter(player_name_or_index, new_filter)
     local player = game.players[player_name_or_index]
     local player_data = storage.player_data[player.index]
-    local old_filter = player_data.active_filter
+    local old_filter = player_data.ui.active_filter
 
     if not resmon.sites.filters[new_filter] then
         log(string.format("Warning: YARM does not have a filter named '%s'", new_filter))
         return old_filter
     end
 
-    player_data.active_filter = new_filter
+    player_data.ui.active_filter = new_filter
     resmon.ui.update_filter_buttons(player)
     resmon.ui.update_player(player)
 
