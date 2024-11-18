@@ -3,29 +3,31 @@ local click_module = {
     handlers = {}
 }
 
+---@param event EventData.on_gui_click
 function click_module.on_gui_click(event)
     -- Automatic binding: if you add handlers.some_button_name, then a click on a GUI element
     -- named `some_button_name` will automatically be routed to the handler
     if click_module.handlers[event.element.name] then
         click_module.handlers[event.element.name](event)
     -- Remaining bindings are for dynamically-named elements:
-    elseif string.starts_with(event.element.name, "YARM_filter_") then
+    elseif event.element.name:starts_with("YARM_filter_") then
         click_module.set_filter(event)
-    elseif string.starts_with(event.element.name, "YARM_delete_site_") then
+    elseif event.element.name:starts_with("YARM_delete_site_") then
         click_module.delete_site(event)
-    elseif string.starts_with(event.element.name, "YARM_rename_site_") then
+    elseif event.element.name:starts_with("YARM_rename_site_") then
         click_module.rename_site(event)
-    elseif string.starts_with(event.element.name, "YARM_goto_site_") then
+    elseif event.element.name:starts_with("YARM_goto_site_") then
         click_module.goto_site(event)
-    elseif string.starts_with(event.element.name, "YARM_expand_site_") then
+    elseif event.element.name:starts_with("YARM_expand_site_") then
         click_module.expand_site(event)
     end
 end
 
+---@param event EventData.on_gui_click
 function click_module.set_filter(event)
     local new_filter = string.sub(event.element.name, 1 + string.len("YARM_filter_"))
     local player = game.players[event.player_index]
-    local player_data = storage.player_data[event.player_index]
+    local player_data = storage.player_data[player.index]
 
     player_data.ui.active_filter = new_filter
 
@@ -33,6 +35,7 @@ function click_module.set_filter(event)
     resmon.ui.update_player(player)
 end
 
+---@param event EventData.on_gui_click
 function click_module.delete_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_delete_site_"))
 
@@ -53,11 +56,12 @@ function click_module.delete_site(event)
     resmon.ui.update_force_members(player.force)
 end
 
+---@param event EventData.on_gui_click
 function click_module.rename_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_rename_site_"))
 
     local player = game.players[event.player_index]
-    local player_data = storage.player_data[event.player_index]
+    local player_data = storage.player_data[player.index]
 
     if player.gui.center.YARM_site_rename then
         click_module.handlers.YARM_rename_cancel(event)
@@ -79,6 +83,7 @@ function click_module.rename_site(event)
     resmon.ui.update_force_members(player.force)
 end
 
+---@param event EventData.on_gui_click
 function click_module.goto_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_goto_site_"))
 
@@ -91,12 +96,13 @@ function click_module.goto_site(event)
     resmon.ui.update_force_members(player.force)
 end
 
--- one button handler for both the expand_site and expand_site_cancel buttons
+---One button handler for both the expand_site and expand_site_cancel buttons
+---@param event EventData.on_gui_click
 function click_module.expand_site(event)
     local site_name = string.sub(event.element.name, 1 + string.len("YARM_expand_site_"))
 
     local player = game.players[event.player_index]
-    local player_data = storage.player_data[event.player_index]
+    local player_data = storage.player_data[player.index]
     local force_data = storage.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
     local are_we_cancelling_expand = site.is_site_expanding
@@ -105,8 +111,8 @@ function click_module.expand_site(event)
          site cleans up the expansion-related variables on the site) or if we were adding a new site
          and decide to expand an existing one
     --]]
-    if are_we_cancelling_expand or player_data.current_site then
-        resmon.submit_site(event.player_index)
+    if are_we_cancelling_expand and player_data.current_site then
+        resmon.submit_site(player)
     end
 
     --[[ this is to handle cancelling an expansion (by clicking the red button) - submitting the site is
@@ -122,7 +128,7 @@ function click_module.expand_site(event)
         player_data.current_site = site
 
         resmon.ui.update_force_members(player.force)
-        resmon.start_recreate_overlay_existing_site(event.player_index)
+        resmon.start_recreate_overlay_existing_site(player)
     end
 end
 
@@ -134,12 +140,13 @@ end
 -- Just a local alias to make it easier to read
 local handlers = click_module.handlers
 
+---@param event EventData.on_gui_click
 function handlers.YARM_rename_confirm(event)
     local player = game.players[event.player_index]
-    local player_data = storage.player_data[event.player_index]
+    local player_data = storage.player_data[player.index]
     local force_data = storage.force_data[player.force.name]
 
-    local old_name = player_data.renaming_site
+    local old_name = player_data.renaming_site --[[@as string]] --can't get here without this being set
     local new_name = player.gui.center.YARM_site_rename.new_name.text
     local new_name_length_without_tags =
         string.len(string.gsub(new_name, "%[[^=%]]+=[^=%]]+%]", "123"))
@@ -171,9 +178,10 @@ function handlers.YARM_rename_confirm(event)
     resmon.ui.update_force_members(player.force)
 end
 
+---@param event EventData.on_gui_click
 function handlers.YARM_rename_cancel(event)
     local player = game.players[event.player_index]
-    local player_data = storage.player_data[event.player_index]
+    local player_data = storage.player_data[player.index]
 
     player_data.renaming_site = nil
     player.gui.center.YARM_site_rename.destroy()
@@ -189,7 +197,7 @@ local function create_toggle_button_method(button_name, ui_setting_name)
     ---@param event EventData.on_gui_click The click event to be handled
     return function(event)
         local player = game.players[event.player_index]
-        local player_data = storage.player_data[event.player_index]
+        local player_data = storage.player_data[player.index]
         local root = resmon.ui.get_or_create_hud(player)
         if not root then
             return
