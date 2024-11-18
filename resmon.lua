@@ -1,10 +1,6 @@
 require "util"
 require "libs/array_pair"
 require "libs/ore_tracker"
-local mod_gui = require("mod-gui")
-local v = require "semver"
-
-local mod_version = "0.11.2"
 
 ---@class resmon_base
 resmon = {
@@ -18,145 +14,89 @@ resmon = {
     columns = require("resmon.columns"),
     locale = require("resmon.locale"),
     sites = require("resmon.sites"),
+    types = require("resmon.types"),
     ui = require("resmon.ui"),
 }
 
+---Check if `haystack` exactly starts with `needle`; case-sensitive
+---@param haystack string
+---@param needle string
+---@return boolean result True if the first `len(needle)` characters in `haystack` are exactly `needle`
 function string.starts_with(haystack, needle)
     return string.sub(haystack, 1, string.len(needle)) == needle
 end
 
+---Check if `haystack` exactly ends with `needle`; case-sensitive
+---@param haystack string
+---@param needle string
+---@return boolean result True if the last `len(needle)` characters in `haystack` are exactly `needle`
 function string.ends_with(haystack, needle)
     return string.sub(haystack, -string.len(needle)) == needle
 end
 
+---Initialize/upgrade the storage data (for players and forces)
 function resmon.init_globals()
-    for index, _ in pairs(game.players) do
-        resmon.init_player(index)
+    for _, player in pairs(game.players) do
+        resmon.init_player(player)
     end
 end
 
+---Initialize/upgrade the given player
+---@param event EventData.on_player_created
 function resmon.on_player_created(event)
-    resmon.init_player(event.player_index)
+    local player = game.players[event.player_index]
+    resmon.init_player(player)
 end
 
--- migration v0.8.0: remove remote viewers and put players back into the right entity if available
-local function migrate_remove_remote_viewer(player, player_data)
-    local real_char = player_data.real_character
-    if not real_char or not real_char.valid then
-        player.print { "YARM-warn-no-return-possible" }
-        return
-    end
-
-    player.character = real_char
-    if player_data.remote_viewer and player_data.remote_viewer.valid then
-        player_data.remote_viewer.destroy()
-    end
-
-    player_data.real_character = nil
-    player_data.remote_viewer = nil
-    player_data.viewing_site = nil
-end
-
-local function migrate_remove_minimum_resource_amount(force_data)
-    for _, site in pairs(force_data.ore_sites) do
-        if site.minimum_resource_amount then
-            site.minimum_resource_amount = nil
-        end
-    end
-end
-
+---YARM v0.11.2: Keeping iter_fn in the site means trying to keep a function in `storage`, which
+---blocks saving in Factorio 2.0 and would have possibly also led to some mysterious desyncs in
+---previous Factorio versions.
+---@param force_data force_data
 local function migrate_remove_iter_fn(force_data)
     for _, site in pairs(force_data.ore_sites) do
         if site.iter_fn then
             resmon.site_iterators[site.name] = site.iter_fn
-            site.iter_fn = nil
+            site.iter_fn = nil ---@diagnostic disable-line: inject-field
         end
     end
 end
 
-function resmon.init_player(player_index)
-    local player = game.players[player_index]
-    resmon.init_force(player.force)
-
-    -- migration v0.7.402: YARM_root now in mod_gui, destroy the old one
-    local old_root = player.gui.left.YARM_root
-    if old_root and old_root.valid then
-        old_root.destroy()
-    end
-
-    local root = mod_gui.get_frame_flow(player).YARM_root
-    if root and root.buttons and (
-        -- migration v0.8.0: expando now a set of filter buttons, destroy the root and recreate later
-            root.buttons.YARM_expando
-            -- migration v0.TBD: add toggle bg button
-            or not root.buttons.YARM_toggle_bg
-            or not root.buttons.YARM_toggle_surfacesplit
-            or not root.buttons.YARM_toggle_lite)
-    then
-        root.destroy()
-    end
+---Initialize the player-level persistent data, e.g. overlays.
+---Will also trigger force-level initialization
+---@param player LuaPlayer
+function resmon.init_player(player)
+    resmon.init_force(player.force --[[@as LuaForce]])
 
     if not storage.player_data then
-        storage.player_data = {}
+        storage.player_data = {} ---@type player_data[]
     end
 
-    local player_data = storage.player_data[player_index]
+    local player_data = storage.player_data[player.index]
     if not player_data then
-        ---@class player_data
-        player_data = {
-            gui_update_ticks = 300,
-            overlays = {},
-            ---@type player_data_ui
-            ui = {
-                active_filter = resmon.ui.FILTER_WARNINGS,
-                enable_hud_background = false,
-                split_by_surface = false,
-                show_compact_columns = false,
-                site_colors = {},
-            },
-        }
+        player_data = resmon.types.new_player_data()
     end
 
-    if not player_data.gui_update_ticks or player_data.gui_update_ticks == 60 then
-        player_data.gui_update_ticks = 300
-    end
-
-    if not player_data.overlays then
-        player_data.overlays = {}
-    end
-
-    if player_data.viewing_site then
-        migrate_remove_remote_viewer(player, player_data)
-    end
-
-    storage.player_data[player_index] = player_data
+    storage.player_data[player.index] = player_data
 
     resmon.ui.migrate_player_data(player)
 end
 
+---Initialize the force-level stored data, e.g. ore sites
+---@param force LuaForce
 function resmon.init_force(force)
     if not storage.force_data then
-        storage.force_data = {}
+        storage.force_data = {} ---@type force_data[]
     end
 
     local force_data = storage.force_data[force.name]
     if not force_data then
-        force_data = {}
+        force_data = resmon.types.new_force_data()
     end
-
-    if not force_data.ore_sites then
-        force_data.ore_sites = {} ---@type yarm_site[]
-    else
-        resmon.migrate_ore_sites(force_data)
-        resmon.migrate_ore_entities(force_data)
-
-        resmon.sanity_check_sites(force, force_data)
-    end
-
-    migrate_remove_minimum_resource_amount(force_data)
-    migrate_remove_iter_fn(force_data)
 
     storage.force_data[force.name] = force_data
+
+    migrate_remove_iter_fn(force_data)
+    resmon.sanity_check_sites(force, force_data)
 end
 
 local function table_contains(haystack, needle)
@@ -205,101 +145,14 @@ function resmon.sanity_check_sites(force, force_data)
         table.concat(missing_ores, ', ') } }
 end
 
-local function position_to_string(entity)
+---Turn a position into a string usable as a table key
+---@param pos MapPosition
+---@return string
+local function position_to_string(pos)
     -- scale it up so (hopefully) any floating point component disappears,
     -- then force it to be an integer with %d.  not using util.positiontostr
     -- as it uses %g and keeps the floating point component.
-    return string.format("%d,%d", entity.x * 100, entity.y * 100)
-end
-
-function resmon.migrate_ore_entities(force_data)
-    for name, site in pairs(force_data.ore_sites) do
-        -- v0.7.15: instead of tracking entities, track their positions and
-        -- re-find the entity when needed.
-        if site.known_positions then
-            site.known_positions = nil
-        end
-        if site.entities then
-            site.entity_positions = array_pair.new()
-            for _, ent in pairs(site.entities) do
-                if ent.valid then
-                    array_pair.insert(site.entity_positions, ent.position)
-                end
-            end
-            site.entities = nil
-        end
-
-        -- v0.7.107: change to using the site position as a table key, to
-        -- allow faster searching for already-added entities.
-        if site.entity_positions then
-            site.entity_table = {}
-            site.entity_count = 0
-            local iter = array_pair.iterator(site.entity_positions)
-            while iter.has_next() do
-                pos = iter.next()
-                local key = position_to_string(pos)
-                site.entity_table[key] = pos
-                site.entity_count = site.entity_count + 1
-            end
-            site.entity_positions = nil
-        end
-
-        -- v0.8.6: The entities are now tracked by the ore_tracker, and
-        -- sites need only maintain ore tracker indices.
-        if site.entity_table then
-            site.tracker_indices = {}
-            site.entity_count = 0
-
-            for _, pos in pairs(site.entity_table) do
-                local ent = site.surface.find_entity(site.ore_type, pos)
-
-                if ent and ent.valid then
-                    local index = ore_tracker.add_entity(ent)
-                    if index then
-                        site.tracker_indices[index] = true
-                        site.entity_count = site.entity_count + 1
-                    end
-                end
-            end
-
-            site.entity_table = nil
-        end
-    end
-end
-
-function resmon.migrate_ore_sites(force_data)
-    for name, site in pairs(force_data.ore_sites) do
-        if not site.remaining_permille then
-            site.remaining_permille = math.floor(site.amount * 1000 / site.initial_amount)
-        end
-        if not site.ore_per_minute then
-            site.ore_per_minute = 0
-        end
-        if not site.scanned_ore_per_minute then
-            site.scanned_ore_per_minute = 0
-        end
-        if not site.lifetime_ore_per_minute then
-            site.lifetime_ore_per_minute = 0
-        end
-        if not site.etd_minutes then
-            site.etd_minutes = 1 / 0
-        end
-        if not site.scanned_etd_minutes then
-            site.scanned_etd_minutes = -1
-        end
-        if not site.lifetime_etd_minutes then
-            site.lifetime_etd_minutes = 1 / 0
-        end
-        if not site.etd_is_lifetime then
-            site.etd_is_lifetime = true
-        end
-        if not site.etd_minutes_delta then
-            site.etd_minutes_delta = 0
-        end
-        if not site.ore_per_minute_delta then
-            site.ore_per_minute_delta = 0
-        end
-    end
+    return string.format("%d,%d", pos.x * 100, pos.y * 100)
 end
 
 local function find_resource_at(surface, position)
@@ -327,12 +180,14 @@ local function find_center_tile(area)
     return { x = math.floor(center.x), y = math.floor(center.y) }
 end
 
+---@param event EventData.on_player_selected_area
 function resmon.on_player_selected_area(event)
     if event.item ~= 'yarm-selector-tool' then
         return
     end
 
-    local player_data = storage.player_data[event.player_index]
+    local player = game.players[event.player_index]
+    local player_data = storage.player_data[player.index]
     local entities = event.entities
 
     if #entities < 1 then
@@ -345,9 +200,9 @@ function resmon.on_player_selected_area(event)
     if #entities < 1 then
         -- if we have an expanding site, submit it. else, just drop the current site
         if player_data.current_site and player_data.current_site.is_site_expanding then
-            resmon.submit_site(event.player_index)
+            resmon.submit_site(player)
         else
-            resmon.clear_current_site(event.player_index)
+            resmon.clear_current_site(player)
         end
         return
     end
@@ -365,9 +220,9 @@ function resmon.on_player_selected_area(event)
     -- note: resmon.update_players() (via on_tick) will continue the operation from here
 end
 
-function resmon.clear_current_site(player_index)
-    local player = game.players[player_index]
-    local player_data = storage.player_data[player_index]
+---@param player LuaPlayer
+function resmon.clear_current_site(player)
+    local player_data = storage.player_data[player.index]
 
     player_data.current_site = nil
 
@@ -376,69 +231,26 @@ function resmon.clear_current_site(player_index)
     end
 end
 
-function resmon.add_resource(player_index, entity)
+---Add a resource to tracking, either creating a new site or expanding the current one
+---@param player LuaPlayer
+---@param entity LuaEntity
+function resmon.add_resource(player, entity)
     if not entity.valid then
         return
     end
-    local player = game.players[player_index]
-    local player_data = storage.player_data[player_index]
+    local player_data = storage.player_data[player.index]
 
     if player_data.current_site and player_data.current_site.ore_type ~= entity.name then
         if player_data.current_site.finalizing then
-            resmon.submit_site(player_index)
+            resmon.submit_site(player)
         else
-            resmon.clear_current_site(player_index)
+            resmon.clear_current_site(player)
         end
     end
 
     if not player_data.current_site then
         ---@class yarm_site
-        player_data.current_site = {
-            is_summary = false, -- true for summary sites generated by resmon.sites.generate_summaries
-            site_count = 0,     -- nonzero only for summaries (see above), where it contains the number of sites being summarized
-            name = "New site for " .. player.name,
-            added_at = game.tick,
-            surface = entity.surface, ---@type LuaSurface
-            force = player.force,
-            center = { x = 0, y = 0 },
-            ore_type = entity.name, ---@type string Resource entity prototype name
-            ore_name = entity.prototype.localised_name,
-            tracker_indices = {},
-            entity_count = 0,
-            initial_amount = 0,
-            amount = 0,
-            amount_left = 0,   -- like amount, but for infinite resources it excludes that minimum that the resource will always contain
-            update_amount = 0, -- intermediate value while updating a site amount
-            extents = {
-                left = entity.position.x,
-                right = entity.position.x,
-                top = entity.position.y,
-                bottom = entity.position.y,
-            },
-            next_to_scan = {},
-            entities_to_be_overlaid = {},
-            next_to_overlay = {},
-            etd_minutes = -1,
-            scanned_etd_minutes = -1,
-            lifetime_etd_minutes = -1,
-            ore_per_minute = 0, ---@type integer The current ore depletion rate, as of the last time the site was updated
-            scanned_ore_per_minute = 0,
-            lifetime_ore_per_minute = 0,
-            etd_is_lifetime = true,
-            last_ore_check = nil,       -- used for ETD easing; initialized when needed,
-            last_modified_amount = nil, -- but I wanted to _show_ that they can exist.
-            last_modified_tick = nil,   -- essentially the same as last_ore_check
-            etd_minutes_delta = 0,
-            ore_per_minute_delta = 0, ---@type integer The change in ore-per-minute since the last time we updated the site
-            finalizing = false,        -- true after finishing on-tick scans while waiting for player confirmation/cancellation
-            finalizing_since = nil,    -- tick number when finalizing turned true
-            is_site_expanding = false, -- true when expanding an existing site
-            remaining_permille = 1000,
-            deleting_since = nil,      -- tick number when player presses "delete" for the first time; if not pressed for the second time within 120 ticks, deletion is cancelled
-            chart_tag = nil, ---@type LuaCustomChartTag? the associated chart tag (aka map marker) with the site name and amount
-            iter_key = nil,            -- used when iterating the site contents, along with iter_state
-            iter_state = nil,          -- also used when iterating the site contents, along with iter_key
-        }
+        player_data.current_site = resmon.types.new_site(player, entity)
     end
 
 
@@ -449,13 +261,20 @@ function resmon.add_resource(player_index, entity)
         end
     end
 
-    resmon.add_single_entity(player_index, entity)
+    resmon.add_single_entity(player, entity)
     -- note: resmon.scan_current_site() (via on_tick) will continue the operation from here
 end
 
-function resmon.add_single_entity(player_index, entity)
-    local player_data = storage.player_data[player_index]
+---Add the given entity to the given player's current site
+---@param player LuaPlayer
+---@param entity LuaEntity
+function resmon.add_single_entity(player, entity)
+    local player_data = storage.player_data[player.index]
     local site = player_data.current_site
+    if not site then
+        return
+    end
+
     local tracker_index = ore_tracker.add_entity(entity)
 
     if not tracker_index then
@@ -532,8 +351,13 @@ local function shift_position(position, direction)
     end
 end
 
-function resmon.scan_current_site(player_index)
-    local site = storage.player_data[player_index].current_site
+---Continue expanding the current site by scanning near known ores to find new one
+---@param player LuaPlayer
+function resmon.scan_current_site(player)
+    local site = storage.player_data[player.index].current_site
+    if not site then
+        return
+    end
 
     local to_scan = math.min(30, #site.next_to_scan)
     local max_dist = settings.global["YARM-grow-limit"].value
@@ -551,7 +375,7 @@ function resmon.scan_current_site(player_index)
                 if max_dist < 0 or util.distance(search_pos, site.first_center) < max_dist then
                     local found = find_resource_at(surface, search_pos)
                     if found and found.name == site.ore_type then
-                        resmon.add_single_entity(player_index, found)
+                        resmon.add_single_entity(player, found)
                     end
                 end
             end
@@ -577,8 +401,11 @@ local function get_octant_name(vector)
     return octant_names[octant]
 end
 
-function resmon.finalize_site(player_index)
-    local player_data = storage.player_data[player_index]
+---Mark the player's current site as having finished scanning/expanding. This starts the timer
+---that will eventually submit the site
+---@param player LuaPlayer
+function resmon.finalize_site(player)
+    local player_data = storage.player_data[player.index]
 
     ---@type yarm_site
     local site = player_data.current_site
@@ -602,9 +429,11 @@ function resmon.finalize_site(player_index)
     resmon.count_deposits(site, site.added_at % settings.global["YARM-ticks-between-checks"].value)
 end
 
-function resmon.submit_site(player_index)
-    local player = game.players[player_index]
-    local player_data = storage.player_data[player_index]
+---Submit the player's current site, either adding it to their force's sites or completing
+---the site expansion
+---@param player LuaPlayer
+function resmon.submit_site(player)
+    local player_data = storage.player_data[player.index]
     local force_data = storage.force_data[player.force.name]
     local site = player_data.current_site
 
@@ -613,7 +442,7 @@ function resmon.submit_site(player_index)
     end
 
     force_data.ore_sites[site.name] = site
-    resmon.clear_current_site(player_index)
+    resmon.clear_current_site(player)
     if (site.is_site_expanding) then
         if (site.has_expanded) then
             -- reset statistics, the site didn't actually just grow a bunch of ore in existing tiles
@@ -843,8 +672,14 @@ function resmon.on_get_selection_tool(event)
     player.cursor_stack.set_stack { name = "yarm-selector-tool" }
 end
 
-function resmon.start_recreate_overlay_existing_site(player_index)
-    local site = storage.player_data[player_index].current_site
+---Set up the current site to have its entities highlighted (for a site expansion)
+---@param player LuaPlayer
+function resmon.start_recreate_overlay_existing_site(player)
+    local site = storage.player_data[player.index].current_site
+    if not site then
+        return
+    end
+
     site.is_overlay_being_created = true
 
     -- forcible cleanup in case we got interrupted during a previous background overlay attempt
@@ -866,55 +701,73 @@ function resmon.start_recreate_overlay_existing_site(player_index)
     end
 end
 
-function resmon.process_overlay_for_existing_site(player_index)
-    local player_data = storage.player_data[player_index]
+---Intermediate step in highlighting existing entities for the current site
+---@param player LuaPlayer
+function resmon.process_overlay_for_existing_site(player)
+    local player_data = storage.player_data[player.index]
     local site = player_data.current_site
+    if not site then
+        return
+    end
 
     if site.next_to_overlay_count == 0 then
         if site.entities_to_be_overlaid_count == 0 then
-            resmon.end_overlay_creation_for_existing_site(player_index)
+            resmon.end_overlay_creation_for_existing_site(player)
             return
         else
             local ent_key, ent_pos = next(site.entities_to_be_overlaid)
             site.next_to_overlay[ent_key] = ent_pos
-            site.next_to_overlay_count = site.next_to_overlay_count + 1
+        site.next_to_overlay_count = site.next_to_overlay_count + 1
         end
     end
 
     local to_scan = math.min(30, site.next_to_overlay_count)
-    for i = 1, to_scan do
-        local ent_key, ent_pos = next(site.next_to_overlay)
+    for _ = 1, to_scan do
+        resmon.overlay_next_entity_in_existing_site(site, player_data)
+    end
+end
 
-        local entity = site.surface.find_entity(site.ore_type, ent_pos)
-        local entity_position = entity.position
-        local surface = entity.surface
-        local key = position_to_string(entity_position)
+---Overlay the next entity in the given site and scan around it for more
+---@param site yarm_site
+---@param player_data player_data
+function resmon.overlay_next_entity_in_existing_site(site, player_data)
+    local ent_key, ent_pos = next(site.next_to_overlay)
+    local entity = site.surface.find_entity(site.ore_type, ent_pos)
+    if not entity or not entity.valid then
+        return
+    end
 
-        -- put marker down
-        resmon.put_marker_at(surface, entity_position, player_data)
-        -- remove it from our to-do lists
-        site.entities_to_be_overlaid[key] = nil
-        site.entities_to_be_overlaid_count = site.entities_to_be_overlaid_count - 1
-        site.next_to_overlay[key] = nil
-        site.next_to_overlay_count = site.next_to_overlay_count - 1
+    -- put marker down
+    resmon.put_marker_at(site.surface, entity.position, player_data)
 
-        -- Look in every direction around this entity...
-        for _, dir in pairs(defines.direction) do
-            -- ...and if there's a resource that's not already overlaid, add it
-            local found = find_resource_at(surface, shift_position(entity_position, dir))
-            if found and found.name == site.ore_type then
-                local offsetkey = position_to_string(found.position)
-                if site.entities_to_be_overlaid[offsetkey] ~= nil and site.next_to_overlay[offsetkey] == nil then
-                    site.next_to_overlay[offsetkey] = found.position
-                    site.next_to_overlay_count = site.next_to_overlay_count + 1
-                end
+    -- remove it from our to-do lists
+    site.entities_to_be_overlaid[ent_key] = nil
+    site.entities_to_be_overlaid_count = site.entities_to_be_overlaid_count - 1
+    site.next_to_overlay[ent_key] = nil
+    site.next_to_overlay_count = site.next_to_overlay_count - 1
+
+    -- Look in every direction around this entity...
+    for _, dir in pairs(defines.direction) do
+        -- ...and if there's a resource that's not already overlaid, add it
+        local found = find_resource_at(site.surface, shift_position(entity.position, dir))
+        if found and found.name == site.ore_type then
+            local offsetkey = position_to_string(found.position)
+            if site.entities_to_be_overlaid[offsetkey] ~= nil and site.next_to_overlay[offsetkey] == nil then
+                site.next_to_overlay[offsetkey] = found.position
+                site.next_to_overlay_count = site.next_to_overlay_count + 1
             end
         end
     end
 end
 
-function resmon.end_overlay_creation_for_existing_site(player_index)
-    local site = storage.player_data[player_index].current_site
+---Final step in creating overlay for existing site, set it back to the finalizing stage
+---@param player LuaPlayer
+function resmon.end_overlay_creation_for_existing_site(player)
+    local site = storage.player_data[player.index].current_site
+    if not site then
+        return
+    end
+
     site.is_overlay_being_created = false
     site.finalizing = true
     site.finalizing_since = game.tick
@@ -926,39 +779,39 @@ function resmon.update_players(event)
         return
     end
 
-    for index, player in pairs(game.players) do
-        local player_data = storage.player_data[index]
+    for _, player in pairs(game.players) do
+        local player_data = storage.player_data[player.index]
 
         if not player_data then
-            resmon.init_player(index)
+            resmon.init_player(player)
         elseif not player.connected and player_data.current_site then
-            resmon.clear_current_site(index)
+            resmon.clear_current_site(player)
         end
 
         if player_data.current_site then
-            local site = player_data.current_site
+            local site = player_data.current_site --[[@as yarm_site]]
 
             if #site.next_to_scan > 0 then
-                resmon.scan_current_site(index)
+                resmon.scan_current_site(player)
             elseif not site.finalizing then
-                resmon.finalize_site(index)
+                resmon.finalize_site(player)
             elseif site.finalizing_since + 120 == event.tick then
-                resmon.submit_site(index)
+                resmon.submit_site(player)
             end
 
             if site.is_overlay_being_created then
-                resmon.process_overlay_for_existing_site(index)
+                resmon.process_overlay_for_existing_site(player)
             end
         else
             local todo = player_data.todo or {}
             if #todo > 0 then
                 for _, entity in pairs(table.remove(todo)) do
-                    resmon.add_resource(index, entity)
+                    resmon.add_resource(player, entity)
                 end
             end
         end
 
-        if event.tick % player_data.gui_update_ticks == 15 + index then
+        if event.tick % player_data.gui_update_ticks == 15 + player.index then
             resmon.ui.update_player(player)
         end
     end
@@ -1038,4 +891,12 @@ end
 
 function resmon.on_load()
     ore_tracker.on_load()
+end
+
+local function unused()
+    storage = {
+        force_data = {}, ---@type force_data[]
+        player_data = {}, ---@type player_data[]
+        ore_tracker = {},
+    }
 end
