@@ -71,8 +71,8 @@ function click_module.rename_site(event)
         direction = "horizontal" }
 
     root.add { type = "textfield", name = "new_name" }.text = site_name
-    root.add { type = "button", name = "YARM_rename_cancel", caption = { "YARM-site-rename-cancel" }, style = "back-button" }
-    root.add { type = "button", name = "YARM_rename_confirm", caption = { "YARM-site-rename-confirm" }, style = "confirm-button" }
+    root.add { type = "button", name = "YARM_rename_cancel", caption = { "YARM-site-rename-cancel" }, style = "back_button" }
+    root.add { type = "button", name = "YARM_rename_confirm", caption = { "YARM-site-rename-confirm" }, style = "confirm_button" }
 
     player.opened = root
 
