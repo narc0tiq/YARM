@@ -28,8 +28,11 @@ end
 ---periodically (e.g., on_nth_tick) for each player in the game.
 ---@param player LuaPlayer Whose UI is being updated?
 function ui_module.update_player(player)
-    local player_data = storage.player_data[player.index] ---@type player_data
+    ---@type player_data
+    local player_data = storage.player_data[player.index]
+    ---@type force_data
     local force_data = storage.force_data[player.force.name]
+
     if not player_data or not force_data or not force_data.ore_sites then
         return -- early init, nothing ready yet
     end
@@ -199,7 +202,6 @@ end
 ---@param player LuaPlayer The player to whom we are showing the site
 ---@param sites_gui LuaGuiElement The container we are rendering into
 ---@param player_data table The current player's stored data
----@param is_full boolean Whether we're rendering the full width display (12 columns) or the compact view (5 columns)
 ---@param layout column_properties[]
 ---@return boolean Whether we rendered anything or not
 function ui_module.render_single_site(
@@ -212,6 +214,13 @@ function ui_module.render_single_site(
     if not site_filter(site, player) then
         return false
     end
+
+    local threshold = player.mod_settings["YARM-warn-timeleft"].value * 60
+    if site.is_summary then
+        threshold = player.mod_settings["YARM-warn-timeleft_totals"].value * 60
+    end
+    player_data.ui.site_colors[site.name] =
+        ui_module.site_color(site.etd_minutes, threshold)
 
     -- TODO: This shouldn't be part of printing the site! It cancels the deletion
     -- process after 2 seconds pass.
@@ -331,15 +340,15 @@ function ui_module.migrate_player_data(player)
         player_data.ui = {
             active_filter = ui_module.FILTER_WARNINGS,
             enable_hud_background = root.style == "YARM_outer_frame_no_border_bg",
-            split_by_surface = root.YARM_toggle_surfacesplit.style.name:ends_with("_on"),
-            show_compact_columns = root.YARM_toggle_lite.style.name:ends_with("_on"),
+            split_by_surface = root.buttons.YARM_toggle_surfacesplit.style.name:ends_with("_on"),
+            show_compact_columns = root.buttons.YARM_toggle_lite.style.name:ends_with("_on"),
             site_colors = {},
         }
     end
 
     if player_data.active_filter then
         player_data.ui.active_filter = player_data.active_filter
-        player_data.active_filter = nil
+        player_data.active_filter = nil ---@diagnostic disable-line: inject-field
     end
 
     if not player_data.ui.site_colors then

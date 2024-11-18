@@ -15,16 +15,6 @@ function interface.reset_ui(player_name_or_index)
     if root and root.valid then root.destroy() end
 end
 
-function interface.reset_player(player_name_or_index)
-    local player = game.players[player_name_or_index]
-    local player_data = storage.player_data[player.index]
-
-    player.character = player.selected
-    player_data.viewing_site = nil
-    player_data.real_character = nil
-    player_data.remote_viewer = nil
-end
-
 function interface.get_current_filter(player_name_or_index)
     local player = game.players[player_name_or_index]
     local player_data = storage.player_data[player.index]
@@ -47,16 +37,6 @@ function interface.set_filter(player_name_or_index, new_filter)
     resmon.ui.update_player(player)
 
     return old_filter
-end
-
-function interface.hide_expando(player_name_or_index)
-    log("hide_expando is no longer supported. Try set_filter(player_name_or_index, 'none' or 'warnings' or 'all')")
-    return false
-end
-
-function interface.show_expando(player_name_or_index)
-    log("show_expando is no longer supported. Try set_filter(player_name_or_index, 'none' or 'warnings' or 'all')")
-    return false
 end
 
 function interface.get_on_site_updated_event_id()
