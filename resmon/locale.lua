@@ -157,4 +157,16 @@ function locale_module.get_rich_text_for_products(proto)
     return result
 end
 
+---@param surface LuaSurface
+---@return LocalisedString
+function locale_module.surface_name(surface)
+    if not surface or not surface.valid then
+        return ""
+    end
+    if surface.planet and surface.planet.valid then
+        return surface.planet.prototype.localised_name
+    end
+    return surface.name or ""
+end
+
 return locale_module

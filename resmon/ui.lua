@@ -28,7 +28,7 @@ end
 ---periodically (e.g., on_nth_tick) for each player in the game.
 ---@param player LuaPlayer Whose UI is being updated?
 function ui_module.update_player(player)
-    local player_data = storage.player_data[player.index]
+    local player_data = storage.player_data[player.index] ---@type player_data
     local force_data = storage.force_data[player.force.name]
     if not player_data or not force_data or not force_data.ore_sites then
         return -- early init, nothing ready yet
@@ -42,33 +42,18 @@ function ui_module.update_player(player)
         root.sites.destroy()
     end
 
-    -- TODO Refactor this large clump into something more reasonable
-    local is_full = not player_data.ui.show_compact_columns
-    local column_count = is_full and 12 or 5
-    local sites_gui = root.add { type = "table", column_count = column_count, name = "sites", style = "YARM_site_table" }
+    local layout = resmon.columns.layouts.full
+    if player_data.ui.show_compact_columns then
+        layout = resmon.columns.layouts.compact
+    end
+    local sites_gui = root.add { type = "table", column_count = #layout, name = "sites", style = "YARM_site_table" }
     sites_gui.style.horizontal_spacing = 5
     local column_alignments = sites_gui.style.column_alignments
-    if is_full then
-        column_alignments[1] = 'left'    -- rename button
-        column_alignments[2] = 'left'    -- surface name
-        column_alignments[3] = 'left'    -- site name
-        column_alignments[4] = 'right'   -- remaining percent
-        column_alignments[5] = 'right'   -- site amount
-        column_alignments[6] = 'left'    -- ore name
-        column_alignments[7] = 'right'   -- ore per minute
-        column_alignments[8] = 'left'    -- ETD
-        column_alignments[9] = 'right'   -- ETD
-        column_alignments[10] = 'left'   -- ETD
-        column_alignments[11] = 'center' -- ETD
-        column_alignments[12] = 'left'   -- buttons
-    else
-        column_alignments[1] = 'left'    -- surface name
-        column_alignments[2] = 'left'    -- site name
-        column_alignments[3] = 'left'    -- ore name
-        column_alignments[4] = 'right'   -- ETD
-        column_alignments[5] = 'left'    -- buttons
+    for i, col in pairs(layout) do
+        column_alignments[i] = col.alignment
     end
 
+    -- TODO Refactor this site_filter stuff and the surface split bits
     local site_filter = resmon.sites.filters[player_data.ui.active_filter] or resmon.sites.filters[ui_module.FILTER_NONE]
     local surface_names = { false }
     local is_split_by_surface = player_data.ui.split_by_surface
@@ -83,42 +68,53 @@ function ui_module.update_player(player)
         if next(sites) then
             local will_render_sites
             local will_render_totals
-            local summary = show_sites_summary and resmon.sites.generate_summaries(sites, is_split_by_surface) or {}
-            for summary_site in resmon.sites.in_player_order(summary, player) do
-                if site_filter(summary_site, player) then will_render_totals = true end
+            local summaries = show_sites_summary and resmon.sites.generate_summaries(sites, is_split_by_surface) or {}
+            for summary_site in resmon.sites.in_player_order(summaries, player) do
+                if site_filter(summary_site, player) then
+                    will_render_totals = true
+                end
             end
             for _, site in pairs(sites) do
-                if site_filter(site, player) then will_render_sites = true end
+                if site_filter(site, player) then
+                    will_render_sites = true
+                end
             end
 
             surface_num = surface_num + 1
             if surface_num > 1 and rendered_last and (will_render_totals or will_render_sites) then
-                for _ = 1, column_count do sites_gui.add { type = "line" } end
-                for _ = 1, column_count do sites_gui.add { type = "line" } end
-                for _ = 1, column_count do sites_gui.add { type = "line" } end
+                for _ = 1, #layout do sites_gui.add { type = "line" }.style.minimal_height = 15 end
             end
             rendered_last = rendered_last or will_render_totals or will_render_sites
 
-            local row = 1
-            for summary_site in resmon.sites.in_player_order(summary, player) do
-                if resmon.ui.render_single_site(site_filter, summary_site, player, sites_gui, player_data, row, is_full, is_split_by_surface) then
-                    row = row + 1
+            local is_first = true
+            for summary_site in resmon.sites.in_player_order(summaries, player) do
+                if is_first then
+                    player_data.ui.first_site = summary_site.name
+                end
+                if resmon.ui.render_single_site(site_filter, summary_site, player, sites_gui, player_data, layout) then
+                    is_first = false
                 end
             end
+
             if will_render_totals and will_render_sites then
+                local is_full = not player_data.ui.show_compact_columns
                 if is_full then
                     sites_gui.add { type = "label" }.style.maximal_height = 5
                 end
-                sites_gui.add { type = "label" }.style.maximal_height = 5
-                local el = sites_gui.add { type = "label", caption = { "YARM-category-sites" } }
-                el.style.font = "yarm-gui-font"
+                local surface_display_name = resmon.locale.surface_name(game.surfaces[surface_name or ""])
+                resmon.columns.make_label(sites_gui, nil, surface_display_name)
+                resmon.columns.make_label(sites_gui, nil, { "YARM-category-sites" })
                 local start = is_full and 4 or 3
-                for _ = start, column_count do sites_gui.add { type = "label" }.style.maximal_height = 5 end
+                for _ = start, #layout do sites_gui.add { type = "label" }.style.maximal_height = 5 end
             end
-            row = 1
+
+            is_first = not will_render_totals or not will_render_sites
             for _, site in pairs(sites) do
-                if resmon.ui.render_single_site(site_filter, site, player, sites_gui, player_data, row, is_full, is_split_by_surface) then
-                    row = row + 1
+                if is_first then
+                    player_data.ui.first_site = site.name
+                end
+                if resmon.ui.render_single_site(site_filter, site, player, sites_gui, player_data, layout) then
+                    is_first = false
                 end
             end
         end
@@ -203,9 +199,8 @@ end
 ---@param player LuaPlayer The player to whom we are showing the site
 ---@param sites_gui LuaGuiElement The container we are rendering into
 ---@param player_data table The current player's stored data
----@param row integer The index of the row we're rendering; row 1 might be special
 ---@param is_full boolean Whether we're rendering the full width display (12 columns) or the compact view (5 columns)
----@param is_split_by_surface boolean Whether we're splitting the display by surface (which is when row 1 is special)
+---@param layout column_properties[]
 ---@return boolean Whether we rendered anything or not
 function ui_module.render_single_site(
     site_filter,
@@ -213,9 +208,7 @@ function ui_module.render_single_site(
     player,
     sites_gui,
     player_data,
-    row,
-    is_full,
-    is_split_by_surface)
+    layout)
     if not site_filter(site, player) then
         return false
     end
@@ -226,134 +219,8 @@ function ui_module.render_single_site(
         site.deleting_since = nil
     end
 
-    local threshold_type = site.is_summary and "timeleft_totals" or "timeleft"
-    local threshold = player.mod_settings["YARM-warn-" .. threshold_type].value * 60
-    local color = ui_module.site_color(site.etd_minutes, threshold)
-    local el = nil
-
-    -- TODO: Major refactor of site printing, as shown below. We have two possible column states, we have
-    -- different display orders, we have different filters, it's all one HUGE complication
-    if not site.is_summary then
-        if is_full then
-            if player_data.renaming_site == site.name then
-                sites_gui.add { type = "button",
-                    name = "YARM_rename_site_" .. site.name,
-                    tooltip = { "YARM-tooltips.rename-site-cancel" },
-                    style = "YARM_rename_site_cancel" }
-            else
-                sites_gui.add { type = "button",
-                    name = "YARM_rename_site_" .. site.name,
-                    tooltip = { "YARM-tooltips.rename-site-named", site.name },
-                    style = "YARM_rename_site" }
-            end
-        end
-
-        local surf_name = is_split_by_surface and site.surface.name or ""
-        el = sites_gui.add { type = "label", name = "YARM_label_surface_" .. site.name, caption = surf_name }
-        el.style.font_color = color
-        el.style.font = "yarm-gui-font"
-
-        el = sites_gui.add { type = "label", name = "YARM_label_site_" .. site.name, caption = site.name }
-        el.style.font_color = color
-        el.style.font = "yarm-gui-font"
-    else
-        if is_full then
-            sites_gui.add { type = "label" }
-        end
-        local surface = (is_split_by_surface and row == 1)
-            and site.surface.name or ""
-        sites_gui.add { type = "label", caption = surface }
-        local totals = row == 1 and { "YARM-category-totals" } or ""
-        el = sites_gui.add { type = "label", caption = totals }
-        el.style.font = "yarm-gui-font"
-    end
-
-    if is_full then
-        el = sites_gui.add { type = "label", name = "YARM_label_percent_" .. site.name,
-            caption = string.format("%.1f%%", site.remaining_permille / 10) }
-        el.style.font_color = color
-        el.style.font = "yarm-gui-font"
-
-        local display_amount = resmon.locale.site_amount(site, resmon.locale.format_number)
-        el = sites_gui.add { type = "label", name = "YARM_label_amount_" .. site.name,
-            caption = display_amount }
-        el.style.font_color = color
-        el.style.font = "yarm-gui-font"
-    end
-
-    local entity_prototype = prototypes.entity[site.ore_type]
-    el = sites_gui.add { type = "label", name = "YARM_label_ore_name_" .. site.name,
-        caption = is_full
-            and { "", resmon.locale.get_rich_text_for_products(entity_prototype), " ", site.ore_name }
-            or resmon.locale.get_rich_text_for_products(entity_prototype) }
-    el.style.font_color = color
-    el.style.font = "yarm-gui-font"
-
-    if is_full then
-        el = sites_gui.add {
-            name = "YARM_label_ore_per_minute_" .. site.name,
-            type = "label",
-            caption = resmon.locale.site_depletion_rate(site)
-        }
-        el.style.font_color = color
-        el.style.font = "yarm-gui-font"
-
-        ui_module.render_arrow_for_percent_delta(sites_gui, -1 * site.ore_per_minute_delta, site.ore_per_minute)
-    end
-
-    el = sites_gui.add { type = "label", name = "YARM_label_etd_" .. site.name,
-        caption = resmon.locale.time_to_deplete(site.etd_minutes, site.amount_left or site.amount) }
-    el.style.font_color = color
-    el.style.font = "yarm-gui-font"
-
-    if is_full then
-        ui_module.render_arrow_for_percent_delta(sites_gui, site.etd_minutes_delta, site.etd_minutes)
-
-        if not site.is_summary then
-            local etd_icon = site.etd_is_lifetime == 1 and "[img=quantity-time]" or "[img=utility/played_green]"
-            el = sites_gui.add { type = "label", name = "YARM_label_etd_header_" .. site.name,
-                caption = { "YARM-time-to-deplete", etd_icon } }
-            el.style.font_color = color
-            el.style.font = "yarm-gui-font"
-        else
-            sites_gui.add { type = "label", caption = "" }
-        end
-    end
-
-    local site_buttons = sites_gui.add { type = "flow", name = "YARM_site_buttons_" .. site.name,
-        direction = "horizontal", style = "YARM_buttons_h" }
-
-    if not site.is_summary then
-        site_buttons.add { type = "button",
-            name = "YARM_goto_site_" .. site.name,
-            tooltip = { "YARM-tooltips.goto-site" },
-            style = "YARM_goto_site" }
-
-        if is_full then
-            if site.deleting_since then
-                site_buttons.add { type = "button",
-                    name = "YARM_delete_site_" .. site.name,
-                    tooltip = { "YARM-tooltips.delete-site-confirm" },
-                    style = "YARM_delete_site_confirm" }
-            else
-                site_buttons.add { type = "button",
-                    name = "YARM_delete_site_" .. site.name,
-                    tooltip = { "YARM-tooltips.delete-site" },
-                    style = "YARM_delete_site" }
-            end
-
-            if site.is_site_expanding then
-                site_buttons.add { type = "button",
-                    name = "YARM_expand_site_" .. site.name,
-                    tooltip = { "YARM-tooltips.expand-site-cancel" },
-                    style = "YARM_expand_site_cancel" }
-            else
-                site_buttons.add { type = "button",
-                    name = "YARM_expand_site_" .. site.name,
-                    tooltip = { "YARM-tooltips.expand-site" },
-                    style = "YARM_expand_site" }
-            end
-        end
+    for _, col in ipairs(layout) do
+        col.render(sites_gui, site, player_data)
     end
 
     return true
@@ -412,31 +279,7 @@ function ui_module.render_arrow_for_percent_delta(sites_gui, delta, amount)
     local value = math.min(0.5 + math.abs(percent_delta / 2), 1)
     local el = sites_gui.add({ type = "label", caption = (amount == 0 and "") or (delta or 0) >= 0 and "⬆" or "⬇" })
     el.style.font_color = ui_module.hsv2rgb(hue, saturation, value)
-end
-
----Performs any migrations of UI-related player data for the given player. Should be
----called on_configuration_changed, but should also be safe to be called
----on_init/on_load (just that it's not likely to do anything).
----@param player LuaPlayer Whose data are we updating?
-function ui_module.migrate_player_data(player)
-    local player_data = storage.player_data[player.index]
-
-    -- v0.12.0: player UI data moved into own namespace
-    if not player_data.ui then
-        local root = ui_module.get_or_create_hud(player)
-
-        player_data.ui = {
-            active_filter = ui_module.FILTER_WARNINGS,
-            enable_hud_background = root.style == "YARM_outer_frame_no_border_bg",
-            split_by_surface = root.YARM_toggle_surfacesplit.style.name:ends_with("_on"),
-            show_compact_columns = root.YARM_toggle_lite.style.name:ends_with("_on"),
-        }
-    end
-
-    if player_data.active_filter then
-        player_data.ui.active_filter = player_data.active_filter
-        player_data.active_filter = nil
-    end
+    return el
 end
 
 ---Update the given site's chart tag (map marker) with the current name and ore count
@@ -454,20 +297,54 @@ function ui_module.update_chart_tag(site)
     end
 
     if not site.chart_tag or not site.chart_tag.valid then
-        if not site.force or not site.force.valid or not site.surface.valid then return end
+        if not site.force or not site.force.valid or not site.surface.valid then
+            return
+        end
 
         local chart_tag = {
             position = site.center,
             text = site.name,
         }
         site.chart_tag = site.force.add_chart_tag(site.surface, chart_tag)
-        if not site.chart_tag then return end -- may fail if chunk is not currently charted accd. to @Bilka
+        if not site.chart_tag then
+            return
+        end -- may fail if chunk is not currently charted accd. to @Bilka
     end
 
     local display_value = resmon.locale.site_amount(site, resmon.locale.format_number_si)
     local ore_prototype = prototypes.entity[site.ore_type]
     site.chart_tag.text =
         string.format('%s - %s %s', site.name, display_value, resmon.locale.get_rich_text_for_products(ore_prototype))
+end
+
+---Performs any migrations of UI-related player data for the given player. Should be
+---called on_configuration_changed, but should also be safe to be called
+---on_init/on_load (just that it's not likely to do anything).
+---@param player LuaPlayer Whose data are we updating?
+function ui_module.migrate_player_data(player)
+    local player_data = storage.player_data[player.index]
+
+    -- v0.12.0: player UI data moved into own namespace
+    if not player_data.ui then
+        local root = ui_module.get_or_create_hud(player)
+        ---@class player_data_ui
+        player_data.ui = {
+            active_filter = ui_module.FILTER_WARNINGS,
+            enable_hud_background = root.style == "YARM_outer_frame_no_border_bg",
+            split_by_surface = root.YARM_toggle_surfacesplit.style.name:ends_with("_on"),
+            show_compact_columns = root.YARM_toggle_lite.style.name:ends_with("_on"),
+            site_colors = {},
+        }
+    end
+
+    if player_data.active_filter then
+        player_data.ui.active_filter = player_data.active_filter
+        player_data.active_filter = nil
+    end
+
+    if not player_data.ui.site_colors then
+        player_data.ui.site_colors = {}
+    end
 end
 
 return ui_module
