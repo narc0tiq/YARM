@@ -14,10 +14,11 @@ resmon = {
     -- updated `on_tick` to contain `ore_tracker.get_entity_cache()`
     entity_cache = nil,
 
-    ui = require("resmon.ui"),
     click = require("resmon.click"),
-    sites = require("resmon.sites"),
+    columns = require("resmon.columns"),
     locale = require("resmon.locale"),
+    sites = require("resmon.sites"),
+    ui = require("resmon.ui"),
 }
 
 function string.starts_with(haystack, needle)
@@ -58,7 +59,9 @@ end
 
 local function migrate_remove_minimum_resource_amount(force_data)
     for _, site in pairs(force_data.ore_sites) do
-        if site.minimum_resource_amount then site.minimum_resource_amount = nil end
+        if site.minimum_resource_amount then
+            site.minimum_resource_amount = nil
+        end
     end
 end
 
@@ -77,7 +80,9 @@ function resmon.init_player(player_index)
 
     -- migration v0.7.402: YARM_root now in mod_gui, destroy the old one
     local old_root = player.gui.left.YARM_root
-    if old_root and old_root.valid then old_root.destroy() end
+    if old_root and old_root.valid then
+        old_root.destroy()
+    end
 
     local root = mod_gui.get_frame_flow(player).YARM_root
     if root and root.buttons and (
@@ -91,26 +96,38 @@ function resmon.init_player(player_index)
         root.destroy()
     end
 
-    if not storage.player_data then storage.player_data = {} end
+    if not storage.player_data then
+        storage.player_data = {}
+    end
 
     local player_data = storage.player_data[player_index]
     if not player_data then
         ---@class player_data
         player_data = {
+            gui_update_ticks = 300,
+            overlays = {},
+            ---@type player_data_ui
             ui = {
                 active_filter = resmon.ui.FILTER_WARNINGS,
                 enable_hud_background = false,
                 split_by_surface = false,
                 show_compact_columns = false,
+                site_colors = {},
             },
         }
     end
 
-    if not player_data.gui_update_ticks or player_data.gui_update_ticks == 60 then player_data.gui_update_ticks = 300 end
+    if not player_data.gui_update_ticks or player_data.gui_update_ticks == 60 then
+        player_data.gui_update_ticks = 300
+    end
 
-    if not player_data.overlays then player_data.overlays = {} end
+    if not player_data.overlays then
+        player_data.overlays = {}
+    end
 
-    if player_data.viewing_site then migrate_remove_remote_viewer(player, player_data) end
+    if player_data.viewing_site then
+        migrate_remove_remote_viewer(player, player_data)
+    end
 
     storage.player_data[player_index] = player_data
 
@@ -118,10 +135,14 @@ function resmon.init_player(player_index)
 end
 
 function resmon.init_force(force)
-    if not storage.force_data then storage.force_data = {} end
+    if not storage.force_data then
+        storage.force_data = {}
+    end
 
     local force_data = storage.force_data[force.name]
-    if not force_data then force_data = {} end
+    if not force_data then
+        force_data = {}
+    end
 
     if not force_data.ore_sites then
         force_data.ore_sites = {} ---@type yarm_site[]
@@ -167,7 +188,9 @@ function resmon.sanity_check_sites(force, force_data)
         end
     end
 
-    if #discarded_sites == 0 then return end
+    if #discarded_sites == 0 then
+        return
+    end
 
     local discard_message = "YARM-warnings.discard-multi-missing-ore-type-multi"
     if #missing_ores == 1 then
@@ -249,15 +272,33 @@ function resmon.migrate_ore_sites(force_data)
         if not site.remaining_permille then
             site.remaining_permille = math.floor(site.amount * 1000 / site.initial_amount)
         end
-        if not site.ore_per_minute then site.ore_per_minute = 0 end
-        if not site.scanned_ore_per_minute then site.scanned_ore_per_minute = 0 end
-        if not site.lifetime_ore_per_minute then site.lifetime_ore_per_minute = 0 end
-        if not site.etd_minutes then site.etd_minutes = 1 / 0 end
-        if not site.scanned_etd_minutes then site.scanned_etd_minutes = -1 end
-        if not site.lifetime_etd_minutes then site.lifetime_etd_minutes = 1 / 0 end
-        if not site.etd_is_lifetime then site.etd_is_lifetime = 1 end
-        if not site.etd_minutes_delta then site.etd_minutes_delta = 0 end
-        if not site.ore_per_minute_delta then site.ore_per_minute_delta = 0 end
+        if not site.ore_per_minute then
+            site.ore_per_minute = 0
+        end
+        if not site.scanned_ore_per_minute then
+            site.scanned_ore_per_minute = 0
+        end
+        if not site.lifetime_ore_per_minute then
+            site.lifetime_ore_per_minute = 0
+        end
+        if not site.etd_minutes then
+            site.etd_minutes = 1 / 0
+        end
+        if not site.scanned_etd_minutes then
+            site.scanned_etd_minutes = -1
+        end
+        if not site.lifetime_etd_minutes then
+            site.lifetime_etd_minutes = 1 / 0
+        end
+        if not site.etd_is_lifetime then
+            site.etd_is_lifetime = true
+        end
+        if not site.etd_minutes_delta then
+            site.etd_minutes_delta = 0
+        end
+        if not site.ore_per_minute_delta then
+            site.ore_per_minute_delta = 0
+        end
     end
 end
 
@@ -268,7 +309,9 @@ local function find_resource_at(surface, position)
     local bottom_right = { x = position.x + 0.5, y = position.y + 0.5 }
 
     local stuff = surface.find_entities_filtered { area = { top_left, bottom_right }, type = 'resource' }
-    if #stuff < 1 then return nil end
+    if #stuff < 1 then
+        return nil
+    end
 
     return stuff[1] -- there should never be another resource at the exact same coordinates
 end
@@ -285,7 +328,9 @@ local function find_center_tile(area)
 end
 
 function resmon.on_player_selected_area(event)
-    if event.item ~= 'yarm-selector-tool' then return end
+    if event.item ~= 'yarm-selector-tool' then
+        return
+    end
 
     local player_data = storage.player_data[event.player_index]
     local entities = event.entities
@@ -332,7 +377,9 @@ function resmon.clear_current_site(player_index)
 end
 
 function resmon.add_resource(player_index, entity)
-    if not entity.valid then return end
+    if not entity.valid then
+        return
+    end
     local player = game.players[player_index]
     local player_data = storage.player_data[player_index]
 
@@ -351,7 +398,7 @@ function resmon.add_resource(player_index, entity)
             site_count = 0,     -- nonzero only for summaries (see above), where it contains the number of sites being summarized
             name = "New site for " .. player.name,
             added_at = game.tick,
-            surface = entity.surface,
+            surface = entity.surface, ---@type LuaSurface
             force = player.force,
             center = { x = 0, y = 0 },
             ore_type = entity.name, ---@type string Resource entity prototype name
@@ -377,7 +424,7 @@ function resmon.add_resource(player_index, entity)
             ore_per_minute = 0, ---@type integer The current ore depletion rate, as of the last time the site was updated
             scanned_ore_per_minute = 0,
             lifetime_ore_per_minute = 0,
-            etd_is_lifetime = 1,
+            etd_is_lifetime = true,
             last_ore_check = nil,       -- used for ETD easing; initialized when needed,
             last_modified_amount = nil, -- but I wanted to _show_ that they can exist.
             last_modified_tick = nil,   -- essentially the same as last_ore_check
@@ -420,7 +467,9 @@ function resmon.add_single_entity(player_index, entity)
     end
 
     -- Reset the finalizing timer
-    if site.finalizing then site.finalizing = false end
+    if site.finalizing then
+        site.finalizing = false
+    end
 
     -- Memorize this entity
     site.tracker_indices[tracker_index] = true
@@ -559,7 +608,9 @@ function resmon.submit_site(player_index)
     local force_data = storage.force_data[player.force.name]
     local site = player_data.current_site
 
-    if not site then return end
+    if not site then
+        return
+    end
 
     force_data.ore_sites[site.name] = site
     resmon.clear_current_site(player_index)
@@ -658,12 +709,14 @@ function resmon.finish_deposit_count(site)
     site.iter_state = nil
 
     if site.last_ore_check then
-        if not site.last_modified_amount then             -- make sure those two values have a default
+        if not site.last_modified_amount then
+            -- make sure those two values have a default
             site.last_modified_amount = site.amount       --
             site.last_modified_tick = site.last_ore_check --
         end
         local delta_ore_since_last_update = site.last_modified_amount - site.amount
-        if delta_ore_since_last_update ~= 0 then                                                     -- only store the amount and tick from last update if it actually changed
+        if delta_ore_since_last_update ~= 0 then
+            -- only store the amount and tick from last update if it actually changed
             site.last_modified_tick = site.last_ore_check                                            --
             site.last_modified_amount = site.amount                                                  --
         end
@@ -707,11 +760,11 @@ function resmon.finish_deposit_count(site)
     if site.scanned_etd_minutes == -1 or site.lifetime_etd_minutes <= site.scanned_etd_minutes then
         site.ore_per_minute = site.lifetime_ore_per_minute
         site.etd_minutes = site.lifetime_etd_minutes
-        site.etd_is_lifetime = 1
+        site.etd_is_lifetime = true
     else
         site.ore_per_minute = site.scanned_ore_per_minute
         site.etd_minutes = site.scanned_etd_minutes
-        site.etd_is_lifetime = 0
+        site.etd_is_lifetime = false
     end
     site.etd_minutes_delta = site.etd_minutes - old_etd_minutes
     site.ore_per_minute_delta = site.ore_per_minute - old_ore_per_minute
@@ -752,24 +805,37 @@ function resmon.surface_names()
 end
 
 function resmon.on_gui_confirmed(event)
-    if not event.element or not event.element.valid then return end
-    if event.element.name ~= "new_name" or event.element.parent.name ~= "YARM_site_rename" then return end
+    if not event.element or not event.element.valid then
+        return
+    end
+    if event.element.name ~= "new_name" or event.element.parent.name ~= "YARM_site_rename" then
+        return
+    end
 
     resmon.click.handlers.YARM_rename_confirm(event)
 end
 
 function resmon.on_gui_closed(event)
-    if event.gui_type ~= defines.gui_type.custom then return end
-    if not event.element or not event.element.valid then return end
-    if event.element.name ~= "YARM_site_rename" then return end
+    if event.gui_type ~= defines.gui_type.custom then
+        return
+    end
+    if not event.element or not event.element.valid then
+        return
+    end
+    if event.element.name ~= "YARM_site_rename" then
+        return
+    end
 
     resmon.click.handlers.YARM_rename_cancel(event)
 end
 
 function resmon.on_get_selection_tool(event)
     local player = game.players[event.player_index]
-    if player.cursor_stack.valid_for_read then -- already have something?
-        if player.cursor_stack.name == "yarm-selector-tool" then return end
+    if player.cursor_stack.valid_for_read then
+        -- already have something?
+        if player.cursor_stack.name == "yarm-selector-tool" then
+            return
+        end
 
         player.clear_cursor() -- and it's not a selector tool, so Q it away
     end
@@ -856,7 +922,9 @@ end
 
 function resmon.update_players(event)
     -- At tick 0 on an MP server initial join, on_init may not have run
-    if not storage.player_data then return end
+    if not storage.player_data then
+        return
+    end
 
     for index, player in pairs(game.players) do
         local player_data = storage.player_data[index]
@@ -898,7 +966,9 @@ end
 
 function resmon.update_forces(event)
     -- At tick 0 on an MP server initial join, on_init may not have run
-    if not storage.force_data then return end
+    if not storage.force_data then
+        return
+    end
 
     local update_cycle = event.tick % settings.global["YARM-ticks-between-checks"].value
     for _, force in pairs(game.forces) do
