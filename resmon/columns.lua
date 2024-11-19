@@ -21,6 +21,20 @@ function columns_module.make_label(target, name, caption, color)
     return el
 end
 
+---Render an arrow going up, down, or nothing, depending on the given delta and amount. The ratio of
+---the delta to the amount determines the color of the arrow.
+---@param sites_gui LuaGuiElement The render target that we are placing the arrow onto
+---@param delta number The last recorded change in amount
+---@param amount number The last recorded amount
+function columns_module.render_arrow_for_percent_delta(sites_gui, delta, amount)
+    local percent_delta = (100 * (delta or 0) / (amount or 0)) / 5
+    local hue = percent_delta >= 0 and (1 / 3) or 0
+    local saturation = math.min(math.abs(percent_delta), 1)
+    local value = math.min(0.5 + math.abs(percent_delta / 2), 1)
+    local el = sites_gui.add({ type = "label", caption = (amount == 0 and "") or (delta or 0) >= 0 and "⬆" or "⬇" })
+    el.style.font_color = resmon.ui.hsv2rgb(hue, saturation, value)
+    return el
+end
 
 ---@type column_properties
 columns_module.rename_button = {
@@ -88,6 +102,7 @@ columns_module.site_name = {
     end
 }
 
+---@type column_properties
 columns_module.remaining_percent = {
     alignment = "right",
     ---@type render_function
@@ -100,6 +115,7 @@ columns_module.remaining_percent = {
     end
 }
 
+---@type column_properties
 columns_module.site_amount = {
     alignment = "right",
     ---@type render_function
@@ -113,6 +129,7 @@ columns_module.site_amount = {
     end
 }
 
+---@type column_properties
 columns_module.ore_name = {
     alignment = "left",
     ---@type render_function
@@ -131,6 +148,7 @@ columns_module.ore_name = {
     end
 }
 
+---@type column_properties
 columns_module.ore_per_minute = {
     alignment = "right",
     ---@type render_function
@@ -143,14 +161,16 @@ columns_module.ore_per_minute = {
     end
 }
 
+---@type column_properties
 columns_module.ore_per_minute_arrow = {
     alignment = "left",
     ---@type render_function
     render = function (sites_gui, site, player_data)
-        return resmon.ui.render_arrow_for_percent_delta(sites_gui, -1 * site.ore_per_minute_delta, site.ore_per_minute)
+        return columns_module.render_arrow_for_percent_delta(sites_gui, -1 * site.ore_per_minute_delta, site.ore_per_minute)
     end
 }
 
+---@type column_properties
 columns_module.etd_timespan = {
     alignment = "right",
     ---@type render_function
@@ -163,14 +183,16 @@ columns_module.etd_timespan = {
     end
 }
 
+---@type column_properties
 columns_module.etd_arrow = {
     alignment = "left",
     ---@type render_function
     render = function (sites_gui, site, player_data)
-        return resmon.ui.render_arrow_for_percent_delta(sites_gui, site.etd_minutes_delta, site.etd_minutes)
+        return columns_module.render_arrow_for_percent_delta(sites_gui, site.etd_minutes_delta, site.etd_minutes)
     end
 }
 
+---@type column_properties
 columns_module.etd_is_lifetime = {
     alignment = "center",
     ---@type render_function
@@ -188,6 +210,7 @@ columns_module.etd_is_lifetime = {
 
 }
 
+---@type column_properties
 columns_module.site_buttons = {
     alignment = "left",
     ---@type render_function

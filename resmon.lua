@@ -99,6 +99,7 @@ function resmon.init_force(force)
     resmon.sanity_check_sites(force, force_data)
 end
 
+---Check if the given table contains the given value as a value
 local function table_contains(haystack, needle)
     for _, candidate in pairs(haystack) do
         if candidate == needle then
@@ -109,6 +110,11 @@ local function table_contains(haystack, needle)
     return false
 end
 
+---Clean up sites whose resource entities no longer exist, e.g. because of mod removal.
+---If any sites were cleaned up, the players on the force owning the site are warned about
+---their removal.
+---@param force LuaForce
+---@param force_data force_data
 function resmon.sanity_check_sites(force, force_data)
     local discarded_sites = {}
     local missing_ores = {}
@@ -338,6 +344,10 @@ function resmon.put_marker_at(surface, pos, player, player_data)
     table.insert(player_data.overlays, overlay)
 end
 
+---Adjust the given coordinates by 1 tile in the given direction
+---@param position MapPosition
+---@param direction defines.direction
+---@return MapPosition position ±1 tile in x, y, or both
 local function shift_position(position, direction)
     if direction == defines.direction.north then
         return { x = position.x, y = position.y - 1 }
@@ -392,6 +402,7 @@ function resmon.scan_current_site(player)
     end
 end
 
+---@enum octant_names
 local octant_names = {
     [0] = "E",
     [1] = "SE",
@@ -403,6 +414,10 @@ local octant_names = {
     [7] = "NE",
 }
 
+---Turn a vector (actually assumed to originate at 0,0, therefore just a world coordinate)
+---into an octant (8-way compass heading, e.g. "NW" or "S")
+---@param vector MapPosition
+---@return octant_names
 local function get_octant_name(vector)
     local radians = math.atan2(vector.y, vector.x)
     local octant = math.floor(8 * radians / (2 * math.pi) + 8.5) % 8
@@ -483,6 +498,12 @@ function resmon.submit_site(player)
     resmon.ui.update_force_members(player.force)
 end
 
+---Sets up or continues counting the resource amounts within the given site. A count will only start
+---if the `site.added_at` matches the current update_cycle (to spread site counting across the range
+---of `settings.global["YARM-ticks-between-checks"]`). Each tick of counting will only take up to
+---1000 resource entities at a time (counting a large site may take multiple ticks).
+---@param site yarm_site
+---@param update_cycle integer The current tick modulo ticks-between-checks
 function resmon.count_deposits(site, update_cycle)
     if not resmon.site_iterators[site.name] then
         resmon.site_iterators[site.name] = pairs(site.tracker_indices)
@@ -505,6 +526,9 @@ function resmon.count_deposits(site, update_cycle)
     site.update_amount = 0
 end
 
+---Count up to 1000 resources in the given site, adding them to the update_amount. If this tick
+---finished all the resources in the site, continues with `resmon.finish_deposit_count`
+---@param site yarm_site
 function resmon.tick_deposit_count(site)
     local index = site.iter_key
 
@@ -527,9 +551,9 @@ function resmon.tick_deposit_count(site)
     site.iter_key = index
 end
 
--- as a default case, takes a diff between two values and returns a smoothed
--- easing step. however to force convergence, it does *not* smooth diffs below 1
--- and clamps smoothed diffs below 10 to be at least 1.
+---As a default case, takes a diff between two values and returns a smoothed
+---easing step. However, to force convergence it does *not* smooth diffs below 1
+---and clamps smoothed diffs below 10 to be at least 1.
 function resmon.smooth_clamp_diff(diff)
     if math.abs(diff) < 1 then
         return diff
@@ -625,6 +649,10 @@ function resmon.finish_deposit_count(site)
     })
 end
 
+---Determine a site's remaining permille based on its current and initial amount. Infinite
+---resources count down to their minimum_resource_amount rather than 0
+---@param site yarm_site
+---@return number # 0-1000 describing how full the site is compared to its initial amount
 function resmon.calc_remaining_permille(site)
     local entity_prototype = prototypes.entity[site.ore_type]
     local minimum = entity_prototype.infinite_resource
@@ -642,6 +670,7 @@ function resmon.surface_names()
     return names
 end
 
+---@param event EventData.on_gui_confirmed
 function resmon.on_gui_confirmed(event)
     if not event.element or not event.element.valid then
         return
@@ -653,6 +682,7 @@ function resmon.on_gui_confirmed(event)
     resmon.click.handlers.YARM_rename_confirm(event)
 end
 
+---@param event EventData.on_gui_closed
 function resmon.on_gui_closed(event)
     if event.gui_type ~= defines.gui_type.custom then
         return
@@ -667,8 +697,15 @@ function resmon.on_gui_closed(event)
     resmon.click.handlers.YARM_rename_cancel(event)
 end
 
+---@param event EventData.CustomInputEvent
 function resmon.on_get_selection_tool(event)
     local player = game.players[event.player_index]
+    resmon.give_selection_tool(player)
+end
+
+---Give the player the YARM selector tool
+---@param player LuaPlayer
+function resmon.give_selection_tool(player)
     if player.cursor_stack.valid_for_read then
         -- already have something?
         if player.cursor_stack.name == "yarm-selector-tool" then
@@ -783,6 +820,7 @@ function resmon.end_overlay_creation_for_existing_site(player)
     site.finalizing_since = game.tick
 end
 
+---@param event EventData.on_tick
 function resmon.update_players(event)
     -- At tick 0 on an MP server initial join, on_init may not have run
     if not storage.player_data then
@@ -827,6 +865,7 @@ function resmon.update_players(event)
     end
 end
 
+---@param event EventData.on_tick
 function resmon.update_forces(event)
     -- At tick 0 on an MP server initial join, on_init may not have run
     if not storage.force_data then
@@ -857,6 +896,7 @@ local function profiler_output(message, stopwatch)
 end
 
 
+---@param event EventData.on_tick
 local function on_tick_internal(event)
     ore_tracker.on_tick(event)
     resmon.entity_cache = ore_tracker.get_entity_cache()
@@ -866,6 +906,7 @@ local function on_tick_internal(event)
 end
 
 
+---@param event EventData.on_tick
 local function on_tick_internal_with_profiling(event)
     local big_stopwatch = game.create_profiler()
     local stopwatch = game.create_profiler()
@@ -889,7 +930,7 @@ local function on_tick_internal_with_profiling(event)
     profiler_output("total on_tick", big_stopwatch)
 end
 
-
+---@param event EventData.on_tick
 function resmon.on_tick(event)
     local wants_profiling = settings.global["YARM-debug-profiling"].value or false
     if wants_profiling then
