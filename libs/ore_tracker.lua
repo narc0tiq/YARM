@@ -31,7 +31,10 @@ ore_tracker = {
     position_cache = {},
 }
 
-
+---Turn a position into a string usable as a table key. NB: Duplicate
+---also present in resmon.lua
+---@param position MapPosition
+---@return string
 local function position_to_string(position)
     -- scale it up so (hopefully) any floating point component disappears,
     -- then force it to be an integer with %d.  not using util.positiontostr
@@ -39,9 +42,13 @@ local function position_to_string(position)
     return string.format("%d,%d", position.x * 100, position.y * 100)
 end
 
-
+---Check if the ore tracker already knows the given entity.
+---@param entity LuaEntity Must be a resource entity
+---@return boolean
 function ore_tracker.has_entity(entity)
-    if not entity or not entity.valid or entity.type ~= "resource" then return false end
+    if not entity or not entity.valid or entity.type ~= "resource" then
+        return false
+    end
 
     local position_key = position_to_string(entity.position)
     if ore_tracker.position_cache[position_key] then
@@ -51,12 +58,14 @@ function ore_tracker.has_entity(entity)
     return false
 end
 
---*f Add an entity to the ore tracker
---*r Returns the entity's tracker index;
--- Note: if the tracker already had the entity, it will simply return the
--- existing tracker index rather than create a new one.
+---Add an entity to the ore tracker if not already present. The entity must
+---be valid and be a resource type.
+---@param entity LuaEntity Must be a resource entity
+---@return number? index The index of the entity within the ore tracker cache, or nil if the entity could not be added
 function ore_tracker.add_entity(entity)
-    if not entity or not entity.valid or entity.type ~= "resource" then return nil end
+    if not entity or not entity.valid or entity.type ~= "resource" then
+        return nil
+    end
 
     if not storage.ore_tracker or not storage.ore_tracker.entities then
         storage.ore_tracker = {
@@ -83,6 +92,7 @@ function ore_tracker.add_entity(entity)
     -- Otherwise, create the tracking data and store it, including position_cache
     local entities = storage.ore_tracker.entities
     local next_index = #entities + 1
+    ---@class ore_tracker_entity
     entities[next_index] = {
         entity = entity,
         valid = entity.valid,
@@ -94,14 +104,25 @@ function ore_tracker.add_entity(entity)
     return next_index
 end
 
+---Return a view of the ore tracker entity cache.
+---@return ore_tracker_entity[]?
+---NB: Current implementation actually returns the cache itself; altering it would be a
+---bad idea.
 function ore_tracker.get_entity_cache()
-    if not storage.ore_tracker then return nil end
+    if not storage.ore_tracker then
+        return nil
+    end
 
     return storage.ore_tracker.entities
 end
 
+---Set up the position cache that allows fast lookup from a position to the entity that
+---occupies it. This must be done on_load every time, as the cache is not in `storage`
 function ore_tracker.on_load()
-    if not storage.ore_tracker or not storage.ore_tracker.entities then return end
+    -- ...why isn't the cache in storage?
+    if not storage.ore_tracker or not storage.ore_tracker.entities then
+        return
+    end
 
     for tracker_index, tracking_data in pairs(storage.ore_tracker.entities) do
         local key = position_to_string(tracking_data.position)
@@ -109,8 +130,13 @@ function ore_tracker.on_load()
     end
 end
 
+---Iterate one tick's worth of entities (configurable), updating their tracking data
+---to allow consumers to query a table instead of the entity itself
 local function update_entities_this_tick()
-    if not storage.ore_tracker or not storage.ore_tracker.entities then return end
+    -- ...but why not just query the entity itself?
+    if not storage.ore_tracker or not storage.ore_tracker.entities then
+        return
+    end
     local entities_per_tick = settings.global['YARM-entities-per-tick'].value
 
     if not ore_tracker.iterator_func then
@@ -127,7 +153,7 @@ local function update_entities_this_tick()
 
     local key = storage.ore_tracker.iterator_key
     local state = ore_tracker.iterator_state
-    local iterator = ore_tracker.iterator_func
+    local iterator = ore_tracker.iterator_func --[[@as function]]
     local tracking_data = nil
     for i = 1, entities_per_tick do
         key, tracking_data = iterator(state, key)
@@ -152,7 +178,7 @@ local function update_entities_this_tick()
     ore_tracker.iterator_func = iterator
 end
 
-
+---@param event EventData.on_tick
 function ore_tracker.on_tick(event)
     update_entities_this_tick()
 end

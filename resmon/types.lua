@@ -100,4 +100,27 @@ function types_module.new_site(player, entity)
     return site
 end
 
+---Create a new summary based on the given site
+---@param site yarm_site
+---@param summary_id string An identifier to distinguish this summary from others
+---@return table
+function types_module.new_summary_site_from(site, summary_id)
+    return {
+        name = "Total " .. summary_id,
+        ore_type = site.ore_type,
+        ore_name = site.ore_name,
+        initial_amount = 0,
+        amount = 0,
+        ore_per_minute = 0,
+        etd_minutes = 0,
+        is_summary = 1,
+        entity_count = 0,
+        remaining_permille = 0,
+        site_count = 0,
+        etd_minutes_delta = 0,
+        ore_per_minute_delta = 0,
+        surface = site.surface,
+    }
+end
+
 return types_module
