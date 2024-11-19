@@ -276,21 +276,6 @@ function ui_module.hsv2rgb(h, s, v)
     return { r = r, g = g, b = b }
 end
 
----Render an arrow going up, down, or nothing, depending on the given delta and amount. The ratio of
----the delta to the amount determines the color of the arrow.
----@param sites_gui LuaGuiElement The render target that we are placing the arrow onto
----@param delta number The last recorded change in amount
----@param amount number The last recorded amount
-function ui_module.render_arrow_for_percent_delta(sites_gui, delta, amount)
-    local percent_delta = (100 * (delta or 0) / (amount or 0)) / 5
-    local hue = percent_delta >= 0 and (1 / 3) or 0
-    local saturation = math.min(math.abs(percent_delta), 1)
-    local value = math.min(0.5 + math.abs(percent_delta / 2), 1)
-    local el = sites_gui.add({ type = "label", caption = (amount == 0 and "") or (delta or 0) >= 0 and "⬆" or "⬇" })
-    el.style.font_color = ui_module.hsv2rgb(hue, saturation, value)
-    return el
-end
-
 ---Update the given site's chart tag (map marker) with the current name and ore count
 ---@param site yarm_site
 function ui_module.update_chart_tag(site)

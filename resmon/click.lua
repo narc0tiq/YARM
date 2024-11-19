@@ -122,7 +122,7 @@ function click_module.expand_site(event)
         return
     end
 
-    resmon.on_get_selection_tool(event)
+    resmon.give_selection_tool(player)
     if player.cursor_stack.valid_for_read and player.cursor_stack.name == "yarm-selector-tool" then
         site.is_site_expanding = true
         player_data.current_site = site
@@ -192,7 +192,7 @@ end
 ---Create an event handler for a toggle button that toggles a UI setting.
 ---@param ui_setting_name string Which `player_data.ui` setting are we toggling?
 ---@param button_name string Which button reflects the UI setting name?
----@return function handler An event handler that can be dispatched then the toggle button is clicked
+---@return function # An event handler that can be dispatched when the toggle button is clicked
 local function create_toggle_button_method(button_name, ui_setting_name)
     ---@param event EventData.on_gui_click The click event to be handled
     return function(event)
