@@ -1,6 +1,12 @@
 require "resmon"
 require "remote"
 
+---@module "resmon.click"
+---@module "resmon.columns"
+---@module "resmon.locale"
+---@module "resmon.sites"
+---@module "resmon.types"
+---@module "resmon.ui"
 
 -- if this ever happens, I'll be enormously surprised
 if not resmon then error("YARM has become badly corrupted: the variable resmon should've been set!") end
