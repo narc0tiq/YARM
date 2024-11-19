@@ -98,7 +98,7 @@ columns_module.site_name = {
             end
             color = nil
         end
-        return columns_module.make_label(sites_gui, "YARM_label_site_"..site.name, site_name, color)
+        return columns_module.make_label(sites_gui, "YARM_label_site_"..site.name, site_name)
     end
 }
 
@@ -143,8 +143,7 @@ columns_module.ore_name = {
         return columns_module.make_label(
             sites_gui,
             "YARM_label_ore_name_"..site.name,
-            caption,
-            player_data.ui.site_colors[site.name])
+            caption)
     end
 }
 

@@ -255,7 +255,6 @@ function resmon.add_resource(player, entity)
     end
 
     if not player_data.current_site then
-        ---@class yarm_site
         player_data.current_site = resmon.types.new_site(player, entity)
     end
 
