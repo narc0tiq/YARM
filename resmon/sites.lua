@@ -21,9 +21,13 @@ local sites_module = {
 ---finally a name comparison. Is the fallback comparator for most others, as well as the normal
 ---default.
 sites_module.comparators["default"] = function(left, right)
-    return left.remaining_permille < right.remaining_permille
-        or left.added_at < right.added_at
-        or left.name < right.name
+    if left.remaining_permille ~= right.remaining_permille then
+        return left.remaining_permille < right.remaining_permille
+    elseif left.added_at ~= right.added_at then
+        return left.added_at < right.added_at
+    else
+        return left.name < right.name
+    end
 end
 
 ---Same as the default comparator: ORDERBY percentage ASC, added_at ASC, name ASC
