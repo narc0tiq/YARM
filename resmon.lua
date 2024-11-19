@@ -309,10 +309,18 @@ function resmon.add_single_entity(player, entity)
     end
 
     -- Give visible feedback, too
-    resmon.put_marker_at(entity.surface, entity.position, player_data)
+    resmon.put_marker_at(entity.surface, entity.position, player, player_data)
 end
 
-function resmon.put_marker_at(surface, pos, player_data)
+---Draw a marker (blue highlight) on top of the given position to signify that
+---YARM has seen it (either when scanning for a site creation, or when
+---re-displaying an expanding site's known resources). Only the player who
+---is creating/expanding the site can see the marker
+---@param surface LuaSurface
+---@param pos MapPosition
+---@param player LuaPlayer Who are we rendering this for
+---@param player_data player_data
+function resmon.put_marker_at(surface, pos, player, player_data)
     if math.floor(pos.x) % settings.global["YARM-overlay-step"].value ~= 0 or
         math.floor(pos.y) % settings.global["YARM-overlay-step"].value ~= 0 then
         return
@@ -324,6 +332,7 @@ function resmon.put_marker_at(surface, pos, player_data)
         filled = true,
         color = { 0, 0, 0.5, 0.4 },
         surface = surface,
+        players = { player },
         draw_on_ground = true,
     }
     table.insert(player_data.overlays, overlay)
@@ -723,14 +732,15 @@ function resmon.process_overlay_for_existing_site(player)
 
     local to_scan = math.min(30, site.next_to_overlay_count)
     for _ = 1, to_scan do
-        resmon.overlay_next_entity_in_existing_site(site, player_data)
+        resmon.overlay_next_entity_in_existing_site(site, player, player_data)
     end
 end
 
 ---Overlay the next entity in the given site and scan around it for more
 ---@param site yarm_site
+---@param player LuaPlayer
 ---@param player_data player_data
-function resmon.overlay_next_entity_in_existing_site(site, player_data)
+function resmon.overlay_next_entity_in_existing_site(site, player, player_data)
     local ent_key, ent_pos = next(site.next_to_overlay)
     local entity = site.surface.find_entity(site.ore_type, ent_pos)
     if not entity or not entity.valid then
@@ -738,7 +748,7 @@ function resmon.overlay_next_entity_in_existing_site(site, player_data)
     end
 
     -- put marker down
-    resmon.put_marker_at(site.surface, entity.position, player_data)
+    resmon.put_marker_at(site.surface, entity.position, player, player_data)
 
     -- remove it from our to-do lists
     site.entities_to_be_overlaid[ent_key] = nil
