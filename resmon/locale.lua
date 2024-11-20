@@ -1,17 +1,17 @@
 ---@class locale_module
 local locale_module = {}
 
----Return a localized string with the estimated time until amount reaches 0
----@param etd_minutes number Estimated minutes until depletion (could be a very large number, or -1 for 'never')
----@param amount_left integer Number of items (resource amount) remaining
+---Return a localized string with the estimated time until site resource amount reaches 0
+---@param site yarm_site
 ---@return LocalisedString A human-readable string describing the time remaining, e.g., rendering to "2d 03:45h"
-function locale_module.time_to_deplete(etd_minutes, amount_left)
+function locale_module.site_time_to_deplete(site)
+    local amount_left = site.amount_left or site.amount
     if amount_left < 1 then
         return { "YARM-etd-now" }
     end
 
     local ups_adjust = settings.global["YARM-nominal-ups"].value / 60
-    local minutes = (etd_minutes and (etd_minutes / ups_adjust)) or -1
+    local minutes = (site.etd_minutes and (site.etd_minutes / ups_adjust)) or -1
 
     if minutes == -1 or minutes == math.huge then return { "YARM-etd-never" } end
 
