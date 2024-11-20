@@ -177,7 +177,7 @@ columns_module.etd_timespan = {
         return columns_module.make_label(
             sites_gui,
             "YARM_label_etd_timespan_"..site.name,
-            resmon.locale.time_to_deplete(site.etd_minutes, site.amount_left or site.amount),
+            resmon.locale.site_time_to_deplete(site),
             player_data.ui.site_colors[site.name])
     end
 }
