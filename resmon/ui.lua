@@ -1,5 +1,7 @@
 local get_frame_flow = require("mod-gui").get_frame_flow
 
+---@module "columns"
+
 ---@class ui_module
 local ui_module = {
     -- NB: filter names should be single words with optional underscores (_)
