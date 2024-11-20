@@ -1,6 +1,7 @@
 require "resmon"
 require "remote"
 
+-- Fake requires for LuaLS
 ---@module "resmon.click"
 ---@module "resmon.columns"
 ---@module "resmon.locale"
@@ -9,7 +10,9 @@ require "remote"
 ---@module "resmon.ui"
 
 -- if this ever happens, I'll be enormously surprised
-if not resmon then error("YARM has become badly corrupted: the variable resmon should've been set!") end
+if not resmon then
+    error("YARM has become badly corrupted: the variable resmon should've been set!")
+end
 
 -- Enable Lua API global Variable Viewer
 -- https://mods.factorio.com/mod/gvv
