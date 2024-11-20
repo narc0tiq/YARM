@@ -35,7 +35,6 @@ end
 ---@param site yarm_site
 ---@return LocalisedString
 function locale_module.site_depletion_rate(site)
-    -- TODO Refactor this so the locale module doesn't need to know what a site is
     local ups_adjust = settings.global["YARM-nominal-ups"].value / 60
     local speed = ups_adjust * site.ore_per_minute
 
@@ -115,7 +114,6 @@ end
 ---@param format_func function A number formatting function, e.g. resmon.locale.format_number
 ---@return string The formatted number containing the resource amount, e.g. "2,123,456" or "2.1 M"
 function locale_module.site_amount(site, format_func)
-    -- TODO Refactor this so the locale module doesn't need to know what a site is
     local entity_prototype = prototypes.entity[site.ore_type]
     -- Special case: infinite resources show "N x 123.4%", which is more useful than the raw amount
     if entity_prototype.infinite_resource then
