@@ -37,7 +37,7 @@ end
 
 ---@param event EventData.on_gui_click
 function click_module.delete_site(event)
-    local site_name = event.element.tags.site
+    local site_name = event.element.tags.site --[[@as string]]
     local player = game.players[event.player_index]
     local force_data = storage.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
@@ -57,7 +57,7 @@ end
 
 ---@param event EventData.on_gui_click
 function click_module.rename_site(event)
-    local site_name = event.element.tags.site
+    local site_name = event.element.tags.site --[[@as string]]
     local player = game.players[event.player_index]
     local player_data = storage.player_data[player.index]
 
@@ -83,7 +83,7 @@ end
 
 ---@param event EventData.on_gui_click
 function click_module.goto_site(event)
-    local site_name = event.element.tags.site
+    local site_name = event.element.tags.site --[[@as string]]
     local player = game.players[event.player_index]
     local force_data = storage.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
@@ -96,7 +96,7 @@ end
 ---One button handler for both the expand_site and expand_site_cancel buttons
 ---@param event EventData.on_gui_click
 function click_module.expand_site(event)
-    local site_name = event.element.tags.site
+    local site_name = event.element.tags.site --[[@as string]]
     local player = game.players[event.player_index]
     local player_data = storage.player_data[player.index]
     local force_data = storage.force_data[player.force.name]
