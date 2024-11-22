@@ -50,13 +50,15 @@ columns_module.rename_button = {
                 type = "button",
                 name = "YARM_rename_site_" .. site.name,
                 tooltip = { "YARM-tooltips.rename-site-cancel" },
-                style = "YARM_rename_site_cancel" }
+                style = "YARM_rename_site_cancel",
+                tags = { site = site.name } }
         else
             return sites_gui.add {
                 type = "button",
                 name = "YARM_rename_site_" .. site.name,
                 tooltip = { "YARM-tooltips.rename-site-named", site.name },
-                style = "YARM_rename_site" }
+                style = "YARM_rename_site",
+                tags = { site = site.name } }
         end
     end
 }
@@ -89,14 +91,12 @@ columns_module.site_name = {
     ---@type render_function
     render = function (sites_gui, site, player_data)
         local site_name = site.name ---@type LocalisedString
-        local color = player_data.ui.site_colors[site.name]
         if site.is_summary then
             if is_first_site(site, player_data) then
                 site_name = { "YARM-category-totals" }
             else
                 site_name = ""
             end
-            color = nil
         end
         return columns_module.make_label(sites_gui, "YARM_label_site_"..site.name, site_name)
     end
@@ -221,30 +221,35 @@ columns_module.site_buttons = {
             site_buttons.add { type = "button",
                 name = "YARM_goto_site_" .. site.name,
                 tooltip = { "YARM-tooltips.goto-site" },
-                style = "YARM_goto_site" }
+                style = "YARM_goto_site",
+                tags = { site = site.name } }
             if not player_data.ui.show_compact_columns then
                 if site.deleting_since then
                     site_buttons.add { type = "button",
                         name = "YARM_delete_site_" .. site.name,
                         tooltip = { "YARM-tooltips.delete-site-confirm" },
-                        style = "YARM_delete_site_confirm" }
+                        style = "YARM_delete_site_confirm",
+                        tags = { site = site.name } }
                 else
                     site_buttons.add { type = "button",
                         name = "YARM_delete_site_" .. site.name,
                         tooltip = { "YARM-tooltips.delete-site" },
-                        style = "YARM_delete_site" }
+                        style = "YARM_delete_site",
+                        tags = { site = site.name } }
                 end
 
                 if site.is_site_expanding then
                     site_buttons.add { type = "button",
                         name = "YARM_expand_site_" .. site.name,
                         tooltip = { "YARM-tooltips.expand-site-cancel" },
-                        style = "YARM_expand_site_cancel" }
+                        style = "YARM_expand_site_cancel",
+                        tags = { site = site.name } }
                 else
                     site_buttons.add { type = "button",
                         name = "YARM_expand_site_" .. site.name,
                         tooltip = { "YARM-tooltips.expand-site" },
-                        style = "YARM_expand_site" }
+                        style = "YARM_expand_site",
+                        tags = { site = site.name } }
                 end
             end
         end
