@@ -90,7 +90,6 @@ function migrations.ore_tracker.v1()
             storage.ore_tracker.entities[key] = nil
         else
             tracking_data.position = nil ---@diagnostic disable-line: inject-field
-            tracking_data.position_key = resmon.entity_position_to_string(tracking_data.entity)
         end
     end
     return 2
