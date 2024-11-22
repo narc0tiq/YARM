@@ -76,7 +76,8 @@ function ore_tracker_module.add_entity(entity)
     local next_index = #entities + 1
     entities[next_index] = tracking_data
 
-    ore_tracker_module.position_cache[tracking_data.position_key] = next_index
+    local position_key = internal.entity_position_to_string(entity)
+    ore_tracker_module.position_cache[position_key] = next_index
 
     return next_index
 end
@@ -121,7 +122,10 @@ function ore_tracker_module.on_load()
     -- if somehow the cached indexes don't make sense anymore, we don't perpetuate the
     -- nonsense. We can _easily_ rebuild it without querying the entities themselves:
     for tracker_index, tracking_data in pairs(storage.ore_tracker.entities) do
-        ore_tracker_module.position_cache[tracking_data.position_key] = tracker_index
+        if tracking_data.valid then
+            local position_key = internal.entity_position_to_string(tracking_data.entity)
+            ore_tracker_module.position_cache[position_key] = tracker_index
+        end
     end
 end
 
@@ -136,7 +140,6 @@ function internal.new_resource_tracking_data(entity)
     ---@class resource_tracking_data
     local resource_tracking_data = {
         entity = entity, ---@type LuaEntity?
-        position_key = internal.entity_position_to_string(entity),
         resource_amount = entity.amount,
         valid = entity.valid,
     }
