@@ -1,6 +1,7 @@
 require "util"
 require "libs/array_pair"
-require "libs/ore_tracker"
+
+local ore_tracker = require "libs/ore_tracker"
 
 ---@class resmon_base
 resmon = {
@@ -13,6 +14,7 @@ resmon = {
     columns = require("resmon.columns"),
     locale = require("resmon.locale"),
     sites = require("resmon.sites"),
+    migrations = require("resmon.migrations"),
     types = require("resmon.types"),
     ui = require("resmon.ui"),
 }
@@ -35,6 +37,8 @@ end
 
 ---Initialize/upgrade the storage data (for players and forces)
 function resmon.init_globals()
+    resmon.init_storage()
+    resmon.migrations.perform_migrations()
     for _, player in pairs(game.players) do
         resmon.init_player(player)
     end
@@ -50,7 +54,7 @@ end
 ---YARM v0.11.2: Keeping iter_fn in the site means trying to keep a function in `storage`, which
 ---blocks saving in Factorio 2.0 and would have possibly also led to some mysterious desyncs in
 ---previous Factorio versions.
----YARM v1.0: iter_fn is just `next(t, k)
+---YARM v1.0: iter_fn is just `next(t, k)`
 ---@param force_data force_data
 local function migrate_remove_iter_fn(force_data)
     for _, site in pairs(force_data.ore_sites) do
@@ -151,6 +155,17 @@ function resmon.sanity_check_sites(force, force_data)
     force.print { discard_message, table.concat(discarded_sites, ', '), table.concat(missing_ores, ', ') }
     log { "", force.name, ' was warned: ', { discard_message, table.concat(discarded_sites, ', '),
         table.concat(missing_ores, ', ') } }
+end
+
+---Convert an entity's location into a string usable as table key. Like `position_to_string`, but
+---taking the surface into account as well.
+---@param entity LuaEntity
+---@return string # A string like "nauvis@12345,12345" where the coordinates are upscaled 100x
+function resmon.entity_position_to_string(entity)
+    -- Scale up x/y so (hopefully) any floating point component disappears, then
+    -- force them to be integer with %d. Not using util.positiontostr as it uses %g
+    -- and keeps the floating point component.
+    return string.format("%s@%d,%d", entity.surface.name, entity.position.x * 100, entity.position.y * 100)
 end
 
 ---Turn a position into a string usable as a table key
@@ -940,10 +955,17 @@ function resmon.on_load()
     ore_tracker.on_load()
 end
 
-local function unused()
-    storage = {
-        force_data = {}, ---@type force_data[]
-        player_data = {}, ---@type player_data[]
-        ore_tracker = {},
-    }
+function resmon.init_storage()
+    -- NB: storage.player_data and storage.force_data are carefully chosen:
+    -- - if upgrading from YARM < v1.0, it already exists so we must not initialize storage.versions
+    -- - if it's a completely new game, it doesn't exist and we can initialize storage.versions
+    -- - if it's not a completely new game and YARM >= 1.0, it exists and so does storage.versions
+    if not storage.player_data or not storage.force_data then
+        storage = {
+            versions = resmon.migrations.default_versions(),
+            force_data = {}, ---@type force_data[]
+            player_data = {}, ---@type player_data[]
+        }
+    end
+    ore_tracker.init_globals()
 end
