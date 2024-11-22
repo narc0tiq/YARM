@@ -94,10 +94,9 @@ function types_module.new_site(player, entity)
         has_expanded = false,
         original_amount = 0,
         remaining_permille = 1000,
-        deleting_since = nil,      -- tick number when player presses "delete" for the first time; if not pressed for the second time within 120 ticks, deletion is cancelled
+        deleting_since = nil, -- tick number when player presses "delete" for the first time; if not pressed for the second time within 120 ticks, deletion is cancelled
         chart_tag = nil, ---@type LuaCustomChartTag? the associated chart tag (aka map marker) with the site name and amount
-        iter_key = nil,            -- used when iterating the site contents, along with iter_state
-        iter_state = nil,          -- also used when iterating the site contents, along with iter_key
+        iter_key = nil,       -- used when iterating the site contents to remember how far we've gotten
     }
     return site
 end
