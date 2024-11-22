@@ -5,10 +5,9 @@ require "libs/ore_tracker"
 ---@class resmon_base
 resmon = {
     on_click = {},
-    site_iterators = {},
 
     -- updated `on_tick` to contain `ore_tracker.get_entity_cache()`
-    entity_cache = nil,
+    entity_cache = {},
 
     click = require("resmon.click"),
     columns = require("resmon.columns"),
@@ -51,13 +50,16 @@ end
 ---YARM v0.11.2: Keeping iter_fn in the site means trying to keep a function in `storage`, which
 ---blocks saving in Factorio 2.0 and would have possibly also led to some mysterious desyncs in
 ---previous Factorio versions.
+---YARM v1.0: iter_fn is just `next(t, k)
 ---@param force_data force_data
 local function migrate_remove_iter_fn(force_data)
     for _, site in pairs(force_data.ore_sites) do
         if site.iter_fn then
-            resmon.site_iterators[site.name] = site.iter_fn
             site.iter_fn = nil ---@diagnostic disable-line: inject-field
         end
+    end
+    if resmon.site_iterators then
+        resmon.site_iterators = nil ---@diagnostic disable-line: inject-field
     end
 end
 
@@ -504,12 +506,8 @@ end
 ---@param site yarm_site
 ---@param update_cycle integer The current tick modulo ticks-between-checks
 function resmon.count_deposits(site, update_cycle)
-    if not resmon.site_iterators[site.name] then
-        resmon.site_iterators[site.name] = pairs(site.tracker_indices)
-    end
-
-    -- the site is currently being iterated so just continue iterating
-    if site.iter_key or site.iter_state then
+    -- the site is already being iterated so just continue iterating
+    if site.iter_key then
         resmon.tick_deposit_count(site)
         return
     end
@@ -521,8 +519,9 @@ function resmon.count_deposits(site, update_cycle)
     end
 
     -- yes, it's time to iterate it; set up the state and get it going!
-    _, site.iter_state, site.iter_key = pairs(site.tracker_indices)
+    site.iter_key = nil
     site.update_amount = 0
+    resmon.tick_deposit_count(site)
 end
 
 ---Count up to 1000 resources in the given site, adding them to the update_amount. If this tick
@@ -532,8 +531,7 @@ function resmon.tick_deposit_count(site)
     local index = site.iter_key
 
     for _ = 1, 1000 do
-        local iterator = resmon.site_iterators[site.name]
-        index = iterator(site.iter_state, index)
+        index = next(site.tracker_indices, index)
         if index == nil then
             resmon.finish_deposit_count(site)
             return
@@ -567,7 +565,6 @@ end
 ---@param site yarm_site
 function resmon.finish_deposit_count(site)
     site.iter_key = nil
-    site.iter_state = nil
 
     if site.last_ore_check then
         if not site.last_modified_amount then
