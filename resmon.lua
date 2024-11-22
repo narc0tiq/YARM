@@ -157,16 +157,7 @@ function resmon.sanity_check_sites(force, force_data)
         table.concat(missing_ores, ', ') } }
 end
 
----Convert an entity's location into a string usable as table key. Like `position_to_string`, but
----taking the surface into account as well.
----@param entity LuaEntity
----@return string # A string like "nauvis@12345,12345" where the coordinates are upscaled 100x
-function resmon.entity_position_to_string(entity)
-    -- Scale up x/y so (hopefully) any floating point component disappears, then
-    -- force them to be integer with %d. Not using util.positiontostr as it uses %g
-    -- and keeps the floating point component.
-    return string.format("%s@%d,%d", entity.surface.name, entity.position.x * 100, entity.position.y * 100)
-end
+resmon.entity_position_to_string = ore_tracker.internal.entity_position_to_string
 
 ---Turn a position into a string usable as a table key
 ---@param pos MapPosition
