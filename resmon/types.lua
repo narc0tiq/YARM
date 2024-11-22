@@ -1,3 +1,4 @@
+---@class types_module
 local types_module = {}
 
 ---Create a new player_data structure
@@ -104,9 +105,10 @@ end
 ---Create a new summary based on the given site
 ---@param site yarm_site
 ---@param summary_id string An identifier to distinguish this summary from others
----@return table
+---@return summary_site
 function types_module.new_summary_site_from(site, summary_id)
-    return {
+    ---@class summary_site: yarm_site
+    local summary = {
         name = "Total " .. summary_id,
         ore_type = site.ore_type,
         ore_name = site.ore_name,
@@ -122,6 +124,7 @@ function types_module.new_summary_site_from(site, summary_id)
         ore_per_minute_delta = 0,
         surface = site.surface,
     }
+    return summary
 end
 
 return types_module
