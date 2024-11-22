@@ -38,7 +38,9 @@ data:extend(
             alt_select = {
                 border_color = { g = 1, b = 1 },
                 cursor_box_type = 'copy',
-                mode = 'nothing',
+                mode = 'any-entity',
+                entity_filter_mode = 'whitelist',
+                entity_type_filters = { 'resource' },
             },
         },
 
