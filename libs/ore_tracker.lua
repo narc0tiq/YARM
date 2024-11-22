@@ -172,7 +172,16 @@ function internal.new_ore_tracker_storage()
     return ore_tracker_storage
 end
 
-internal.entity_position_to_string = resmon.entity_position_to_string
+---Convert an entity's location into a string usable as table key. Like `position_to_string`, but
+---taking the surface into account as well.
+---@param entity LuaEntity
+---@return string # A string like "nauvis@12345,12345" where the coordinates are upscaled 100x
+function internal.entity_position_to_string(entity)
+    -- Scale up x/y so (hopefully) any floating point component disappears, then
+    -- force them to be integer with %d. Not using util.positiontostr as it uses %g
+    -- and keeps the floating point component.
+    return string.format("%s@%d,%d", entity.surface.name, entity.position.x * 100, entity.position.y * 100)
+end
 
 ---Iterate one tick's worth of entities (configurable), updating their tracking data
 ---to allow consumers to query a table instead of the entity itself
