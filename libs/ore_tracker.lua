@@ -122,7 +122,7 @@ function ore_tracker_module.on_load()
     -- if somehow the cached indexes don't make sense anymore, we don't perpetuate the
     -- nonsense. We can _easily_ rebuild it without querying the entities themselves:
     for tracker_index, tracking_data in pairs(storage.ore_tracker.entities) do
-        if tracking_data.valid then
+        if tracking_data.valid and tracking_data.entity and tracking_data.entity.valid then
             local position_key = internal.entity_position_to_string(tracking_data.entity)
             ore_tracker_module.position_cache[position_key] = tracker_index
         end
