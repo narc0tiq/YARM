@@ -144,17 +144,16 @@ function resmon.sanity_check_sites(force, force_data)
         return
     end
 
-    local discard_message = "YARM-warnings.discard-multi-missing-ore-type-multi"
-    if #missing_ores == 1 then
-        discard_message = "YARM-warnings.discard-multi-missing-ore-type-single"
-        if #discarded_sites == 1 then
-            discard_message = "YARM-warnings.discard-single-missing-ore-type-single"
-        end
-    end
-
-    force.print { discard_message, table.concat(discarded_sites, ', '), table.concat(missing_ores, ', ') }
-    log { "", force.name, ' was warned: ', { discard_message, table.concat(discarded_sites, ', '),
-        table.concat(missing_ores, ', ') } }
+    ---@type LocalisedString
+    local message_locale = {
+        "YARM-warnings.discard-missing-ore-type",
+        table.concat(discarded_sites, ', '),
+        table.concat(missing_ores, ', '),
+        #discarded_sites,
+        #missing_ores,
+    }
+    force.print(message_locale)
+    log({ "", force.name, " received warning: ", message_locale})
 end
 
 resmon.entity_position_to_string = ore_tracker.internal.entity_position_to_string
