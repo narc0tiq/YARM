@@ -343,4 +343,41 @@ function ui_module.migrate_player_data(player)
     end
 end
 
+---Render a sites table into the container; the table is a viewmodel of a grid of sites
+---containing some parameters of what to render, and rows containing cells, which are
+---objects that know how to create and/or update themselves.
+---@param container LuaGuiElement
+---@param t sites_table To be rendered
+function ui_module.render_sites_table(container, t)
+    local table_element = container[t.name]
+    if not table_element then
+        table_element = container.add {
+            type = "table",
+            style = "YARM_site_table",
+            name = t.name,
+            column_count = t.column_count,
+        }
+        local column_alignments = table_element.style.column_alignments
+        for i, alignment in pairs(t.column_alignments) do
+            column_alignments[i] = alignment
+        end
+    end
+
+    local row_num = 1
+    for i, row in ipairs(t.rows) do
+        for j, cell in ipairs(row.cells) do
+            local cell_name = "row_"..i.."_col_"..j
+            if table_element[cell_name] then
+                cell.update(table_element[cell_name], row_num)
+            else
+                cell.create(table_element, cell_name, row_num)
+            end
+        end
+
+        if row.should_reset_row_count then
+            row_num = 1
+        end
+    end
+end
+
 return ui_module
