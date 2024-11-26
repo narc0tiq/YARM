@@ -14,6 +14,7 @@ resmon = {
     columns = require("resmon.columns"),
     locale = require("resmon.locale"),
     sites = require("resmon.sites"),
+    sites_table = require("resmon.sites_table"),
     migrations = require("resmon.migrations"),
     types = require("resmon.types"),
     ui = require("resmon.ui"),
