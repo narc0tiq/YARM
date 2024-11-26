@@ -26,7 +26,7 @@ function types_module.new_player_data_ui()
         first_site = nil, -- when rendering sites, the first one is recorded so it can have a special display (e.g., surface name)
         split_by_surface = false,
         show_compact_columns = false,
-        site_colors = {},
+        site_colors = {}, ---@type { [string]: Color }
     }
     return player_data_ui
 end
