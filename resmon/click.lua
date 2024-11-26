@@ -185,6 +185,11 @@ function handlers.YARM_rename_cancel(event)
     resmon.ui.update_force_members(player.force)
 end
 
+handlers.YARM_goto_site = click_module.goto_site
+handlers.YARM_delete_site = click_module.delete_site
+handlers.YARM_expand_site = click_module.expand_site
+handlers.YARM_rename_site = click_module.rename_site
+
 ---Create an event handler for a toggle button that toggles a UI setting.
 ---@param ui_setting_name string Which `player_data.ui` setting are we toggling?
 ---@param button_name string Which button reflects the UI setting name?

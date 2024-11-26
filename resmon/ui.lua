@@ -43,13 +43,33 @@ function ui_module.update_player(player)
     root.style = player_data.ui.enable_hud_background and "YARM_outer_frame_no_border_bg" or "YARM_outer_frame_no_border"
     local show_sites_summary = player.mod_settings["YARM-show-sites-summary"].value or false
 
-    if root.sites and root.sites.valid then
+    if root.sites and root.sites.valid and not player_data.ui.show_compact_columns then
         root.sites.destroy()
     end
 
     local layout = resmon.columns.layouts.full
     if player_data.ui.show_compact_columns then
         layout = resmon.columns.layouts.compact
+
+        -- TODO remove override
+        local t = resmon.sites_table.new_table(resmon.sites_table.layouts.compact, "sites")
+        local i = 1
+        for _, site in pairs(force_data.ore_sites) do
+            t.add_site_row(site)
+            if i % 3 == 0 then
+                t.add_divider_row()
+            end
+            i = i + 1
+        end
+
+        if root.sites.column_count ~= t.column_count then
+            root.sites.destroy()
+        end
+
+        ui_module.render_sites_table(root, t)
+        return
+        -- TODO remove override
+
     end
     local sites_gui = root.add { type = "table", column_count = #layout, name = "sites", style = "YARM_site_table" }
     sites_gui.style.horizontal_spacing = 5
@@ -203,7 +223,7 @@ end
 ---@param site yarm_site The site we're rendering
 ---@param player LuaPlayer The player to whom we are showing the site
 ---@param sites_gui LuaGuiElement The container we are rendering into
----@param player_data table The current player's stored data
+---@param player_data player_data The current player's stored data
 ---@param layout column_properties[]
 ---@return boolean Whether we rendered anything or not
 function ui_module.render_single_site(
@@ -343,6 +363,14 @@ function ui_module.migrate_player_data(player)
     end
 end
 
+function ui_module.update_tags(elem, new_tags)
+    local tags = elem.tags
+    for k, v in pairs(new_tags) do
+        tags[k] = v
+    end
+    elem.tags = tags
+end
+
 ---Render a sites table into the container; the table is a viewmodel of a grid of sites
 ---containing some parameters of what to render, and rows containing cells, which are
 ---objects that know how to create and/or update themselves.
@@ -363,6 +391,18 @@ function ui_module.render_sites_table(container, t)
         end
     end
 
+    local rendered_rows = math.ceil(#table_element.children / table_element.column_count)
+    if rendered_rows > #t.rows then
+        for i = #t.rows, rendered_rows do
+            for j = 1, t.column_count do
+                local cell_name = "row_"..i.."_col_"..j
+                if table_element[cell_name] then
+                    table_element[cell_name].destroy()
+                end
+            end
+        end
+    end
+
     local row_num = 1
     for i, row in ipairs(t.rows) do
         for j, cell in ipairs(row.cells) do
@@ -376,6 +416,8 @@ function ui_module.render_sites_table(container, t)
 
         if row.should_reset_row_count then
             row_num = 1
+        else
+            row_num = row_num + 1
         end
     end
 end
