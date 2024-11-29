@@ -158,9 +158,7 @@ yatable_module.layouts = {
             ---@type yatable_column_type
             type = enum.column_type.ore_name_compact,
             ---@type TextAlign
-            alignment = "left",
-            ---@type boolean?
-            is_compact = true,
+            alignment = "right",
         },
         {
             type = enum.column_type.etd_timespan,
@@ -169,9 +167,58 @@ yatable_module.layouts = {
         {
             type = enum.column_type.site_buttons_compact,
             alignment = "left",
-            is_compact = true,
         },
     },
+    full = {
+        {
+            type = enum.column_type.rename_button,
+            alignment = "left",
+        },
+        {
+            type = enum.column_type.surface_name,
+            alignment = "right",
+        },
+        {
+            type = enum.column_type.site_name,
+            alignment = "left",
+        },
+        {
+            type = enum.column_type.remaining_percent,
+            alignment = "right",
+        },
+        {
+            type = enum.column_type.site_amount,
+            alignment = "right",
+        },
+        {
+            type = enum.column_type.ore_name_full,
+            alignment = "left",
+        },
+        {
+            type = enum.column_type.ore_per_minute,
+            alignment = "right",
+        },
+        {
+            type = enum.column_type.ore_per_minute_arrow,
+            alignment = "left",
+        },
+        {
+            type = enum.column_type.etd_timespan,
+            alignment = "right",
+        },
+        {
+            type = enum.column_type.etd_arrow,
+            alignment = "left",
+        },
+        {
+            type = enum.column_type.site_status,
+            alignment = "left",
+        },
+        {
+            type = enum.column_type.site_buttons_full,
+            alignment = "left",
+        },
+    }
 }
 
 ---@diagnostic disable-next-line: unused-local, unused-function
@@ -193,10 +240,12 @@ local function unused()
     local example_row = {
         ---@type yatable_row_type
         type = enum.row_type.site,
-        ---@type yarm_site?
+        ---@type yarm_site? When row type is site or summary, this contains the relevant site
         site = summary_sites["nauvis.iron-ore"],
-        ---@type LuaSurface?
-        surface = game.surfaces.nauvis
+        ---@type Color When row type is site or summary, this contains the site color
+        color = { 1, 1, 1 },
+        ---@type LuaSurface? When row type is header, this contains the relevant surface
+        surface = game.surfaces.nauvis,
     }
 
     ---@class yatable_table

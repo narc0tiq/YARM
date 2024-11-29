@@ -32,7 +32,8 @@ end
 
 ---@param get_caption fun(integer):LocalisedString
 ---@param get_color nil|fun():Color
-local function new_label_cell(get_caption, get_color)
+---@param get_tooltip nil|fun():LocalisedString
+local function new_label_cell(get_caption, get_color, get_tooltip)
     ---@class yatable_cell
     local cell = {
         ---Create a cell inside the given container, because it is not already present
@@ -41,15 +42,15 @@ local function new_label_cell(get_caption, get_color)
         ---@param row_num integer Display row number (can be reset by dividers)
         ---@param insert_index integer? Where in the container's children to add the control
         create = function(container, cell_name, row_num, insert_index)
-            local color = get_color and get_color() or {1,1,1}
             local the_label = container.add {
                 type = "label",
                 name = cell_name,
                 index = insert_index,
                 caption = get_caption(row_num),
+                tooltip = get_tooltip and get_tooltip(),
             }
             the_label.style.font = "yarm-gui-font"
-            the_label.style.font_color = color
+            the_label.style.font_color = get_color and get_color() or {1,1,1}
             return the_label
         end,
         ---Update the cell, because it is already present
@@ -57,6 +58,7 @@ local function new_label_cell(get_caption, get_color)
         ---@param row_num integer Display row number (can be reset by dividers)
         update = function(cell_elem, row_num)
             cell_elem.caption = get_caption(row_num)
+            cell_elem.tooltip = get_tooltip and get_tooltip()
             cell_elem.style.font_color = get_color and get_color() or {1,1,1}
         end
     }
@@ -82,9 +84,24 @@ local function update_cancelable_button(button, site, config, is_active)
     button.style = state.style
 end
 
----@param site yarm_site
+local function new_delta_arrow(amount, delta)
+    local function get_caption()
+        return (amount == 0 and "") or (delta or 0) >= 0 and "⬆" or "⬇"
+    end
+    local function get_color()
+        local percent_delta = (100 * (delta or 0) / (amount or 0)) / 5
+        local hue = percent_delta >= 0 and (1 / 3) or 0
+        local saturation = math.min(math.abs(percent_delta), 1)
+        local value = math.min(0.5 + math.abs(percent_delta / 2), 1)
+        return resmon.ui.hsv2rgb(hue, saturation, value)
+    end
+    return get_caption, get_color
+end
+
+---@param row yatable_row_data
 ---@param player_data player_data
-local function new_rename_button_cell(site, player_data)
+local function new_rename_button_cell(row, player_data)
+    local site = row.site --[[@as yarm_site]]
     local cell = {}
     local config = resmon.columns.cancelable_buttons.rename_site
     function cell.create(container, cell_name, _, insert_index)
@@ -109,7 +126,10 @@ local function new_rename_button_cell(site, player_data)
     return cell
 end
 
-local function new_surface_name_cell(site, player_data)
+---@param row yatable_row_data
+---@param player_data player_data
+local function new_surface_name_cell(row, player_data)
+    local site = row.site --[[@as yarm_site]]
     local function get_caption(row_num)
         if not player_data.ui.split_by_surface or row_num ~= 1 then
             return ""
@@ -119,45 +139,125 @@ local function new_surface_name_cell(site, player_data)
     return new_label_cell(get_caption)
 end
 
-local function new_site_name_cell(site)
+---@param row yatable_row_data
+local function new_site_name_cell(row)
     local function get_caption(row_num)
-        if site.is_summary then
+        if row.site.is_summary then
             return row_num ~= 1 and "" or { "YARM-category-totals" }
         end
-        return site.name
+        return row.site.name
     end
     return new_label_cell(get_caption)
 end
 
+---@param row yatable_row_data
+local function new_remaining_percent_cell(row)
+    local function get_caption()
+        return string.format("%.1f%%", row.site.remaining_permille / 10)
+    end
+    local function get_color()
+        return row.color or {0.7, 0.7, 0.7}
+    end
+    return new_label_cell(get_caption, get_color)
+end
+
+---@param row yatable_row_data
+local function new_site_amount_cell(row)
+    local function get_caption()
+        return resmon.locale.site_amount(row.site, resmon.locale.format_number)
+    end
+    local function get_color()
+        return row.color or {0.7, 0.7, 0.7}
+    end
+    return new_label_cell(get_caption, get_color)
+end
+
 local function ore_name_cell_factory(is_compact)
-    return function (site)
+    ---@param row yatable_row_data
+    return function (row)
+        local site = row.site --[[@as yarm_site]]
         local function get_caption()
             local entity_prototype = prototypes.entity[site.ore_type]
-            local caption = {"", resmon.locale.get_rich_text_for_products(entity_prototype)}
+            local caption = {"",
+                resmon.locale.get_rich_text_for_products(entity_prototype),
+            }
             if not is_compact then
                 table.insert(caption, " ")
                 table.insert(caption, site.ore_name)
             end
             return caption
         end
-        return new_label_cell(get_caption)
+        local function get_tooltip()
+            if is_compact then
+                local entity_prototype = prototypes.entity[site.ore_type]
+                return {"",
+                    resmon.locale.site_amount(site, resmon.locale.format_number),
+                    " ",
+                    resmon.locale.get_rich_text_for_products(entity_prototype),
+                    site.ore_name,
+                }
+            end
+        end
+        return new_label_cell(get_caption, nil, get_tooltip)
     end
 end
 
----@param site yarm_site
----@param player_data player_data
-local function new_etd_timespan_cell(site, player_data)
+---@param row yatable_row_data
+local function new_ore_per_minute_cell(row)
     local function get_caption()
-        return resmon.locale.site_time_to_deplete(site)
+        return resmon.locale.site_depletion_rate(row.site)
     end
     local function get_color()
-        return player_data.ui.site_colors[site.name] or {0.7, 0.7, 0.7}
+        return row.color or {0.7, 0.7, 0.7}
     end
     return new_label_cell(get_caption, get_color)
 end
 
+---@param row yatable_row_data
+local function new_ore_per_minute_arrow(row)
+    local get_caption, get_color = new_delta_arrow(row.site.ore_per_minute, -1 * row.site.ore_per_minute_delta)
+    return new_label_cell(get_caption, get_color)
+end
+
+---@param row yatable_row_data
+local function new_etd_timespan_cell(row)
+    local function get_caption()
+        return resmon.locale.site_time_to_deplete(row.site)
+    end
+    local function get_color()
+        return row.color or {0.7, 0.7, 0.7}
+    end
+    return new_label_cell(get_caption, get_color)
+end
+
+---@param row yatable_row_data
+local function new_etd_arrow(row)
+    local get_caption, get_color = new_delta_arrow(row.site.etd_minutes, row.site.etd_minutes_delta)
+    return new_label_cell(get_caption, get_color)
+end
+
+---@param row yatable_row_data
+local function new_site_status_cell(row)
+    if row.site.is_summary then
+        return new_empty_cell()
+    end
+    local function get_caption()
+        return row.site.etd_is_lifetime and "[img=quantity-time]" or "[img=utility/played_green]"
+    end
+    local function get_tooltip()
+        return { "",
+            { "YARM-site-statuses.status-header", row.site.name },
+            "\r\n",
+            row.site.etd_is_lifetime and { "YARM-site-statuses.site-is-paused" } or { "YARM-site-statuses.site-is-mining" },
+        }
+    end
+    return new_label_cell(get_caption, nil, get_tooltip)
+end
+
 local function new_site_buttons_cell(is_compact)
-    return function (site)
+    ---@param row yatable_row_data
+    return function (row)
+        local site = row.site --[[@as yarm_site]]
         local cell = {}
         function cell.create(container, cell_name, _, insert_index)
             if site.is_summary then
@@ -180,14 +280,13 @@ local function new_site_buttons_cell(is_compact)
                 style = "YARM_goto_site",
                 tags = { operation = "YARM_goto_site", site = site.name }}
 
-            -- TODO Return delete_site to `if not is_compact`
+            if not is_compact then
                 local config = resmon.columns.cancelable_buttons.delete_site
                 site_buttons.add(new_cancelable_button(
                     config.operation, site, config,
                     site.deleting_since
                 ))
 
-            if not is_compact then
                 config = resmon.columns.cancelable_buttons.expand_site
                 site_buttons.add(new_cancelable_button(
                     config.operation, site, config,
@@ -219,26 +318,33 @@ local function new_site_buttons_cell(is_compact)
     end
 end
 
----@type { [yatable_column_type]: fun(site:yarm_site, player_data:player_data) }
+---@type { [yatable_column_type]: fun(row:yatable_row_data, player_data:player_data) }
 local factories = {
     [enum.column_type.rename_button] = new_rename_button_cell,
     [enum.column_type.surface_name] = new_surface_name_cell,
     [enum.column_type.site_name] = new_site_name_cell,
+    [enum.column_type.remaining_percent] = new_remaining_percent_cell,
+    [enum.column_type.site_amount] = new_site_amount_cell,
     [enum.column_type.ore_name_compact] = ore_name_cell_factory(true),
+    [enum.column_type.ore_name_full] = ore_name_cell_factory(false),
+    [enum.column_type.ore_per_minute] = new_ore_per_minute_cell,
+    [enum.column_type.ore_per_minute_arrow] = new_ore_per_minute_arrow,
     [enum.column_type.etd_timespan] = new_etd_timespan_cell,
+    [enum.column_type.etd_arrow] = new_etd_arrow,
+    [enum.column_type.site_status] = new_site_status_cell,
     [enum.column_type.site_buttons_compact] = new_site_buttons_cell(true),
+    [enum.column_type.site_buttons_full] = new_site_buttons_cell(false),
 }
 
 ---@param column_type yatable_column_type
 ---@param row_data yatable_row_data
 ---@param player_data player_data
 function cell_factories_module.for_site(column_type, row_data, player_data)
-    ---@type fun(site:yarm_site, player_data:player_data)
     local factory = factories[column_type]
     if not factory then
         error("Tried to generate a yatable cell with no factory for column type "..column_type)
     end
-    return factory(row_data.site, player_data)
+    return factory(row_data, player_data)
 end
 
 ---@param column_type yatable_column_type

@@ -30,9 +30,7 @@ end
 ---periodically (e.g., on_nth_tick) for each player in the game.
 ---@param player LuaPlayer Whose UI is being updated?
 function ui_module.update_player(player)
-    ---@type player_data
     local player_data = storage.player_data[player.index]
-    ---@type force_data
     local force_data = storage.force_data[player.force.name]
 
     if not player_data or not force_data or not force_data.ore_sites then
@@ -41,97 +39,9 @@ function ui_module.update_player(player)
 
     local root = ui_module.get_or_create_hud(player)
     root.style = player_data.ui.enable_hud_background and "YARM_outer_frame_no_border_bg" or "YARM_outer_frame_no_border"
-    local show_sites_summary = player.mod_settings["YARM-show-sites-summary"].value or false
 
-    if root.sites and root.sites.valid and not player_data.ui.show_compact_columns then
-        root.sites.destroy()
-    end
-
-    local layout = resmon.columns.layouts.full
-    if player_data.ui.show_compact_columns then
-        layout = resmon.columns.layouts.compact
-
-        -- TODO remove override
-        local table_data = resmon.sites.create_sites_yatable_data(player)
-        resmon.yatable.render(root, table_data, player_data)
-
-        return
-        -- TODO remove override
-
-    end
-    local sites_gui = root.add { type = "table", column_count = #layout, name = "sites", style = "YARM_site_table" }
-    sites_gui.style.horizontal_spacing = 5
-    local column_alignments = sites_gui.style.column_alignments
-    for i, col in pairs(layout) do
-        column_alignments[i] = col.alignment
-    end
-
-    -- TODO Refactor this site_filter stuff and the surface split bits
-    local site_filter = resmon.sites.filters[player_data.ui.active_filter] or resmon.sites.filters[ui_module.FILTER_NONE]
-    local surface_names = { false }
-    local is_split_by_surface = player_data.ui.split_by_surface
-    if is_split_by_surface then
-        surface_names = resmon.surface_names()
-    end
-    local surface_num = 0
-    local rendered_last = false
-
-    for _, surface_name in pairs(surface_names) do
-        local sites = resmon.sites.on_surface(player, surface_name)
-        if next(sites) then
-            local will_render_sites
-            local will_render_totals
-            local summaries = show_sites_summary and resmon.sites.generate_summaries(sites, is_split_by_surface) or {}
-            for summary_site in resmon.sites.in_player_order(summaries, player) do
-                if site_filter(summary_site, player) then
-                    will_render_totals = true
-                end
-            end
-            for _, site in pairs(sites) do
-                if site_filter(site, player) then
-                    will_render_sites = true
-                end
-            end
-
-            surface_num = surface_num + 1
-            if surface_num > 1 and rendered_last and (will_render_totals or will_render_sites) then
-                for _ = 1, #layout do sites_gui.add { type = "line" }.style.minimal_height = 15 end
-            end
-            rendered_last = rendered_last or will_render_totals or will_render_sites
-
-            local is_first = true
-            for summary_site in resmon.sites.in_player_order(summaries, player) do
-                if is_first then
-                    player_data.ui.first_site = summary_site.name
-                end
-                if resmon.ui.render_single_site(site_filter, summary_site, player, sites_gui, player_data, layout) then
-                    is_first = false
-                end
-            end
-
-            if will_render_totals and will_render_sites then
-                local is_full = not player_data.ui.show_compact_columns
-                if is_full then
-                    sites_gui.add { type = "label" }.style.maximal_height = 5
-                end
-                local surface_display_name = resmon.locale.surface_name(game.surfaces[surface_name or ""])
-                resmon.columns.make_label(sites_gui, nil, surface_display_name)
-                resmon.columns.make_label(sites_gui, nil, { "YARM-category-sites" })
-                local start = is_full and 4 or 3
-                for _ = start, #layout do sites_gui.add { type = "label" }.style.maximal_height = 5 end
-            end
-
-            is_first = not will_render_totals or not will_render_sites
-            for _, site in pairs(sites) do
-                if is_first then
-                    player_data.ui.first_site = site.name
-                end
-                if resmon.ui.render_single_site(site_filter, site, player, sites_gui, player_data, layout) then
-                    is_first = false
-                end
-            end
-        end
-    end
+    local table_data = resmon.sites.create_sites_yatable_data(player)
+    resmon.yatable.render(root, table_data, player_data)
 end
 
 ---Returns the player's HUD root, creating it if necessary
@@ -206,54 +116,15 @@ function ui_module.update_filter_buttons(player)
     end
 end
 
----Render a single site onto the given `sites_gui`. Candidate for refactor: too many inputs, too many states
----@param site_filter function Returns true or false if the given site should be shown to the given player
----@param site yarm_site The site we're rendering
----@param player LuaPlayer The player to whom we are showing the site
----@param sites_gui LuaGuiElement The container we are rendering into
----@param player_data player_data The current player's stored data
----@param layout column_properties[]
----@return boolean Whether we rendered anything or not
-function ui_module.render_single_site(
-    site_filter,
-    site,
-    player,
-    sites_gui,
-    player_data,
-    layout)
-    if not site_filter(site, player) then
-        return false
-    end
-
+function ui_module.color_for_site(site, player)
     local threshold = player.mod_settings["YARM-warn-timeleft"].value * 60
     if site.is_summary then
         threshold = player.mod_settings["YARM-warn-timeleft_totals"].value * 60
     end
-    player_data.ui.site_colors[site.name] =
-        ui_module.site_color(site.etd_minutes, threshold)
-
-    -- TODO: This shouldn't be part of printing the site! It cancels the deletion
-    -- process after 2 seconds pass.
-    if site.deleting_since and site.deleting_since + 120 < game.tick then
-        site.deleting_since = nil
+    if site.etd_minutes == -1 then
+        site.etd_minutes = threshold
     end
-
-    for _, col in ipairs(layout) do
-        col.render(sites_gui, site, player_data)
-    end
-
-    return true
-end
-
----Generate the site color depending on the remaining minutes and player's warning threshold
----@param etd_minutes number Estimated time to depletion
----@param threshold number Player's warning threshold
----@return table RGB color
-function ui_module.site_color(etd_minutes, threshold)
-    if etd_minutes == -1 then
-        etd_minutes = threshold
-    end
-    local factor = (threshold == 0 and 1) or (etd_minutes / threshold)
+    local factor = (threshold == 0 and 1) or (site.etd_minutes / threshold)
     if factor > 1 then
         factor = 1
     end
@@ -337,7 +208,6 @@ function ui_module.migrate_player_data(player)
             enable_hud_background = root.style == "YARM_outer_frame_no_border_bg",
             split_by_surface = root.buttons.YARM_toggle_surfacesplit.style.name:ends_with("_on"),
             show_compact_columns = root.buttons.YARM_toggle_lite.style.name:ends_with("_on"),
-            site_colors = {},
         }
     end
 
@@ -346,8 +216,8 @@ function ui_module.migrate_player_data(player)
         player_data.active_filter = nil ---@diagnostic disable-line: inject-field
     end
 
-    if not player_data.ui.site_colors then
-        player_data.ui.site_colors = {}
+    if player_data.ui.site_colors then
+        player_data.ui.site_colors = nil ---@diagnostic disable-line: inject-field
     end
 end
 
