@@ -11,7 +11,6 @@ resmon = {
     entity_cache = {},
 
     click = require("resmon.click"),
-    columns = require("resmon.columns"),
     locale = require("resmon.locale"),
     sites = require("resmon.sites"),
     migrations = require("resmon.migrations"),

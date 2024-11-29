@@ -103,7 +103,7 @@ end
 local function new_rename_button_cell(row, player_data)
     local site = row.site --[[@as yarm_site]]
     local cell = {}
-    local config = resmon.columns.cancelable_buttons.rename_site
+    local config = enum.cancelable_buttons.rename_site
     function cell.create(container, cell_name, _, insert_index)
         if site.is_summary then
             container.add { type = "empty-widget", name = cell_name, index = insert_index }
@@ -281,13 +281,13 @@ local function new_site_buttons_cell(is_compact)
                 tags = { operation = "YARM_goto_site", site = site.name }}
 
             if not is_compact then
-                local config = resmon.columns.cancelable_buttons.delete_site
+                local config = enum.cancelable_buttons.delete_site
                 site_buttons.add(new_cancelable_button(
                     config.operation, site, config,
                     site.deleting_since
                 ))
 
-                config = resmon.columns.cancelable_buttons.expand_site
+                config = enum.cancelable_buttons.expand_site
                 site_buttons.add(new_cancelable_button(
                     config.operation, site, config,
                     site.is_site_expanding
@@ -301,13 +301,13 @@ local function new_site_buttons_cell(is_compact)
                 return
             end
             cell_elem.YARM_goto_site.tags = { operation = "YARM_goto_site", site = site.name }
-            local config = resmon.columns.cancelable_buttons.delete_site
+            local config = enum.cancelable_buttons.delete_site
             if cell_elem[config.operation] then
                 update_cancelable_button(
                     cell_elem[config.operation], site, config, site.deleting_since
                 )
             end
-            config = resmon.columns.cancelable_buttons.expand_site
+            config = enum.cancelable_buttons.expand_site
             if cell_elem[config.operation] then
                 update_cancelable_button(
                     cell_elem[config.operation], site, config, site.is_site_expanding
