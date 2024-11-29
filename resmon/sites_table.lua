@@ -1,7 +1,6 @@
 local sites_table_module = {}
 local columns_module = require("resmon.columns")
 
-
 local cell_definitions = {
     surface_name = {
         alignment = "right",
@@ -66,8 +65,9 @@ function sites_table_module.new_table(layout, name)
 
     ---Add a row representing the given site, using the layout to generate cells
     ---@param site yarm_site
+    ---@param player_data player_data
     ---@return sites_table_row
-    function t.add_site_row(site)
+    function t.add_site_row(site, player_data)
         ---@class sites_table_row
         local row = {
             ---@type boolean If true, row_num will reset back to 1 after this row is rendered
@@ -75,7 +75,7 @@ function sites_table_module.new_table(layout, name)
             ---@type sites_table_cell[] The cells of this row
             cells = {} }
         for i, cell in pairs(layout) do
-            row.cells[i] = cell.factory()(site)
+            row.cells[i] = cell.factory()(site, player_data)
         end
         table.insert(t.rows, row)
         return row
@@ -167,12 +167,15 @@ function sites_table_module.new_ore_name_cell(is_compact)
     end
 end
 
-function sites_table_module.new_etd_timespan_cell(site)
+---@param site yarm_site
+---@param player_data player_data
+---@return sites_table_cell
+function sites_table_module.new_etd_timespan_cell(site, player_data)
     local function get_caption()
         return resmon.locale.site_time_to_deplete(site)
     end
     local function get_color()
-        return resmon.ui.site_color(site.etd_minutes, 24*60)
+        return player_data.ui.site_colors[site.name] or {0.7, 0.7, 0.7}
     end
     return sites_table_module.new_label_cell(get_caption, get_color)
 end
