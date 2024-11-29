@@ -12,14 +12,6 @@ function click_module.on_gui_click(event)
     -- Remaining bindings are for dynamically-named elements:
     elseif event.element.name:starts_with("YARM_filter_") then
         click_module.set_filter(event)
-    elseif event.element.name:starts_with("YARM_delete_site_") then
-        click_module.delete_site(event)
-    elseif event.element.name:starts_with("YARM_rename_site_") then
-        click_module.rename_site(event)
-    elseif event.element.name:starts_with("YARM_goto_site_") then
-        click_module.goto_site(event)
-    elseif event.element.name:starts_with("YARM_expand_site_") then
-        click_module.expand_site(event)
     end
 end
 
@@ -33,99 +25,6 @@ function click_module.set_filter(event)
 
     resmon.ui.update_filter_buttons(player)
     resmon.ui.update_player(player)
-end
-
----@param event EventData.on_gui_click
-function click_module.delete_site(event)
-    local site_name = event.element.tags.site --[[@as string]]
-    local player = game.players[event.player_index]
-    local force_data = storage.force_data[player.force.name]
-    local site = force_data.ore_sites[site_name]
-
-    if site.deleting_since then
-        force_data.ore_sites[site_name] = nil
-
-        if site.chart_tag and site.chart_tag.valid then
-            site.chart_tag.destroy()
-        end
-    else
-        site.deleting_since = event.tick
-    end
-
-    resmon.ui.update_force_members(player.force)
-end
-
----@param event EventData.on_gui_click
-function click_module.rename_site(event)
-    local site_name = event.element.tags.site --[[@as string]]
-    local player = game.players[event.player_index]
-    local player_data = storage.player_data[player.index]
-
-    if player.gui.center.YARM_site_rename then
-        click_module.handlers.YARM_rename_cancel(event)
-        return
-    end
-
-    player_data.renaming_site = site_name
-    local root = player.gui.center.add { type = "frame",
-        name = "YARM_site_rename",
-        caption = { "YARM-site-rename-title", site_name },
-        direction = "horizontal" }
-
-    root.add { type = "textfield", name = "new_name" }.text = site_name
-    root.add { type = "button", name = "YARM_rename_cancel", caption = { "YARM-site-rename-cancel" }, style = "back_button" }
-    root.add { type = "button", name = "YARM_rename_confirm", caption = { "YARM-site-rename-confirm" }, style = "confirm_button" }
-
-    player.opened = root
-
-    resmon.ui.update_force_members(player.force)
-end
-
----@param event EventData.on_gui_click
-function click_module.goto_site(event)
-    local site_name = event.element.tags.site --[[@as string]]
-    local player = game.players[event.player_index]
-    local force_data = storage.force_data[player.force.name]
-    local site = force_data.ore_sites[site_name]
-
-    player.set_controller { type = defines.controllers.remote, position = site.center, surface = site.surface }
-
-    resmon.ui.update_force_members(player.force)
-end
-
----One button handler for both the expand_site and expand_site_cancel buttons
----@param event EventData.on_gui_click
-function click_module.expand_site(event)
-    local site_name = event.element.tags.site --[[@as string]]
-    local player = game.players[event.player_index]
-    local player_data = storage.player_data[player.index]
-    local force_data = storage.force_data[player.force.name]
-    local site = force_data.ore_sites[site_name]
-    local are_we_cancelling_expand = site.is_site_expanding
-
-    --[[ we want to submit the site if we're cancelling the expansion (mostly because submitting the
-         site cleans up the expansion-related variables on the site) or if we were adding a new site
-         and decide to expand an existing one
-    --]]
-    if are_we_cancelling_expand and player_data.current_site then
-        resmon.submit_site(player)
-    end
-
-    --[[ this is to handle cancelling an expansion (by clicking the red button) - submitting the site is
-         all we need to do in this case ]]
-    if are_we_cancelling_expand then
-        resmon.ui.update_force_members(player.force)
-        return
-    end
-
-    resmon.give_selection_tool(player)
-    if player.cursor_stack.valid_for_read and player.cursor_stack.name == "yarm-selector-tool" then
-        site.is_site_expanding = true
-        player_data.current_site = site
-
-        resmon.ui.update_force_members(player.force)
-        resmon.start_recreate_overlay_existing_site(player)
-    end
 end
 
 -----------------------------------------------------------------------------------------------
@@ -185,10 +84,98 @@ function handlers.YARM_rename_cancel(event)
     resmon.ui.update_force_members(player.force)
 end
 
-handlers.YARM_goto_site = click_module.goto_site
-handlers.YARM_delete_site = click_module.delete_site
-handlers.YARM_expand_site = click_module.expand_site
-handlers.YARM_rename_site = click_module.rename_site
+---@param event EventData.on_gui_click
+function handlers.YARM_delete_site(event)
+    local site_name = event.element.tags.site --[[@as string]]
+    local player = game.players[event.player_index]
+    local force_data = storage.force_data[player.force.name]
+    local site = force_data.ore_sites[site_name]
+
+    if site.deleting_since then
+        force_data.ore_sites[site_name] = nil
+
+        if site.chart_tag and site.chart_tag.valid then
+            site.chart_tag.destroy()
+        end
+    else
+        site.deleting_since = event.tick
+    end
+
+    resmon.ui.update_force_members(player.force)
+end
+
+---@param event EventData.on_gui_click
+function handlers.YARM_rename_site(event)
+    local site_name = event.element.tags.site --[[@as string]]
+    local player = game.players[event.player_index]
+    local player_data = storage.player_data[player.index]
+
+    if player.gui.center.YARM_site_rename then
+        click_module.handlers.YARM_rename_cancel(event)
+        return
+    end
+
+    player_data.renaming_site = site_name
+    local root = player.gui.center.add { type = "frame",
+        name = "YARM_site_rename",
+        caption = { "YARM-site-rename-title", site_name },
+        direction = "horizontal" }
+
+    root.add { type = "textfield", name = "new_name" }.text = site_name
+    root.add { type = "button", name = "YARM_rename_cancel", caption = { "YARM-site-rename-cancel" }, style = "back_button" }
+    root.add { type = "button", name = "YARM_rename_confirm", caption = { "YARM-site-rename-confirm" }, style = "confirm_button" }
+
+    player.opened = root
+
+    resmon.ui.update_force_members(player.force)
+end
+
+---@param event EventData.on_gui_click
+function handlers.YARM_goto_site(event)
+    local site_name = event.element.tags.site --[[@as string]]
+    local player = game.players[event.player_index]
+    local force_data = storage.force_data[player.force.name]
+    local site = force_data.ore_sites[site_name]
+
+    player.set_controller { type = defines.controllers.remote, position = site.center, surface = site.surface }
+
+    resmon.ui.update_force_members(player.force)
+end
+
+---One button handler for both the expand_site and expand_site_cancel buttons
+---@param event EventData.on_gui_click
+function handlers.YARM_expand_site(event)
+    local site_name = event.element.tags.site --[[@as string]]
+    local player = game.players[event.player_index]
+    local player_data = storage.player_data[player.index]
+    local force_data = storage.force_data[player.force.name]
+    local site = force_data.ore_sites[site_name]
+    local are_we_cancelling_expand = site.is_site_expanding
+
+    --[[ we want to submit the site if we're cancelling the expansion (mostly because submitting the
+         site cleans up the expansion-related variables on the site) or if we were adding a new site
+         and decide to expand an existing one
+    --]]
+    if are_we_cancelling_expand and player_data.current_site then
+        resmon.submit_site(player)
+    end
+
+    --[[ this is to handle cancelling an expansion (by clicking the red button) - submitting the site is
+         all we need to do in this case ]]
+    if are_we_cancelling_expand then
+        resmon.ui.update_force_members(player.force)
+        return
+    end
+
+    resmon.give_selection_tool(player)
+    if player.cursor_stack.valid_for_read and player.cursor_stack.name == "yarm-selector-tool" then
+        site.is_site_expanding = true
+        player_data.current_site = site
+
+        resmon.ui.update_force_members(player.force)
+        resmon.start_recreate_overlay_existing_site(player)
+    end
+end
 
 ---Create an event handler for a toggle button that toggles a UI setting.
 ---@param ui_setting_name string Which `player_data.ui` setting are we toggling?
