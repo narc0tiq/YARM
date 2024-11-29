@@ -52,21 +52,9 @@ function ui_module.update_player(player)
         layout = resmon.columns.layouts.compact
 
         -- TODO remove override
-        local t = resmon.sites_table.new_table(resmon.sites_table.layouts.compact, "sites")
-        local i = 1
-        for _, site in pairs(force_data.ore_sites) do
-            t.add_site_row(site)
-            if i % 3 == 0 then
-                t.add_divider_row()
-            end
-            i = i + 1
-        end
+        local table_data = resmon.sites.create_sites_yatable_data(player)
+        resmon.yatable.render(root, table_data, player_data)
 
-        if root.sites.column_count ~= t.column_count then
-            root.sites.destroy()
-        end
-
-        ui_module.render_sites_table(root, t)
         return
         -- TODO remove override
 
@@ -391,15 +379,19 @@ function ui_module.render_sites_table(container, t)
         end
     end
 
+    local function delete_row(row_index)
+        for i = 1, t.column_count do
+            local cell_name = "row_"..row_index.."_col_"..i
+            if table_element[cell_name] then
+                table_element[cell_name].destroy()
+            end
+        end
+    end
+
     local rendered_rows = math.ceil(#table_element.children / table_element.column_count)
     if rendered_rows > #t.rows then
         for i = #t.rows, rendered_rows do
-            for j = 1, t.column_count do
-                local cell_name = "row_"..i.."_col_"..j
-                if table_element[cell_name] then
-                    table_element[cell_name].destroy()
-                end
-            end
+            delete_row(i)
         end
     end
 
