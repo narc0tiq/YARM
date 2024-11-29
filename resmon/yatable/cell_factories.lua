@@ -233,6 +233,7 @@ local factories = {
 ---@param row_data yatable_row_data
 ---@param player_data player_data
 function cell_factories_module.for_site(column_type, row_data, player_data)
+    ---@type fun(site:yarm_site, player_data:player_data)
     local factory = factories[column_type]
     if not factory then
         error("Tried to generate a yatable cell with no factory for column type "..column_type)
@@ -242,6 +243,7 @@ end
 
 ---@param column_type yatable_column_type
 ---@param row_data yatable_row_data
+---@param player_data player_data
 function cell_factories_module.for_header(column_type, row_data, player_data)
     if column_type == enum.column_type.surface_name then
         if not player_data.ui.split_by_surface then
