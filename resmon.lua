@@ -882,6 +882,9 @@ function resmon.update_forces(event)
             resmon.init_force(force)
         elseif force_data and force_data.ore_sites then
             for _, site in pairs(force_data.ore_sites) do
+                if site.deleting_since and site.deleting_since + 120 < game.tick then
+                    site.deleting_since = nil
+                end
                 resmon.count_deposits(site, update_cycle)
             end
         end

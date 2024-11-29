@@ -12,6 +12,7 @@ return {
         rename_button = 'rename_button',
         surface_name = 'surface_name',
         site_name = 'site_name',
+        remaining_percent = 'remaining_percent',
         site_amount = 'site_amount',
         ore_name_compact = 'ore_name_compact',
         ore_name_full = 'ore_name_full',
@@ -19,7 +20,7 @@ return {
         ore_per_minute_arrow = 'ore_per_minute_arrow',
         etd_timespan = 'etd_timespan',
         etd_arrow = 'etd_arrow',
-        etd_is_lifetime = 'etd_is_lifetime',
+        site_status = 'site_status',
         site_buttons_compact = 'site_buttons_compact',
         site_buttons_full = 'site_buttons_full',
     }

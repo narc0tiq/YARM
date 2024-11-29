@@ -160,7 +160,7 @@ end
 ---@param container { [string]:summary_site }
 ---@param site yarm_site
 local function add_to_summaries(container, site)
-    local summary_id = site.ore_type
+    local summary_id = site.ore_type.." on "..site.surface.name
     if not container[summary_id] then
         container[summary_id] = resmon.types.new_summary_site_from(site, summary_id)
     end
@@ -221,15 +221,19 @@ local function select_sites(unsorted_sites, site_filter, split_by_surface, with_
     return result
 end
 
-local function add_surface(rows, surface_data)
+---comment
+---@param rows yatable_row_data[]
+---@param surface_data table
+---@param player LuaPlayer
+local function add_surface(rows, surface_data, player)
     for _, summary in ipairs(surface_data.summaries) do
         table.insert(rows, {
             type = resmon.yatable.row_type.summary,
             site = summary,
+            color = resmon.ui.color_for_site(summary, player),
         })
     end
     if #surface_data.summaries > 0 and #surface_data.sites > 0 then
-        -- TODO Should be a "Sites" header row instead of a bare divider
         table.insert(rows, {
             type = resmon.yatable.row_type.header,
             surface = surface_data.sites[1].surface,
@@ -239,6 +243,7 @@ local function add_surface(rows, surface_data)
         table.insert(rows, {
             type = resmon.yatable.row_type.site,
             site = site,
+            color = resmon.ui.color_for_site(site, player),
         })
     end
 end
@@ -247,10 +252,12 @@ function sites_module.create_sites_yatable_data(player)
     local player_data = storage.player_data[player.index]
     local force_data = storage.force_data[player.force.name]
 
-    -- TODO add full layout
+    local layout = player_data.ui.show_compact_columns
+        and resmon.yatable.layouts.compact
+        or resmon.yatable.layouts.full
     local sites_table = {
         name = "sites",
-        columns = resmon.yatable.layouts.compact,
+        columns = layout,
         rows = {},
     }
 
@@ -260,13 +267,13 @@ function sites_module.create_sites_yatable_data(player)
 
     local sites_by_surface = select_sites(force_data.ore_sites, site_filter, split_by_surface, show_sites_summary, player)
     if not split_by_surface then
-        add_surface(sites_table.rows, sites_by_surface['*'])
+        add_surface(sites_table.rows, sites_by_surface['*'], player)
         return sites_table
     end
 
     for _, surface in pairs(game.surfaces) do
         if sites_by_surface[surface.name] then
-            add_surface(sites_table.rows, sites_by_surface[surface.name])
+            add_surface(sites_table.rows, sites_by_surface[surface.name], player)
             table.insert(sites_table.rows, { type = resmon.yatable.row_type.divider })
         end
     end
