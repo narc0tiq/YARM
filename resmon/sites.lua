@@ -76,9 +76,9 @@ sites_module.comparators["alphabetical"] = function(left, right)
 end
 
 ---Return an iterator providing the given sites in the given player's preferred (configured) order
----@param site_container yarm_site[]
+---@param site_container { [any]:yarm_site }
 ---@param player LuaPlayer
----@return function
+---@return fun():yarm_site?
 function sites_module.in_player_order(site_container, player)
     local order_by = player.mod_settings["YARM-order-by"].value --[[@as order_by_enum]]
     local comparator = sites_module.comparators[order_by] or sites_module.comparators.default
@@ -86,9 +86,9 @@ function sites_module.in_player_order(site_container, player)
 end
 
 ---Return an iterator providing the given sites in the order determined by the given comparator
----@param site_container yarm_site[]
+---@param site_container { [any]:yarm_site }
 ---@param comparator function
----@return function
+---@return fun():yarm_site?
 function sites_module.in_order(site_container, comparator)
     -- damn in-place table.sort makes us make a copy first...
     local ordered_sites = {}
@@ -100,10 +100,12 @@ function sites_module.in_order(site_container, comparator)
 
     local i = 0
     local n = #ordered_sites
-    return function()
+    ---@return yarm_site?
+    local iterator = function()
         i = i + 1
         if i <= n then return ordered_sites[i] end
     end
+    return iterator
 end
 
 ---Returns the player's force's ore sites on a given surface, in the player's preferred order
@@ -153,6 +155,123 @@ function sites_module.generate_summaries(site_container, do_split_by_surface)
         summary_site.ore_per_minute_delta = summary_site.ore_per_minute_delta + (site.ore_per_minute_delta or 0)
     end
     return summaries
+end
+
+---@param container { [string]:summary_site }
+---@param site yarm_site
+local function add_to_summaries(container, site)
+    local summary_id = site.ore_type
+    if not container[summary_id] then
+        container[summary_id] = resmon.types.new_summary_site_from(site, summary_id)
+    end
+
+    local entity_prototype = prototypes.entity[site.ore_type]
+    local is_endless = entity_prototype.infinite_resource
+    local summary_site = container[summary_id]
+
+    summary_site.site_count = summary_site.site_count + 1
+    summary_site.initial_amount = summary_site.initial_amount + site.initial_amount
+    summary_site.amount = summary_site.amount + site.amount
+    summary_site.ore_per_minute = summary_site.ore_per_minute + site.ore_per_minute
+    summary_site.entity_count = summary_site.entity_count + site.entity_count
+    summary_site.etd_minutes_delta = summary_site.etd_minutes_delta + (site.etd_minutes_delta or 0)
+    summary_site.ore_per_minute_delta = summary_site.ore_per_minute_delta + (site.ore_per_minute_delta or 0)
+
+    local minimum = is_endless and (summary_site.entity_count * entity_prototype.minimum_resource_amount) or 0
+    local amount_left = summary_site.amount - minimum
+    summary_site.etd_minutes =
+        (summary_site.ore_per_minute ~= 0 and amount_left / (-summary_site.ore_per_minute))
+        or (amount_left == 0 and 0)
+        or -1
+end
+
+---In the name of efficiency, we want to iterate force_data.ore_sites exactly once, and pull the
+---following out of it:
+---  1. only sites that pass the player's current filter
+---  2. separated by surface if the option is enabled
+---  3. with summaries if the option is enabled
+---  4. in the player's preferred (configured) order
+---@param unsorted_sites { [any]:yarm_site }
+---@param site_filter fun(site:yarm_site?, player:LuaPlayer?)
+---@param split_by_surface boolean
+---@param with_summary boolean
+---@param player LuaPlayer
+local function select_sites(unsorted_sites, site_filter, split_by_surface, with_summary, player)
+    local result = {}
+    for site in sites_module.in_player_order(unsorted_sites, player) do
+        if site_filter(site, player) then
+            local surface_name = split_by_surface and site.surface.name or '*'
+            if not result[surface_name] then
+                result[surface_name] = { summaries_table = {}, sites = {} }
+            end
+            table.insert(result[surface_name].sites, site)
+            if with_summary then
+                add_to_summaries(result[surface_name].summaries_table, site)
+            end
+        end
+    end
+    for _, surface_data in pairs(result) do
+        -- The summaries need to be in player order too
+        surface_data.summaries = {}
+        for summary in sites_module.in_player_order(surface_data.summaries_table, player) do
+            table.insert(surface_data.summaries, summary)
+        end
+        surface_data.summaries_table = nil
+    end
+    return result
+end
+
+local function add_surface(rows, surface_data)
+    for _, summary in ipairs(surface_data.summaries) do
+        table.insert(rows, {
+            type = resmon.yatable.row_type.summary,
+            site = summary,
+        })
+    end
+    if #surface_data.summaries > 0 and #surface_data.sites > 0 then
+        -- TODO Should be a "Sites" header row instead of a bare divider
+        table.insert(rows, {
+            type = resmon.yatable.row_type.header,
+            surface = surface_data.sites[1].surface,
+         })
+    end
+    for _, site in ipairs(surface_data.sites) do
+        table.insert(rows, {
+            type = resmon.yatable.row_type.site,
+            site = site,
+        })
+    end
+end
+
+function sites_module.create_sites_yatable_data(player)
+    local player_data = storage.player_data[player.index]
+    local force_data = storage.force_data[player.force.name]
+
+    -- TODO add full layout
+    local sites_table = {
+        name = "sites",
+        columns = resmon.yatable.layouts.compact,
+        rows = {},
+    }
+
+    local site_filter = resmon.sites.filters[player_data.ui.active_filter] or resmon.sites.filters[ui_module.FILTER_NONE]
+    local split_by_surface = player_data.ui.split_by_surface
+    local show_sites_summary = player.mod_settings["YARM-show-sites-summary"].value or false
+
+    local sites_by_surface = select_sites(force_data.ore_sites, site_filter, split_by_surface, show_sites_summary, player)
+    if not split_by_surface then
+        add_surface(sites_table.rows, sites_by_surface['*'])
+        return sites_table
+    end
+
+    for _, surface in pairs(game.surfaces) do
+        if sites_by_surface[surface.name] then
+            add_surface(sites_table.rows, sites_by_surface[surface.name])
+            table.insert(sites_table.rows, { type = resmon.yatable.row_type.divider })
+        end
+    end
+    sites_table.rows[#sites_table.rows] = nil -- trim the unnecessary last divider
+    return sites_table
 end
 
 return sites_module

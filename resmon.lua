@@ -18,6 +18,7 @@ resmon = {
     migrations = require("resmon.migrations"),
     types = require("resmon.types"),
     ui = require("resmon.ui"),
+    yatable = require("resmon.yatable"),
 }
 
 ---Check if `haystack` exactly starts with `needle`; case-sensitive
