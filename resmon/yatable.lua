@@ -174,55 +174,62 @@ yatable_module.layouts = {
     },
 }
 
-local summary_sites = {
-    ["nauvis.iron-ore"] = { name = "nauvis.iron-ore", amount = 1234567, --[[ etc.. ]]},
-    ["nauvis.copper-ore"] = { name = "nauvis.copper-ore", amount = 1234567, --[[ etc.. ]]},
-    ["nauvis.coal"] = { name = "nauvis.coal", amount = 1234567, --[[ etc.. ]]},
-    ["nauvis.stone"] = { name = "nauvis.stone", amount = 1234567, --[[ etc.. ]]},
-}
-
-local sites = {
-    ["NE 123"] = { name = "NE 123", ore_type = prototypes.entity["iron-ore"], amount = 1234567, --[[ etc.. ]]},
-}
-
----@class yatable_table
-local example_table = {
-    ---@type string
-    name = "sites",
-    ---@type yatable_column_data[]
-    columns = yatable_module.layouts.compact,
-    ---@type yatable_row_data[]
-    rows = {
-        ---@class yatable_row_data
-        {
-            ---@type yatable_row_type
-            type = enum.row_type.site,
-            ---@type yarm_site?
-            site = summary_sites["nauvis.iron-ore"],
-        },
-        {
-            type = enum.row_type.site,
-            site = summary_sites["nauvis.copper-ore"],
-        },
-        {
-            type = enum.row_type.site,
-            site = summary_sites["nauvis.coal"],
-        },
-        {
-            type = enum.row_type.site,
-            site = summary_sites["nauvis.stone"],
-        },
-        {
-            type = enum.row_type.divider,
-        },
-        {
-            type = enum.row_type.site,
-            site = sites["NE 123"],
-        },
-        -- etc.
+---@diagnostic disable-next-line: unused-local, unused-function
+local function unused()
+    ---@type summary_site[]
+    local summary_sites = {
+        ["nauvis.iron-ore"] = { name = "nauvis.iron-ore", amount = 1234567, --[[ etc.. ]]},
+        ["nauvis.copper-ore"] = { name = "nauvis.copper-ore", amount = 1234567, --[[ etc.. ]]},
+        ["nauvis.coal"] = { name = "nauvis.coal", amount = 1234567, --[[ etc.. ]]},
+        ["nauvis.stone"] = { name = "nauvis.stone", amount = 1234567, --[[ etc.. ]]},
     }
-}
 
---yatable_module.render_yatable({}, example_table, {})
+    ---@type yarm_site[]
+    local sites = {
+        ["NE 123"] = { name = "NE 123", ore_type = prototypes.entity["iron-ore"], amount = 1234567, --[[ etc.. ]]},
+    }
+
+    ---@class yatable_row_data
+    local example_row = {
+        ---@type yatable_row_type
+        type = enum.row_type.site,
+        ---@type yarm_site?
+        site = summary_sites["nauvis.iron-ore"],
+        ---@type LuaSurface?
+        surface = game.surfaces.nauvis
+    }
+
+    ---@class yatable_table
+    local example_table = {
+        ---@type string
+        name = "sites",
+        ---@type yatable_column_data[]
+        columns = yatable_module.layouts.compact,
+        ---@type yatable_row_data[]
+        rows = {
+            example_row,
+            {
+                type = enum.row_type.site,
+                site = summary_sites["nauvis.copper-ore"],
+            },
+            {
+                type = enum.row_type.site,
+                site = summary_sites["nauvis.coal"],
+            },
+            {
+                type = enum.row_type.site,
+                site = summary_sites["nauvis.stone"],
+            },
+            {
+                type = enum.row_type.divider,
+            },
+            {
+                type = enum.row_type.site,
+                site = sites["NE 123"],
+            },
+            -- etc.
+        }
+    }
+end
 
 return yatable_module
