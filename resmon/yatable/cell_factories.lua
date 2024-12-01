@@ -3,44 +3,67 @@ local cell_factories_module = {}
 
 local enum = require("resmon/yatable/enum")
 
-cell_factories_module.divider = {
+---@alias yatable_cell_factory_create fun(container:LuaGuiElement, cell_name:string, row_num:integer, insert_index:integer?):LuaGuiElement
+---@alias yatable_cell_factory_update fun(cell_elem:LuaGuiElement, row_num:integer)
+
+---@class yatable_cell_factory
+local unused_example_cell_factory = {
+    ---Create a cell inside the given container, because it is not already present
+    ---@param container LuaGuiElement The containing element (expected to be a table)
+    ---@param cell_name string Name of the element to be created
+    ---@param row_num integer Display row number (can be reset by dividers)
+    ---@param insert_index integer? Where in the container's children to add the control
+    ---@return LuaGuiElement # The rendered GUI element
+    ---@type yatable_cell_factory_create
+    create = function (container, cell_name, row_num, insert_index)
+        -- Normally something like:
+        --container.add { type = "some-widget-type", name = cell_name, index = insert_index, etc = "etc" }
+        -- May also have special behavior, e.g., if row_num == 1
+        return {} --[[ @as LuaGuiElement ]] ---@diagnostic disable-line missing-field
+    end,
+
+    ---Update the cell, because it is already present
+    ---@param cell_elem LuaGuiElement The cell element created by create
+    ---@param row_num integer Display row number (can be reset by dividers)
+    ---@type yatable_cell_factory_update
+    update = function (cell_elem, row_num)
+        -- Normally something like:
+        --cell_elem.caption = "some-new-value"
+        -- May also have special behavior, e.g., if row_num == 1
+    end
+}
+
+---@type yatable_cell_factory
+cell_factories_module.divider_cell_factory = {
     ---@param table_elem LuaGuiElement
     ---@param cell_name string
     ---@param row_num integer
     ---@param insert_index integer?
     create = function (table_elem, cell_name, row_num, insert_index)
-        table_elem.add {
+        local cell_elem = table_elem.add {
             type = "line",
             name = cell_name,
             index = insert_index,
-        }.style.minimal_height = 15
+        }
+        cell_elem.style.minimal_height = 15
+        return cell_elem
     end,
-    update = function ()
-        -- Divider does nothing when updated
-    end
+    update = function () --[[ Divider does nothing when updated ]] end
 }
 
-local function new_empty_cell()
-    local cell = {
-        create = function(container, cell_name, _, insert_index)
-            container.add { type = "empty-widget", name = cell_name, index = insert_index }
-        end,
-        update = function() return end,
-    }
-    return cell
-end
+cell_factories_module.empty_cell_factory = {
+    create = function(container, cell_name, _, insert_index)
+        return container.add { type = "empty-widget", name = cell_name, index = insert_index }
+    end,
+    update = function() --[[ Empty cell does nothing when updated ]] end,
+}
 
 ---@param get_caption fun(integer):LocalisedString
 ---@param get_color nil|fun():Color
 ---@param get_tooltip nil|fun():LocalisedString
 local function new_label_cell(get_caption, get_color, get_tooltip)
-    ---@class yatable_cell
+    ---@type yatable_cell_factory
     local cell = {
-        ---Create a cell inside the given container, because it is not already present
-        ---@param container LuaGuiElement The containing element (expected to be a table)
-        ---@param cell_name string Name of the element to be created
-        ---@param row_num integer Display row number (can be reset by dividers)
-        ---@param insert_index integer? Where in the container's children to add the control
         create = function(container, cell_name, row_num, insert_index)
             local the_label = container.add {
                 type = "label",
@@ -53,9 +76,6 @@ local function new_label_cell(get_caption, get_color, get_tooltip)
             the_label.style.font_color = get_color and get_color() or {1,1,1}
             return the_label
         end,
-        ---Update the cell, because it is already present
-        ---@param cell_elem LuaGuiElement The cell element created by create
-        ---@param row_num integer Display row number (can be reset by dividers)
         update = function(cell_elem, row_num)
             cell_elem.caption = get_caption(row_num)
             cell_elem.tooltip = get_tooltip and get_tooltip()
@@ -65,6 +85,13 @@ local function new_label_cell(get_caption, get_color, get_tooltip)
     return cell
 end
 
+---Create a cancelable button LuaGuiElement.add_param
+---@param name string Name of the button
+---@param site yarm_site The site this button is associated with
+---@param config cancelable_button_config
+---@param is_active boolean Is the button currently active/cancelable
+---@param insert_index integer? Insert index when replacing an existing cell
+---@return LuaGuiElement.add_param
 local function new_cancelable_button(name, site, config, is_active, insert_index)
     local state = is_active and config.active or config.normal
     return {
@@ -77,6 +104,11 @@ local function new_cancelable_button(name, site, config, is_active, insert_index
     }
 end
 
+---Update a given cancelable button according to its config and current state
+---@param button LuaGuiElement The existing cancelable button
+---@param site yarm_site The site this button is associated with
+---@param config cancelable_button_config
+---@param is_active boolean Is the button currently active/cancelable?
 local function update_cancelable_button(button, site, config, is_active)
     local state = is_active and config.active or config.normal
     button.tags = { operation = config.operation, site = site.name }
@@ -104,13 +136,13 @@ local function new_rename_button_cell(row, player_data)
     local site = row.site --[[@as yarm_site]]
     local cell = {}
     local config = enum.cancelable_buttons.rename_site
+    ---@param container LuaGuiElement
     function cell.create(container, cell_name, _, insert_index)
         if site.is_summary then
-            container.add { type = "empty-widget", name = cell_name, index = insert_index }
-            return
+            return container.add { type = "empty-widget", name = cell_name, index = insert_index }
         end
 
-        container.add(new_cancelable_button(
+        return container.add(new_cancelable_button(
             cell_name, site, config,
             player_data.renaming_site == site.name,
             insert_index))
@@ -239,7 +271,7 @@ end
 ---@param row yatable_row_data
 local function new_site_status_cell(row)
     if row.site.is_summary then
-        return new_empty_cell()
+        return cell_factories_module.empty_cell_factory
     end
     local function get_caption()
         return row.site.etd_is_lifetime and "[img=quantity-time]" or "[img=utility/played_green]"
@@ -353,7 +385,7 @@ end
 function cell_factories_module.for_header(column_type, row_data, player_data)
     if column_type == enum.column_type.surface_name then
         if not player_data.ui.split_by_surface then
-            return new_empty_cell()
+            return cell_factories_module.empty_cell_factory
         end
         local function get_caption() return resmon.locale.surface_name(row_data.surface) end
         return new_label_cell(get_caption)
@@ -361,7 +393,7 @@ function cell_factories_module.for_header(column_type, row_data, player_data)
         local function get_caption() return { "YARM-category-sites" } end
         return new_label_cell(get_caption)
     else
-        return new_empty_cell()
+        return cell_factories_module.empty_cell_factory
     end
 end
 
