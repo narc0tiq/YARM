@@ -11,22 +11,6 @@ function interface.how_many_entities_tracked(player_name_or_index)
     player.print({ "", "Tracking ", #storage.ore_tracker.entities, " entities" })
 end
 
----@param player_name_or_index string|number
----@param new_amount number
-function interface.set_update_time(player_name_or_index, new_amount)
-    if not tonumber(new_amount) then
-        new_amount = 300
-    end
-    new_amount = math.floor(new_amount)
-    if new_amount < 30 then
-        new_amount = 30
-    end
-    local player = game.players[player_name_or_index]
-    local player_data = storage.player_data[player.index]
-    player_data.gui_update_ticks = new_amount
-    player.print("Set GUI update time to every "..new_amount.." ticks" )
-end
-
 ---Allow the remote to reset the given player's UI by destroying the HUD root. This usually
 ---results in the HUD being recreated correctly. Mostly useful in UI development to clean up
 ---experiments.

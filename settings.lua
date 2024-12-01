@@ -1,5 +1,13 @@
 data:extend({
 
+    -- Startup settings
+    {
+        type = "bool-setting",
+        name = "YARM-make-fake-ores",
+        setting_type = "startup",
+        default_value = false
+    },
+
     -- Global settings
     {
         type = "int-setting",
@@ -134,9 +142,12 @@ data:extend({
         default_value = true
     },
     {
-        type = "bool-setting",
-        name = "YARM-make-fake-ores",
-        setting_type = "startup",
-        default_value = false
-    }
+        type = "int-setting",
+        name = "YARM-hud-update-ticks",
+        setting_type = "runtime-per-user",
+        order = "e",
+        default_value = 300,
+        minimum_value = 30,
+        maximum_value = 600,
+    },
 })

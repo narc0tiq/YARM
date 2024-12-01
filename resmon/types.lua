@@ -7,7 +7,6 @@ function types_module.new_player_data()
     ---@class player_data
     local player_data = {
         current_site = nil, ---@type yarm_site?
-        gui_update_ticks = 300,
         overlays = {},
         renaming_site = nil, ---@type string? Name of the site being renamed, if any
         todo = {}, ---@type LuaEntity[]

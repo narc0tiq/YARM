@@ -860,7 +860,8 @@ function resmon.update_players(event)
             end
         end
 
-        if event.tick % player_data.gui_update_ticks == 15 + player.index then
+        local update_ticks = player.mod_settings["YARM-hud-update-ticks"].value or 300
+        if event.tick % update_ticks == 15 + player.index then
             resmon.ui.update_player(player)
         end
     end
