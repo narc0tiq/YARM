@@ -221,6 +221,9 @@ function ui_module.migrate_player_data(player)
     end
 end
 
+---Update a GUI element's tags (they have to be rewritten fully every time)
+---@param elem LuaGuiElement
+---@param new_tags table
 function ui_module.update_tags(elem, new_tags)
     local tags = elem.tags
     for k, v in pairs(new_tags) do
