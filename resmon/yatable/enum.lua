@@ -23,6 +23,7 @@ return {
         site_status = 'site_status',
         site_buttons_compact = 'site_buttons_compact',
         site_buttons_full = 'site_buttons_full',
+        debug = 'debug',
     },
 
     ---@type { [string]: cancelable_button_config }

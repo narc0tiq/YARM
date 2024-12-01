@@ -350,6 +350,18 @@ local function new_site_buttons_cell(is_compact)
     end
 end
 
+---@param row yatable_row_data
+local function new_debug_cell(row)
+    if row.site.is_summary then
+        return cell_factories_module.empty_cell_factory
+    end
+    local site = row.site --[[@as yarm_site]]
+    local function get_caption()
+        return string.format("S: %.1f, L: %.1f, ETD: %.1f", site.scanned_etd_minutes, site.lifetime_etd_minutes, site.etd_minutes)
+    end
+    return new_label_cell(get_caption)
+end
+
 ---@type { [yatable_column_type]: fun(row:yatable_row_data, player_data:player_data) }
 local factories = {
     [enum.column_type.rename_button] = new_rename_button_cell,
@@ -366,6 +378,7 @@ local factories = {
     [enum.column_type.site_status] = new_site_status_cell,
     [enum.column_type.site_buttons_compact] = new_site_buttons_cell(true),
     [enum.column_type.site_buttons_full] = new_site_buttons_cell(false),
+    [enum.column_type.debug] = new_debug_cell,
 }
 
 ---@param column_type yatable_column_type

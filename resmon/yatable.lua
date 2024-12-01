@@ -243,6 +243,18 @@ yatable_module.layouts = {
     }
 }
 
+function yatable_module.on_load()
+    -- While developing with fmtk, add a debug column to the compact view
+    if mods["debugadapter"] then
+        table.insert(
+            yatable_module.layouts.compact,
+            {
+                type = enum.column_type.debug,
+                alignment = "left",
+            })
+    end
+end
+
 ---Example of a working yatable, giving the opportunity to describe the data structures for LuaLS
 ---@diagnostic disable-next-line: unused-local, unused-function
 local function unused_example()
