@@ -121,10 +121,11 @@ function ui_module.color_for_site(site, player)
     if site.is_summary then
         threshold = player.mod_settings["YARM-warn-timeleft_totals"].value * 60
     end
-    if site.etd_minutes == -1 then
-        site.etd_minutes = threshold
+    local etd = site.etd_minutes
+    if etd == -1 then
+        etd = threshold
     end
-    local factor = (threshold == 0 and 1) or (site.etd_minutes / threshold)
+    local factor = (threshold == 0 and 1) or (etd / threshold)
     if factor > 1 then
         factor = 1
     end
