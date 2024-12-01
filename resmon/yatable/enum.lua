@@ -25,13 +25,22 @@ return {
         site_buttons_full = 'site_buttons_full',
     },
 
+    ---@type { [string]: cancelable_button_config }
     cancelable_buttons = {
+        ---@class cancelable_button_config Configuration for a cancelable button (i.e., one that has a `blah_cancel` style)
         rename_site = {
+            ---@type string Name of the operation, used as the button name and tags.operation
             operation = "YARM_rename_site",
+            ---Describes the button in its normal (inactive/unclicked) state
+            ---@class cancelable_button_style_config Describe the style of one state of a cancelable button
             normal = {
+                ---@type string Locale key for this state. Will be given the site name as a __1__ parameter.
                 tooltip_base = "YARM-tooltips.rename-site-named",
+                ---@type string Style name for this state. This can (and usually will) be different from the `active` state style to show a visual difference
                 style = "YARM_rename_site",
             },
+            ---Describes the button in its active (cancelable) state
+            ---@type cancelable_button_style_config
             active = {
                 tooltip_base = "YARM-tooltips.rename-site-cancel",
                 style = "YARM_rename_site_cancel",
