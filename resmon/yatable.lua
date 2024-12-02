@@ -187,6 +187,10 @@ yatable_module.layouts = {
             alignment = "right",
         },
         {
+            type = enum.column_type.site_status,
+            alignment = "left",
+        },
+        {
             type = enum.column_type.site_buttons_compact,
             alignment = "left",
         },
