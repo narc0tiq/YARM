@@ -156,22 +156,22 @@ data:extend({
         setting_type = "runtime-per-user",
         order = "f1",
         default_value = "red-green",
-        allowed_values = { "red-green", "red-blue", "custom" },
-        ---@alias color_scheme_enum "red-green"|"red-blue"|"custom"
+        allowed_values = { "red-green", "red-blue", "grayscale", "custom" },
+        ---@alias color_scheme_enum "red-green"|"red-blue"|"grayscale"|"custom"
     },
     {
         type = "color-setting",
         name = "YARM-color-from",
         setting_type = "runtime-per-user",
         order="f2",
-        default_value = {0.95, 0, 0},
+        default_value = { r=0.94, g=0.4, b=0.4 },
     },
     {
         type = "color-setting",
         name = "YARM-color-to",
         setting_type = "runtime-per-user",
         order="f2",
-        default_value = {0, 0.95, 0},
+        default_value = {0, 0.94, 0},
     },
 
 })
