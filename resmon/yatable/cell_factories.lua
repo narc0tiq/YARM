@@ -91,17 +91,15 @@ end
 ---@param site yarm_site The site this button is associated with
 ---@param config cancelable_button_config
 ---@param is_active boolean Is the button currently active/cancelable
----@param insert_index integer? Insert index when replacing an existing cell
 ---@return LuaGuiElement.add_param
-local function new_cancelable_button(name, site, config, is_active, insert_index)
+local function new_cancelable_button(name, site, config, is_active)
     local state = is_active and config.active or config.normal
     return {
         type = "button",
         name = name,
-        tooltip = { state.tooltip_base, site.name },
+        tooltip = { state.tooltip_base, site.index },
         style = state.style,
-        tags = { operation = config.operation, site = site.name },
-        index = insert_index,
+        tags = { operation = config.operation, site = site.index },
     }
 end
 
@@ -112,8 +110,8 @@ end
 ---@param is_active boolean Is the button currently active/cancelable?
 local function update_cancelable_button(button, site, config, is_active)
     local state = is_active and config.active or config.normal
-    button.tags = { operation = config.operation, site = site.name }
-    button.tooltip = { state.tooltip_base, site.name }
+    button.tags = { operation = config.operation, site = site.index }
+    button.tooltip = { state.tooltip_base, site.index }
     button.style = state.style
 end
 
@@ -143,18 +141,27 @@ local function new_rename_button_cell(row, player_data)
             return container.add { type = "empty-widget", name = cell_name, index = insert_index }
         end
 
-        return container.add(new_cancelable_button(
-            cell_name, site, config,
-            player_data.renaming_site == site.name,
-            insert_index))
+        local button_holder = container.add {
+            type = "flow",
+            name = cell_name,
+            direction = "horizontal",
+            style = "YARM_buttons_h",
+            index = insert_index,
+        }
+
+        return button_holder.add(new_cancelable_button(
+            config.operation, site, config,
+            player_data.renaming_site == site.index))
     end
     function cell.update(cell_elem)
         if site.is_summary then
             return
         end
-        update_cancelable_button(
-            cell_elem, site, config,
-            player_data.renaming_site == site.name)
+        if cell_elem[config.operation] then
+            update_cancelable_button(
+                cell_elem[config.operation], site, config,
+                player_data.renaming_site == site.index)
+        end
     end
     return cell
 end
@@ -173,12 +180,13 @@ local function new_surface_name_cell(row, player_data)
 end
 
 ---@param row yatable_row_data
-local function new_site_name_cell(row)
+---@param player_data player_data
+local function new_site_name_cell(row, player_data)
     local function get_caption(row_num)
         if row.site.is_summary then
             return row_num ~= 1 and "" or { "YARM-category-totals" }
         end
-        return row.site.name
+        return resmon.locale.site_display_name(row.site, player_data.site_display_name_format)
     end
     return new_label_cell(get_caption)
 end
@@ -270,7 +278,8 @@ local function new_etd_arrow(row)
 end
 
 ---@param row yatable_row_data
-local function new_site_status_cell(row)
+---@param player_data player_data
+local function new_site_status_cell(row, player_data)
     if row.site.is_summary then
         return cell_factories_module.empty_cell_factory
     end
@@ -279,7 +288,7 @@ local function new_site_status_cell(row)
     end
     local function get_tooltip()
         return { "",
-            { "YARM-site-statuses.status-header", row.site.name },
+            { "YARM-site-statuses.status-header", resmon.locale.site_display_name(row.site, player_data.site_display_name_format) },
             "\r\n",
             row.site.etd_is_lifetime and { "YARM-site-statuses.site-is-paused" } or { "YARM-site-statuses.site-is-mining" },
         }
@@ -311,7 +320,7 @@ local function new_site_buttons_cell(is_compact)
                 name = "YARM_goto_site",
                 tooltip = { "YARM-tooltips.goto-site" },
                 style = "YARM_goto_site",
-                tags = { operation = "YARM_goto_site", site = site.name }}
+                tags = { operation = "YARM_goto_site", site = site.index }}
 
             if not is_compact then
                 local config = enum.cancelable_buttons.delete_site
@@ -333,7 +342,7 @@ local function new_site_buttons_cell(is_compact)
             if site.is_summary then
                 return
             end
-            cell_elem.YARM_goto_site.tags = { operation = "YARM_goto_site", site = site.name }
+            cell_elem.YARM_goto_site.tags = { operation = "YARM_goto_site", site = site.index }
             local config = enum.cancelable_buttons.delete_site
             if cell_elem[config.operation] then
                 update_cancelable_button(
