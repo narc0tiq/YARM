@@ -1,6 +1,7 @@
 ---@class cell_factories_module
 local cell_factories_module = {}
 
+local hsv_lib = require("libs/hsv")
 local enum = require("resmon/yatable/enum")
 
 ---@alias yatable_cell_factory_create fun(container:LuaGuiElement, cell_name:string, row_num:integer, insert_index:integer?):LuaGuiElement
@@ -125,7 +126,7 @@ local function new_delta_arrow(amount, delta)
         local hue = percent_delta >= 0 and (1 / 3) or 0
         local saturation = math.min(math.abs(percent_delta), 1)
         local value = math.min(0.5 + math.abs(percent_delta / 2), 1)
-        return resmon.ui.hsv2rgb(hue, saturation, value)
+        return hsv_lib.to_rgb(hue, saturation, value)
     end
     return get_caption, get_color
 end

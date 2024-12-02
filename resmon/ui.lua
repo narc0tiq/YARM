@@ -1,5 +1,7 @@
 local get_frame_flow = require("mod-gui").get_frame_flow
 
+local hsv_lib = require("libs/hsv")
+
 ---@module "columns"
 
 ---@class ui_module
@@ -116,46 +118,36 @@ function ui_module.update_filter_buttons(player)
     end
 end
 
+local color_schemes = {
+    ["red-green"] = { from = { r=0.94, g=0, b=0 }, to = { r=0, g=0.94, b=0 } },
+    ["red-blue"] = { from = { r=0.94, g=0, b=0 }, to = { r=0.52, g=0.6, b=1 } },
+}
+
+local function get_player_color(player, factor)
+    local scheme = player.mod_settings["YARM-color-scheme"].value or next(color_schemes)
+    local from_rgb, to_rgb
+    if color_schemes[scheme] then
+        from_rgb = color_schemes[scheme].from
+        to_rgb = color_schemes[scheme].to
+    else
+        from_rgb = player.mod_settings["YARM-color-from"].value or color_schemes["red-green"].from
+        to_rgb = player.mod_settings["YARM-color-to"].value or color_schemes["red-green"].to
+    end
+
+    local from_hsv = hsv_lib.from_rgb(from_rgb)
+    local to_hsv = hsv_lib.from_rgb(to_rgb)
+    return hsv_lib.lerp(from_hsv, to_hsv, factor)
+end
+
 function ui_module.color_for_site(site, player)
     local threshold = player.mod_settings["YARM-warn-timeleft"].value * 60
     if site.is_summary then
         threshold = player.mod_settings["YARM-warn-timeleft_totals"].value * 60
     end
-    local etd = site.etd_minutes
-    if etd == -1 then
-        etd = threshold
-    end
-    local factor = (threshold == 0 and 1) or (etd / threshold)
-    if factor > 1 then
-        factor = 1
-    end
-    local hue = factor / 3
-    return ui_module.hsv2rgb(hue, 1, 0.9)
-end
-
----Turn a HSV (hue, saturation, value) color to RGB
-function ui_module.hsv2rgb(h, s, v)
-    local r, g, b
-    local i = math.floor(h * 6);
-    local f = h * 6 - i;
-    local p = v * (1 - s);
-    local q = v * (1 - f * s);
-    local t = v * (1 - (1 - f) * s);
-    i = i % 6
-    if i == 0 then
-        r, g, b = v, t, p
-    elseif i == 1 then
-        r, g, b = q, v, p
-    elseif i == 2 then
-        r, g, b = p, v, t
-    elseif i == 3 then
-        r, g, b = p, q, v
-    elseif i == 4 then
-        r, g, b = t, p, v
-    elseif i == 5 then
-        r, g, b = v, p, q
-    end
-    return { r = r, g = g, b = b }
+    local etd = site.etd_minutes == -1 and threshold or site.etd_minutes
+    local fullness = threshold == 0 and 1 or (etd / threshold)
+    if fullness > 1 then fullness = 1 end
+    return hsv_lib.to_rgb(get_player_color(player, fullness))
 end
 
 ---Update the given site's chart tag (map marker) with the current name and ore count
