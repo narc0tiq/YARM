@@ -12,8 +12,8 @@ resmon = {
 
     click = require("resmon.click"),
     locale = require("resmon.locale"),
-    sites = require("resmon.sites"),
     migrations = require("resmon.migrations"),
+    sites = require("resmon.sites"),
     types = require("resmon.types"),
     ui = require("resmon.ui"),
     yatable = require("resmon.yatable"),
