@@ -39,6 +39,8 @@ function ui_module.update_player(player)
         return -- early init, nothing ready yet
     end
 
+    player_data.site_display_name_format = player.mod_settings["YARM-display-name-format"].value --[[@as string]]
+
     local root = ui_module.get_or_create_hud(player)
     root.style = player_data.ui.enable_hud_background and "YARM_outer_frame_no_border_bg" or "YARM_outer_frame_no_border"
 
@@ -173,7 +175,7 @@ function ui_module.update_chart_tag(site)
 
         local chart_tag = {
             position = site.center,
-            text = site.name,
+            text = tostring(site.index) or '',
         }
         site.chart_tag = site.force.add_chart_tag(site.surface, chart_tag)
         if not site.chart_tag then
@@ -182,9 +184,8 @@ function ui_module.update_chart_tag(site)
     end
 
     local display_value = resmon.locale.site_amount(site, resmon.locale.format_number_si)
-    local ore_prototype = prototypes.entity[site.ore_type]
-    site.chart_tag.text =
-        string.format('%s - %s %s', site.name, display_value, resmon.locale.get_rich_text_for_products(ore_prototype))
+    local ore_products = resmon.locale.get_rich_text_for_products(prototypes.entity[site.ore_type])
+    site.chart_tag.text = string.format('%d - %s %s', site.index, display_value, ore_products)
 end
 
 ---Performs any migrations of UI-related player data for the given player. Should be
