@@ -132,7 +132,7 @@ data:extend({
         order = "c",
         default_value = "etd",
         allowed_values = { "alphabetical", "percent-remaining", "ore-type", "ore-count", "etd" }
-        ---@alias order_by_enum "default"|"alphabetical"|"percent-remaining"|"ore-type"|"ore-count"|"etd"
+        ---@alias order_by_enum "alphabetical"|"percent-remaining"|"ore-type"|"ore-count"|"etd"
     },
     {
         type = "bool-setting",
@@ -150,4 +150,28 @@ data:extend({
         minimum_value = 30,
         maximum_value = 600,
     },
+    {
+        type = "string-setting",
+        name = "YARM-color-scheme",
+        setting_type = "runtime-per-user",
+        order = "f1",
+        default_value = "red-green",
+        allowed_values = { "red-green", "red-blue", "custom" },
+        ---@alias color_scheme_enum "red-green"|"red-blue"|"custom"
+    },
+    {
+        type = "color-setting",
+        name = "YARM-color-from",
+        setting_type = "runtime-per-user",
+        order="f2",
+        default_value = {0.95, 0, 0},
+    },
+    {
+        type = "color-setting",
+        name = "YARM-color-to",
+        setting_type = "runtime-per-user",
+        order="f2",
+        default_value = {0, 0.95, 0},
+    },
+
 })
