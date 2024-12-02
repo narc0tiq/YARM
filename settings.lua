@@ -45,13 +45,6 @@ data:extend({
     },
     {
         type = "bool-setting",
-        name = "YARM-site-prefix-with-surface",
-        setting_type = "runtime-global",
-        order = "d",
-        default_value = false
-    },
-    {
-        type = "bool-setting",
         name = "YARM-debug-profiling",
         setting_type = "runtime-global",
         order = "zz[debug]",
@@ -108,10 +101,17 @@ data:extend({
 
     -- Per user settings
     {
+        type = "string-setting",
+        name = "YARM-display-name-format",
+        setting_type = "runtime-per-user",
+        order = "a",
+        default_value = "[index]. [name-tag] ([8-way-compass][distance])",
+    },
+    {
         type = "double-setting",
         name = "YARM-warn-timeleft",
         setting_type = "runtime-per-user",
-        order = "a",
+        order = "b",
         default_value = 24,
         minimum_value = 0,
         maximum_value = 10000000
@@ -120,7 +120,7 @@ data:extend({
         type = "double-setting",
         name = "YARM-warn-timeleft_totals",
         setting_type = "runtime-per-user",
-        order = "b",
+        order = "c",
         default_value = 48,
         minimum_value = 0,
         maximum_value = 10000000
@@ -129,23 +129,23 @@ data:extend({
         type = "string-setting",
         name = "YARM-order-by",
         setting_type = "runtime-per-user",
-        order = "c",
+        order = "d",
         default_value = "etd",
-        allowed_values = { "alphabetical", "percent-remaining", "ore-type", "ore-count", "etd" }
-        ---@alias order_by_enum "alphabetical"|"percent-remaining"|"ore-type"|"ore-count"|"etd"
+        allowed_values = { "numeric", "percent-remaining", "ore-type", "ore-count", "etd" }
+        ---@alias order_by_enum "numeric"|"percent-remaining"|"ore-type"|"ore-count"|"etd"
     },
     {
         type = "bool-setting",
         name = "YARM-show-sites-summary",
         setting_type = "runtime-per-user",
-        order = "d",
+        order = "e",
         default_value = true
     },
     {
         type = "int-setting",
         name = "YARM-hud-update-ticks",
         setting_type = "runtime-per-user",
-        order = "e",
+        order = "k",
         default_value = 300,
         minimum_value = 30,
         maximum_value = 600,
@@ -154,7 +154,7 @@ data:extend({
         type = "string-setting",
         name = "YARM-color-scheme",
         setting_type = "runtime-per-user",
-        order = "f1",
+        order = "z1",
         default_value = "red-green",
         allowed_values = { "red-green", "red-blue", "grayscale", "custom" },
         ---@alias color_scheme_enum "red-green"|"red-blue"|"grayscale"|"custom"
@@ -163,14 +163,14 @@ data:extend({
         type = "color-setting",
         name = "YARM-color-from",
         setting_type = "runtime-per-user",
-        order="f2",
+        order="z2",
         default_value = { r=0.94, g=0.4, b=0.4 },
     },
     {
         type = "color-setting",
         name = "YARM-color-to",
         setting_type = "runtime-per-user",
-        order="f2",
+        order="z3",
         default_value = {0, 0.94, 0},
     },
 

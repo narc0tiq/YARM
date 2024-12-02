@@ -1,5 +1,7 @@
 local ui_module = require("resmon.ui")
 
+---@module "settings"
+
 ---@class sites_module
 local sites_module = {
     ---@type { [order_by_enum|"default"]: comparator_fun }
@@ -18,7 +20,7 @@ local sites_module = {
 ---@alias comparator_fun fun(left: yarm_site, right: yarm_site): boolean
 
 ---Compare sites by remaining percentage, followed by when they were created (oldest first) and
----finally a name comparison. Is the fallback comparator for most others, as well as the normal
+---finally an index comparison. Is the fallback comparator for most others, as well as the normal
 ---default.
 sites_module.comparators["default"] = function(left, right)
     if left.remaining_permille ~= right.remaining_permille then
@@ -26,7 +28,7 @@ sites_module.comparators["default"] = function(left, right)
     elseif left.added_at ~= right.added_at then
         return left.added_at < right.added_at
     else
-        return left.name < right.name
+        return (left.index or 0) < (right.index or 0)
     end
 end
 
@@ -70,9 +72,9 @@ sites_module.comparators["etd"] = function(left, right)
     return left.etd_minutes < right.etd_minutes
 end
 
----Sort alphabetically by site name
-sites_module.comparators["alphabetical"] = function(left, right)
-    return left.name < right.name
+---Sort numerically by index (generally in order of creation)
+sites_module.comparators["numeric"] = function(left, right)
+    return left.index < right.index
 end
 
 ---Return an iterator providing the given sites in the given player's preferred (configured) order

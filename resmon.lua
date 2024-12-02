@@ -408,29 +408,6 @@ function resmon.scan_current_site(player)
     end
 end
 
----@enum octant_names
-local octant_names = {
-    [0] = "E",
-    [1] = "SE",
-    [2] = "S",
-    [3] = "SW",
-    [4] = "W",
-    [5] = "NW",
-    [6] = "N",
-    [7] = "NE",
-}
-
----Turn a vector (actually assumed to originate at 0,0, therefore just a world coordinate)
----into an octant (8-way compass heading, e.g. "NW" or "S")
----@param vector MapPosition
----@return octant_names
-local function get_octant_name(vector)
-    local radians = math.atan2(vector.y, vector.x)
-    local octant = math.floor(8 * radians / (2 * math.pi) + 8.5) % 8
-
-    return octant_names[octant]
-end
-
 ---Mark the player's current site as having finished scanning/expanding. This starts the timer
 ---that will eventually submit the site
 ---@param player LuaPlayer
@@ -447,15 +424,6 @@ function resmon.finalize_site(player)
 
     site.center = find_center_tile(site.extents)
 
-    --[[ don't rename a site we've expanded! (if the site name changes it'll create a new site
-         instead of replacing the existing one) ]]
-    if not site.is_site_expanding then
-        site.name = string.format("%s %d", get_octant_name(site.center), util.distance({ x = 0, y = 0 }, site.center))
-        if settings.global["YARM-site-prefix-with-surface"].value then
-            site.name = string.format("%s %s", site.surface.name, site.name)
-        end
-    end
-
     resmon.count_deposits(site, site.added_at % settings.global["YARM-ticks-between-checks"].value)
 end
 
@@ -471,7 +439,11 @@ function resmon.submit_site(player)
         return
     end
 
-    force_data.ore_sites[site.name] = site
+    if site.index == 0 then
+        site.index = #force_data.ore_sites + 1
+    end
+
+    force_data.ore_sites[site.index] = site
     resmon.clear_current_site(player)
     if (site.is_site_expanding) then
         if (site.has_expanded) then
@@ -481,7 +453,7 @@ function resmon.submit_site(player)
 
             local amount_added = site.amount - site.original_amount
             local sign = amount_added < 0 and '' or '+' -- format_number will handle the negative sign for us (if needed)
-            player.print { "YARM-site-expanded", site.name, resmon.locale.format_number(site.amount), site.ore_name,
+            player.print { "YARM-site-expanded", site.index, resmon.locale.format_number(site.amount), site.ore_name,
                 sign .. resmon.locale.format_number(amount_added) }
         end
         --[[ NB: deliberately not outputting anything in the case where the player cancelled (or
@@ -491,7 +463,7 @@ function resmon.submit_site(player)
             site.chart_tag.destroy()
         end
     else
-        player.print { "YARM-site-submitted", site.name, resmon.locale.format_number(site.amount), site.ore_name }
+        player.print { "YARM-site-submitted", site.index, resmon.locale.format_number(site.amount), site.ore_name }
     end
     resmon.ui.update_chart_tag(site)
 
@@ -640,13 +612,14 @@ function resmon.finish_deposit_count(site)
     resmon.ui.update_chart_tag(site)
 
     script.raise_event(on_site_updated, {
-        force_name         = site.force.name,
-        site_name          = site.name,
-        amount             = site.amount,
-        ore_per_minute     = site.ore_per_minute,
+        force_name = site.force.name,
+        site_name = site.index,
+        name_tag = site.name_tag,
+        amount = site.amount,
+        ore_per_minute = site.ore_per_minute,
         remaining_permille = site.remaining_permille,
-        ore_type           = site.ore_type,
-        etd_minutes        = site.etd_minutes,
+        ore_type = site.ore_type,
+        etd_minutes = site.etd_minutes,
     })
 end
 

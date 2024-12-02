@@ -41,7 +41,7 @@ function handlers.YARM_rename_confirm(event)
     local player_data = storage.player_data[player.index]
     local force_data = storage.force_data[player.force.name]
 
-    local old_name = player_data.renaming_site --[[@as string]] --can't get here without this being set
+    local site_index = player_data.renaming_site --[[@as number]] --can't get here without this being set
     local new_name = player.gui.center.YARM_site_rename.new_name.text
     local new_name_length_without_tags =
         string.len(string.gsub(new_name, "%[[^=%]]+=[^=%]]+%]", "123"))
@@ -60,10 +60,8 @@ function handlers.YARM_rename_confirm(event)
         return
     end
 
-    local site = force_data.ore_sites[old_name]
-    force_data.ore_sites[old_name] = nil
-    force_data.ore_sites[new_name] = site
-    site.name = new_name
+    local site = force_data.ore_sites[site_index]
+    site.name_tag = new_name
 
     resmon.ui.update_chart_tag(site)
 
@@ -106,22 +104,24 @@ end
 
 ---@param event EventData.on_gui_click
 function handlers.YARM_rename_site(event)
-    local site_name = event.element.tags.site --[[@as string]]
+    local site_index = event.element.tags.site --[[@as number]]
     local player = game.players[event.player_index]
     local player_data = storage.player_data[player.index]
+    local site = storage.force_data[player.force.name].ore_sites[site_index]
 
     if player.gui.center.YARM_site_rename then
         click_module.handlers.YARM_rename_cancel(event)
         return
     end
 
-    player_data.renaming_site = site_name
+    player_data.renaming_site = site_index
+    local format = player.mod_settings["YARM-display-name-format"].value --[[@as string]]
     local root = player.gui.center.add { type = "frame",
         name = "YARM_site_rename",
-        caption = { "YARM-site-rename-title", site_name },
+        caption = { "YARM-site-rename-title", resmon.locale.site_display_name(site, format) },
         direction = "horizontal" }
 
-    root.add { type = "textfield", name = "new_name" }.text = site_name
+    root.add { type = "textfield", name = "new_name" }.text = site.name_tag
     root.add { type = "button", name = "YARM_rename_cancel", caption = { "YARM-site-rename-cancel" }, style = "back_button" }
     root.add { type = "button", name = "YARM_rename_confirm", caption = { "YARM-site-rename-confirm" }, style = "confirm_button" }
 
@@ -132,7 +132,7 @@ end
 
 ---@param event EventData.on_gui_click
 function handlers.YARM_goto_site(event)
-    local site_name = event.element.tags.site --[[@as string]]
+    local site_name = event.element.tags.site --[[@as number]]
     local player = game.players[event.player_index]
     local force_data = storage.force_data[player.force.name]
     local site = force_data.ore_sites[site_name]
@@ -145,7 +145,7 @@ end
 ---One button handler for both the expand_site and expand_site_cancel buttons
 ---@param event EventData.on_gui_click
 function handlers.YARM_expand_site(event)
-    local site_name = event.element.tags.site --[[@as string]]
+    local site_name = event.element.tags.site --[[@as number]]
     local player = game.players[event.player_index]
     local player_data = storage.player_data[player.index]
     local force_data = storage.force_data[player.force.name]
