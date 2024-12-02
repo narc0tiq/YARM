@@ -35,6 +35,7 @@
 local migrations_module = {}
 local migrations = {
     ore_tracker = {},
+    force_data = {},
 }
 
 ---Generate default storage.versions for a newly started game. Should contain the version
@@ -46,6 +47,7 @@ function migrations_module.default_versions()
     ---@type {[string]: number}
     local default_versions = {
         ore_tracker = 2,
+        force_data = 2,
     }
     return default_versions
 end
@@ -80,7 +82,7 @@ end
 --- - tracking data stores the actual cache key rather than only the position
 function migrations.ore_tracker.v1()
     if not storage.ore_tracker then
-        return
+        return 2 -- not created yet so it does not need migration (how did we get here?)
     end
 
     storage.ore_tracker.to_be_deleted = {}
@@ -90,6 +92,33 @@ function migrations.ore_tracker.v1()
             storage.ore_tracker.entities[key] = nil
         else
             tracking_data.position = nil ---@diagnostic disable-line: inject-field
+        end
+    end
+    return 2
+end
+
+---2024-12-02, YARM v1.0:<br>
+--- - Add index to all sites
+--- - Add name_tag to all sites (copy from site.name)
+--- - Delete site.name
+--- - Switch force_data to be {[site_index]:yarm_site}
+function migrations.force_data.v1()
+    if not storage.force_data then
+        return 2 -- not created yet so it does not need migration (how did we get here?)
+    end
+
+    for _, force_data in pairs(storage.force_data) do
+        if force_data.ore_sites then
+            local new_ore_sites = {}
+            for _, site in pairs(force_data.ore_sites) do
+                if not site.index then
+                    site.index = #new_ore_sites + 1
+                    site.name_tag = site.name
+                    site.name = nil ---@diagnostic disable-line inject-field
+                end
+                new_ore_sites[site.index] = site
+            end
+            force_data.ore_sites = new_ore_sites
         end
     end
     return 2
