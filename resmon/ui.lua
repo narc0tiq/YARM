@@ -118,9 +118,11 @@ function ui_module.update_filter_buttons(player)
     end
 end
 
+---@type {[color_scheme_enum]:{from:rgb_color, to:rgb_color}}
 local color_schemes = {
-    ["red-green"] = { from = { r=0.94, g=0, b=0 }, to = { r=0, g=0.94, b=0 } },
-    ["red-blue"] = { from = { r=0.94, g=0, b=0 }, to = { r=0.52, g=0.6, b=1 } },
+    ["red-green"] = { from = { r=0.94, g=0.4, b=0.4 }, to = { r=0, g=0.94, b=0 } },
+    ["red-blue"] = { from = { r=0.94, g=0.4, b=0.4 }, to = { r=0.52, g=0.6, b=1 } },
+    ["grayscale"] = { from = { r=0.62, g=0.62, b=0.62 }, to = { r=1, g=1, b=1 } },
 }
 
 local function get_player_color(player, factor)
