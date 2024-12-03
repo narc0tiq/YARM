@@ -61,6 +61,14 @@ average yield goes down per minute. The estimated time indicates when the
 average yield is expected to hit its minimum value.
 
 
+## Translation notes ##
+
+If you want to contribute to localizing (translating) YARM, we are now part of
+the [Factorio mods localization project on Crowdin](https://crowdin.com/project/factorio-mods-localization).
+
+Instructions can be found [here in their README](https://github.com/dima74/factorio-mods-localization?tab=readme-ov-file#how-to-translate-using-crowdin).
+
+
 ## Many thanks for ##
 
 * The major effort by drs9999 to create
@@ -98,6 +106,7 @@ members of the #factorio IRC on espernet.
 * SpaceEx explorer viewer patch by @oof2win2
 * Ore counts adjusted by mining productivity by @georgehank
     * With fixes by @EvilPLa
+ * The aforementioned [Factorio mod localization project](https://github.com/dima74/factorio-mods-localization) for making my life incredibly easy! Thank you @dima74!
 
 
 
