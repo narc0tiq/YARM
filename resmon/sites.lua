@@ -228,6 +228,10 @@ end
 ---@param surface_data table
 ---@param player LuaPlayer
 local function add_surface(rows, surface_data, player)
+    if not surface_data then
+        return -- nothing to add
+    end
+
     for _, summary in ipairs(surface_data.summaries) do
         table.insert(rows, {
             type = resmon.yatable.row_type.summary,
@@ -235,12 +239,14 @@ local function add_surface(rows, surface_data, player)
             color = resmon.ui.color_for_site(summary, player),
         })
     end
+
     if #surface_data.summaries > 0 and #surface_data.sites > 0 then
         table.insert(rows, {
             type = resmon.yatable.row_type.header,
             surface = surface_data.sites[1].surface,
          })
     end
+
     for _, site in ipairs(surface_data.sites) do
         table.insert(rows, {
             type = resmon.yatable.row_type.site,
