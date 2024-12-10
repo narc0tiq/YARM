@@ -46,8 +46,10 @@ local migrations = {
 function migrations_module.default_versions()
     ---@type {[string]: number}
     local default_versions = {
-        ore_tracker = 2,
         force_data = 2,
+        ore_tracker = 2,
+        player_data = 1,
+        versions = 1,
     }
     return default_versions
 end
@@ -56,18 +58,21 @@ end
 ---Should be called on_init or on_configuration_changed.
 function migrations_module.perform_migrations()
     if not storage.versions then
-        -- As a special case, if we get here then player_data, etc., already exist but
-        -- storage.versions does not, i.e., we are upgrading from a YARM before migrations.
-        -- In this case _only_, we must initialize with version 1 (no migrations run) and
-        -- then let the migrations be executed to bring the storage up to date.
-        storage.versions = {}
-        for k, _ in pairs(storage) do
-            storage.versions[k] = 1
+        storage.versions = migrations_module.default_versions()
+
+        if storage.force_data and storage.player_data and storage.ore_tracker then
+            -- As a special case, if we get here then player_data, etc., already exist but
+            -- storage.versions did not, i.e., we are upgrading from a YARM before migrations.
+            -- In this case _only_, we must initialize with version 1 (no migrations run) and
+            -- then let the migrations be executed to bring the storage up to date.
+            for k, _ in pairs(storage.versions) do
+                storage.versions[k] = 1
+            end
         end
     end
 
     for key, version in pairs(storage.versions) do
-        if migrations[key] then
+        if storage[key] and migrations[key] then
             while migrations[key]['v'..version] do
                 version = migrations[key]['v'..version]()
             end
@@ -81,10 +86,6 @@ end
 --- - tracking data can be deleted when entity is lost (e.g., mined out)<br>
 --- - tracking data stores the actual cache key rather than only the position
 function migrations.ore_tracker.v1()
-    if not storage.ore_tracker then
-        return 2 -- not created yet so it does not need migration (how did we get here?)
-    end
-
     storage.ore_tracker.to_be_deleted = {}
 
     for key, tracking_data in pairs(storage.ore_tracker.entities) do
@@ -103,10 +104,6 @@ end
 --- - Delete site.name
 --- - Switch force_data to be {[site_index]:yarm_site}
 function migrations.force_data.v1()
-    if not storage.force_data then
-        return 2 -- not created yet so it does not need migration (how did we get here?)
-    end
-
     for _, force_data in pairs(storage.force_data) do
         if force_data.ore_sites then
             local new_ore_sites = {}
