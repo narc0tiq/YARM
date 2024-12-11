@@ -185,7 +185,8 @@ function ui_module.update_chart_tag(site)
 
     local display_value = resmon.locale.site_amount(site, resmon.locale.format_number_si)
     local ore_products = resmon.locale.get_rich_text_for_products(prototypes.entity[site.ore_type])
-    site.chart_tag.text = string.format('%d - %s %s', site.index, display_value, ore_products)
+    local tag_base_text = site.name_tag and site.name_tag ~= "" and site.name_tag or tostring(site.index)
+    site.chart_tag.text = string.format('%s - %s %s', tag_base_text, display_value, ore_products)
 end
 
 ---Performs any migrations of UI-related player data for the given player. Should be
