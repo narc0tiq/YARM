@@ -37,10 +37,11 @@ function locale_module.minutes_to_human(minutes)
     end
 end
 
----Return a localized string describing the depletion rate of the given site. Candidate for refactoring
+---Return a localized string describing the depletion rate of the given site
 ---@param site yarm_site
 ---@return LocalisedString
 function locale_module.site_depletion_rate(site)
+    --TODO refactor this for readability
     local ups_adjust = settings.global["YARM-nominal-ups"].value / 60
     local speed = ups_adjust * site.ore_per_minute
 
