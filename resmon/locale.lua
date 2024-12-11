@@ -14,7 +14,13 @@ function locale_module.site_time_to_deplete(site)
     local minutes = (site.etd_minutes and (site.etd_minutes / ups_adjust)) or -1
 
     if minutes == -1 or minutes == math.huge then return { "YARM-etd-never" } end
+    return locale_module.minutes_to_human(minutes)
+end
 
+---Turns a number of minutes into a human-readable timespan, e.g., 4340 -> 3d 01:20h
+---@param minutes number
+---@return LocalisedString
+function locale_module.minutes_to_human(minutes)
     local hours = math.floor(minutes / 60)
     local days = math.floor(hours / 24)
     hours = hours % 24
