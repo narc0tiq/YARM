@@ -245,13 +245,30 @@ end
 
 ---@param row yatable_row_data
 local function new_ore_per_minute_cell(row)
+    local site = row.site --[[@as yarm_site]]
+    local is_infinite = prototypes.entity[site.ore_type].infinite_resource or false
     local function get_caption()
-        return resmon.locale.site_depletion_rate(row.site)
+        return resmon.locale.site_depletion_rate(site)
     end
     local function get_color()
         return row.color or {0.7, 0.7, 0.7}
     end
-    return new_label_cell(get_caption, get_color)
+    local function get_tooltip()
+        if site.is_summary then
+            return ""
+        end
+
+        return {"",
+            { "YARM-tooltips.ore-per-minute-current", resmon.locale.depletion_rate_to_human(site.scanned_ore_per_minute or 0, is_infinite) },
+            "\n",
+            {
+                    "YARM-tooltips.ore-per-minute-lifetime",
+                    resmon.locale.depletion_rate_to_human(site.lifetime_ore_per_minute or 0, is_infinite),
+                    resmon.locale.minutes_to_human(math.floor((game.tick - site.added_at) / 3600))
+                }
+        }
+    end
+    return new_label_cell(get_caption, get_color, get_tooltip)
 end
 
 ---@param row yatable_row_data
