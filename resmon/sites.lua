@@ -201,17 +201,23 @@ end
 local function select_sites(unsorted_sites, site_filter, split_by_surface, with_summary, player)
     local result = {}
     for site in sites_module.in_player_order(unsorted_sites, player) do
+        local surface_name = split_by_surface and site.surface.name or '*'
+        if not result[surface_name] then
+            result[surface_name] = { summaries_table = {}, sites = {} }
+        end
+
+        if with_summary then
+            -- NB: Summaries need to include all sites, not just filtered ones;
+            -- e.g., in warnings mode, a single site for iron ore with 25h remaining should
+            -- cause the iron ore summary to show as a <48h warning (whereas the site should not)
+            add_to_summaries(result[surface_name].summaries_table, site)
+        end
+
         if site_filter(site, player) then
-            local surface_name = split_by_surface and site.surface.name or '*'
-            if not result[surface_name] then
-                result[surface_name] = { summaries_table = {}, sites = {} }
-            end
             table.insert(result[surface_name].sites, site)
-            if with_summary then
-                add_to_summaries(result[surface_name].summaries_table, site)
-            end
         end
     end
+
     for _, surface_data in pairs(result) do
         -- The summaries need to be in player order too
         surface_data.summaries = {}
