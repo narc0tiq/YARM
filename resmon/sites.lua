@@ -222,7 +222,9 @@ local function select_sites(unsorted_sites, site_filter, split_by_surface, with_
         -- The summaries need to be in player order too
         surface_data.summaries = {}
         for summary in sites_module.in_player_order(surface_data.summaries_table, player) do
-            table.insert(surface_data.summaries, summary)
+            if site_filter(summary, player) then
+                table.insert(surface_data.summaries, summary)
+            end
         end
         surface_data.summaries_table = nil
     end
