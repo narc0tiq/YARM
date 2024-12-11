@@ -173,8 +173,13 @@ function locale_module.surface_name(surface)
     return surface.name or ""
 end
 
----@enum compass_name
 local compass_names = {
+    [16] = {},
+    [8] = {},
+    [4] = {},
+}
+
+compass_names[16] = {
     [0] = "E",
     [1] = "ESE",
     [2] = "SE",
@@ -193,15 +198,37 @@ local compass_names = {
     [15] = "ENE",
 }
 
+compass_names[8] = {
+    [0] = compass_names[16][0],
+    [1] = compass_names[16][2],
+    [2] = compass_names[16][4],
+    [3] = compass_names[16][6],
+    [4] = compass_names[16][8],
+    [5] = compass_names[16][10],
+    [6] = compass_names[16][12],
+    [7] = compass_names[16][14],
+}
+
+compass_names[4] = {
+    [0] = compass_names[16][0],
+    [1] = compass_names[16][4],
+    [2] = compass_names[16][8],
+    [3] = compass_names[16][12],
+}
+
 ---Turn a vector (actually assumed to originate at 0,0, therefore just a world coordinate)
 ---into a 16-way compass heading, e.g. "WNW", "SE", or "E"
 ---@param vector MapPosition
----@return compass_name
-local function get_compass_name(vector)
-    local radians = math.atan2(vector.y, vector.x)
-    local compass = math.floor(16 * radians / (2 * math.pi) + 16.5) % 16
+---@return string
+local function get_compass_name(vector, point_count)
+    if not compass_names[point_count] then
+        point_count = 16
+    end
 
-    return compass_names[compass]
+    local radians = math.atan2(vector.y, vector.x)
+    local compass = math.floor(point_count * radians / (2 * math.pi) + (point_count + 0.5)) % point_count
+
+    return compass_names[point_count][compass]
 end
 
 ---Get part of the display name (per the given tag)
@@ -210,18 +237,16 @@ end
 ---@return LocalisedString
 local function get_display_name_part(tag, site)
     local lowertag = string.lower(tag)
-    local compass_name = get_compass_name(site.center)
     if string.sub(lowertag, 1, 3) == '[f-' then
         return string.sub(tag, 4, -2)
     elseif lowertag == '[planet]' then
         return locale_module.surface_name(site.surface)
     elseif lowertag == '[4-way-compass]' then
-        return string.sub(compass_name, 1, 1)
+        return get_compass_name(site.center, 4)
     elseif lowertag == '[8-way-compass]' then
-        if #compass_name == 1 then return compass_name end
-        return string.sub(compass_name, -2, 2)
+        return get_compass_name(site.center, 8)
     elseif lowertag == '[16-way-compass]' then
-        return compass_name
+        return get_compass_name(site.center, 16)
     elseif lowertag == '[distance]' then
         return string.format('%d', util.distance({ x = 0, y = 0 }, site.center))
     elseif lowertag == '[center-xy]' then
