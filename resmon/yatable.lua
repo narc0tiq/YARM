@@ -281,7 +281,7 @@ local function unused_example()
         type = enum.row_type.site,
         ---@type yarm_site? When row type is site or summary, this contains the relevant site
         site = summary_sites["nauvis.iron-ore"],
-        ---@type Color When row type is site or summary, this contains the site color
+        ---@type Color? When row type is site or summary, this contains the site color
         color = { 1, 1, 1 },
         ---@type LuaSurface? When row type is header, this contains the relevant surface
         surface = game.surfaces.nauvis,
