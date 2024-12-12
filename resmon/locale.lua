@@ -237,30 +237,33 @@ end
 ---@param site yarm_site
 ---@return LocalisedString
 local function get_display_name_part(tag, site)
-    local lowertag = string.lower(tag)
-    if string.sub(lowertag, 1, 3) == '[f-' then
+    if string.sub(tag, 1, 3) == '[f-' then
         return string.sub(tag, 4, -2)
-    elseif lowertag == '[planet]' then
+    elseif tag == '[planet]' then
         return locale_module.surface_name(site.surface)
-    elseif lowertag == '[4-way-compass]' then
+    elseif tag == '[4-way-compass]' then
         return get_compass_name(site.center, 4)
-    elseif lowertag == '[8-way-compass]' then
+    elseif tag == '[8-way-compass]' then
         return get_compass_name(site.center, 8)
-    elseif lowertag == '[16-way-compass]' then
+    elseif tag == '[16-way-compass]' then
         return get_compass_name(site.center, 16)
-    elseif lowertag == '[distance]' then
+    elseif tag == '[distance]' then
         return string.format('%d', util.distance({ x = 0, y = 0 }, site.center))
-    elseif lowertag == '[center-xy]' then
+    elseif tag == '[center-xy]' then
         return site.center.x..','..site.center.y
-    elseif lowertag == '[index]' then
+    elseif tag == '[index]' then
         return site.index
-    elseif lowertag == '[ore-icon]' then
+    elseif tag == '[ore-icon]' then
         local entity_prototype = prototypes.entity[site.ore_type]
         return resmon.locale.get_rich_text_for_products(entity_prototype)
-    elseif lowertag == '[ore-name]' then
+    elseif tag == '[ore-name]' then
         return site.ore_name
-    elseif lowertag == '[name-tag]' then
+    elseif tag == '[name-tag]' then
         return site.name_tag
+    elseif tag == '[name-tag-or-index]' then
+        return site.name_tag and site.name_tag ~= "" and site.name_tag or tostring(site.index)
+    else
+        return ""
     end
 end
 
@@ -283,10 +286,11 @@ function locale_module.site_display_name(site, format)
     local has_name_tag = false
     local display_name = {""}
     for tag in string.gmatch(fixed_format, '%b[]') do
-        if string.lower(tag) == '[name-tag]' then
+        local lowertag = string.lower(tag)
+        if lowertag == '[name-tag]' or lowertag == '[name-tag-or-index]' then
             has_name_tag = true
         end
-        table.insert(display_name, get_display_name_part(tag, site))
+        table.insert(display_name, get_display_name_part(lowertag, site))
     end
     if not has_name_tag then
         table.insert(display_name, ' ')

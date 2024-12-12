@@ -105,7 +105,7 @@ data:extend({
         name = "YARM-display-name-format",
         setting_type = "runtime-per-user",
         order = "a",
-        default_value = "[index]. [name-tag] ([8-way-compass][distance])",
+        default_value = "[name-tag-or-index] ([8-way-compass][distance])",
     },
     {
         type = "double-setting",
