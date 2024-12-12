@@ -33,7 +33,7 @@ local ore_tracker_module = {
     position_cache = {},
 
     ---@type ore_tracker_module.internal
-    internal = {},
+    internal = {}, ---@diagnostic disable-line: missing-fields
 }
 
 ---@class ore_tracker_module.internal
