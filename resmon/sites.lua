@@ -181,6 +181,8 @@ local function add_to_summaries(container, site)
 
     local minimum = is_endless and (summary_site.entity_count * entity_prototype.minimum_resource_amount) or 0
     local amount_left = summary_site.amount - minimum
+    local initial_amount = summary_site.initial_amount - minimum
+    summary_site.remaining_permille = initial_amount <= 0 and 0 or math.floor(amount_left * 1000 / initial_amount)
     summary_site.etd_minutes =
         (summary_site.ore_per_minute ~= 0 and amount_left / (-summary_site.ore_per_minute))
         or (amount_left == 0 and 0)
