@@ -6,7 +6,7 @@ your mining sites and warns you when they're starting to run low.
 
 Once the mod is installed, using it is relatively simple:
 
-* Use the shortcut button "Resource monitor marker" to drag-select at least one
+* Use the shortcut button "Resource monitor" to drag-select at least one
 ore entity in a patch (like using a blueprint).
     * _Can't find the shortcut button? You may need to add it to the [shortcut
     bar](https://wiki.factorio.com/Shortcut_bar)._
@@ -32,9 +32,10 @@ at all!) or "all sites" (which never hides them).
 
 Each site has some buttons associated with it:
 
-* The 'ab|' button allows you to rename the site. This can be useful to prevent
-auto-naming from overwriting one of your sites with another.
-    * Note: Names may not be longer than 50 characters!
+* The 'ab|' button allows you to add a name tag for the site. The name tag will
+replace the index in the display.
+    * Note: Names may not be longer than 64 characters!
+    * However, [rich-text=tags] count as only 3 characters
 * The 'eye' button opens the map to the center of the ore site.
 * The 'X' button allows you to delete the site. When first clicked, it turns
 red; click it again within 2 seconds to confirm deletion, or leave it alone to
@@ -90,6 +91,7 @@ members of the #factorio IRC on espernet.
 * Italian translation by futuroattore86
 * Chinese translation by @71e6fd52 and @muink
 * Japanese translation by @shelaf
+* Ukrainian translation by @MetenBouldry
 * More updating assistance by @kylewill0725
 * Other-mod-friendly patches by @JonasJurczok
 * Resource monitor shortcut graphics by @npc-strider (aka morley376)
@@ -106,35 +108,38 @@ members of the #factorio IRC on espernet.
 * SpaceEx explorer viewer patch by @oof2win2
 * Ore counts adjusted by mining productivity by @georgehank
     * With fixes by @EvilPLa
- * The aforementioned [Factorio mod localization project](https://github.com/dima74/factorio-mods-localization) for making my life incredibly easy! Thank you @dima74!
-
+ * The aforementioned [Factorio mod localization project](https://github.com/dima74/factorio-mods-localization)
+ for making my life incredibly easy! Thank you @dima74! Thank you all contributors!
 
 
 ## Remote interface ##
 
 YARM's remote interface is grown as needed; there are only a few functions currently:
 
-- `remote.call("YARM", "reset_player", player_name_or_index)`: sets the target player's character to be whatever the player has selected (if it's of a compatible type, of course) and clears out internal data relative to the player.
-    - Note: this is considered deprecated, as the player character is no longer (since v0.8) being changed to allow remote viewing.
-- `remote.call("YARM", "reset_ui", player_name_or_index)`: destroys the target player's YARM UI, forcing it to be recreated (hopefully correctly) at the next UI update cycle (about every 5 seconds).
+- `remote.call("YARM", "reset_ui", player_name_or_index)`: destroys the target player's YARM UI, forcing it to be recreated (hopefully correctly) at the next UI update cycle (configurable, default 5 seconds).
 - `remote.call("YARM", "set_filter", player_name_or_index, new_filter)`: provides programmatic hooks to change the active filter. The filter value may be 'none', 'warnings', or 'all' -- other values are unsupported. The previously active filter is returned.
+- `remote.call("YARM", "get_filter", player_name_or_index)`: returns the given player's current filter (as above) without changing it.
 - `remote.call("YARM", "get_on_site_updated_event_id")`: returns the identifier for the `on_site_updated` event, detailed below. You should probably call this every time mods are initialized, as it is set in the main `control.lua` runtime.
 
 Additionally, there is one event:
 
 - `on_site_updated` is periodically raised whenever a site's ore count and stats are brought up to date. The event contains:
     - `force_name`, the name of the force owning this site
-    - `site_name`, the name of the site that just finished updating; site names are unique within a force
+    - `site_name`, the index of the site that just finished updating; site indexes are unique within a force
+        - NB: before YARM 1.0, this was the unique name, which no longer exists
+    - `name_tag`, the player-assigned name tag of the site (empty by default)
     - `ore_type`, the entity.name of the resource entities tracked in this site (e.g., `crude-oil` or `iron-ore`)
     - `amount`, the number of ore units remaining in the site
     - `ore_per_minute`, the number of ore units mined in a minute on this site, based on the number mined since the last update
     - `remaining_permille`, the ratio of ore remaining versus the initial amount from when the site was created
         - NB: permille is analogous to percent, but multiplied by 1000 instead of 100; its symbol is ‰
+    - `ore_type`, the prototype name of the site's ore entity
+    - `etd_minutes`, the number of minutes until the site is believed to be depleted
 
 
 ## License ##
 
-The source of **YARM** is Copyright 2015 Octav "narc" Sandulescu. It
+The source of **YARM** is Copyright 2015 Octav "narc" Sandulescu and contributors. It
 is licensed under the [MIT license][mit], available in this package in the file
 [LICENSE.md](LICENSE.md).
 

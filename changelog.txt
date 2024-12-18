@@ -2,12 +2,51 @@
 Version: 1.0.0
 Date: 2024-12-18
   Bugfixes:
-    - fix a crash on submitting/cancelling a site expansion very quickly (narc, #181)
-    - fix a many-times-reported crash when an entity is removed while scanning a site (narc, #180)
+    - fix a crash on submitting/cancelling a site expansion very quickly (#181)
+    - fix a many-times-reported crash when an entity is removed while scanning a site (#180)
+    - fix that sites with the same auto-generated name would overwrite each other (#52)
   Changes:
-    - make the fake ore items optional, and turn them off by default (narc, #178)
+    - make the fake ore items optional, and turn them off by default (#178)
+    - the localization has been horribly messed up (big release!) but it is now possible for
+      translators to work from Crowdin, so it should be easier to update in future
+    - the GUI now updates without destroying and recreating itself every time (#99); this should
+      remove most (probably all) issues with buttons not reacting to clicks
+    - surface, site, and ore names are no longer colored (#14)
   Features:
-    - use LuaRendering for overlay instead of creating a false chest entity -- should be faster to display the overlay now (narc, #179)
+    - use LuaRendering for overlay instead of creating a false chest entity -- should be faster to
+      display the overlay now (#179)
+    - use Enter to confirm the rename box, Esc to cancel it (fix #75)
+    - include surface name in the ore tracker (this fixes #183: ores on different surfaces were
+      overriding each other and messing up site ore counts)
+    - add color schemes (#23); the default remains red-to-green, but there is now also a red-to-blue
+      and grayscale, as well as full customization for anyone who wants it
+    - add custom site name formatting (#48): sites now have a custom name tag for players to
+      configure, and multiple sites can have the same name tag without overwriting each other
+    - add HUD update time setting, between 0.5 and 10 seconds (default remains 5 seconds)
+  Translation:
+    - add Ukrainian language (@MetenBouldry, #138)
+  Info:
+    - remove unused array_pair library (it was wonderful when it was needed)
+    - add a hsv library to convert RGB to HSV and back again, for easier linear interpolation in
+      the HSV colorspace (this entry might be the fanciest thing I've written all year)
+    - change the big monolithic resmon.lua to a bunch of modules in the resmon/ folder; this
+      should make no difference to players but any contributors will find it a bit easier to work
+      with:
+    - the click module contains everything to do with clicking in the UI (i.e., button management)
+    - the locale module deals with creating localized strings as well as some other special text
+    - the migrations module provides a framework to centralize migrating runtime data
+    - the sites module provides ordering and filtering sites, as well as turning them into data for display
+    - the types module centralizes how new lua tables of different formats are created
+    - the ui module contains the main UI handling for the HUD root, rename window, etc.
+    - the yatable module ("Yet Another Table") handles displaying sites data from the sites module,
+      including all the logic for UI update-in-place
+    - known bug: it is possible to add the same location multiple times, in different sites;
+      previously, this was masked by the site auto-name conflict bug, but fixing it correctly
+      is much more difficult than asking players to delete duplicates themselves. Sorry :(
+  Remote Interface:
+    - remove the remote call `reset_player` (fake players haven't existed for a long time!)
+    - validate input to `set_filter` (it should be an actual filter)
+    - remove deprecated `show_expando` and `hide_expando`
 ---------------------------------------------------------------------------------------------------
 Version: 0.11.2
 Date: 2024-10-24
