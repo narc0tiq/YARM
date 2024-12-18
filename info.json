@@ -1,9 +1,9 @@
 {
     "name": "YARM",
-    "version": "0.11.2",
+    "version": "1.0.0",
     "factorio_version": "2.0",
     "title": "YARM - Resource Monitor",
-    "author": "Mithaldu (current maintainer)",
+    "author": "Mithaldu (current maintainer) and Narc",
     "homepage": "https://github.com/narc0tiq/YARM",
     "dependencies": [
         "? aai-programmable-vehicles",
@@ -11,5 +11,5 @@
         "? omnimatter",
         "? dqol-resource-monitor"
     ],
-    "description": "This mod helps you to keep track of your mining sites, with useful data such as the percent mined, and estimated time to depletion.\n\n*** GUI_Unifyer is highly recommended to be installed with this mod. ***\n\nOriginal author: Octav 'narc' Sandulescu, based on work by drs, jorgenRe, and L0771"
+    "description": "This mod helps you to keep track of your mining sites, with useful data such as the percent mined, and estimated time to depletion.\n\nOriginal author: Octav 'narc' Sandulescu, based on work by drs, jorgenRe, and L0771"
 }
