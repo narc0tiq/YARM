@@ -1,5 +1,4 @@
 require "util"
-require "libs/array_pair"
 
 local ore_tracker = require "libs/ore_tracker"
 
