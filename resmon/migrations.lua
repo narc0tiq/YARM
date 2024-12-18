@@ -46,7 +46,7 @@ local migrations = {
 function migrations_module.default_versions()
     ---@type {[string]: number}
     local default_versions = {
-        force_data = 2,
+        force_data = 3,
         ore_tracker = 2,
         player_data = 1,
         versions = 1,
@@ -119,6 +119,20 @@ function migrations.force_data.v1()
         end
     end
     return 2
+end
+
+---2024-12-18, YARM v1.0.2:<br>
+--- - Reset site.force for all sites, hopefully resolving an issue where at least one site in someone's game didn't have it
+function migrations.force_data.v2()
+    for _, force in pairs(game.forces) do
+        local force_data = storage.force_data[force.name]
+        if force_data and force_data.ore_sites then
+            for _, site in pairs(force_data.ore_sites) do
+                site.force = force
+            end
+        end
+    end
+    return 3
 end
 
 return migrations_module

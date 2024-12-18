@@ -54,7 +54,7 @@ function types_module.new_site(player, entity)
         name_tag = "",     -- Player-set name tag added to the site display name
         added_at = game.tick,
         surface = entity.surface, ---@type LuaSurface
-        force = player.force,
+        force = player.force or game.forces.player,
         center = { x = 0, y = 0 },
         first_center = { x = 0, y = 0 },
         ore_type = entity.name, ---@type string Resource entity prototype name
