@@ -1,4 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.0
+Date: 2024-12-18
+  Bugfixes:
+    - fix a crash on submitting/cancelling a site expansion very quickly (narc, #181)
+    - fix a many-times-reported crash when an entity is removed while scanning a site (narc, #180)
+  Changes:
+    - make the fake ore items optional, and turn them off by default (narc, #178)
+  Features:
+    - use LuaRendering for overlay instead of creating a false chest entity -- should be faster to display the overlay now (narc, #179)
+---------------------------------------------------------------------------------------------------
 Version: 0.11.2
 Date: 2024-10-24
   Changes:
