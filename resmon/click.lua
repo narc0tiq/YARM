@@ -121,7 +121,7 @@ function handlers.YARM_rename_site(event)
         caption = { "YARM-site-rename-title", resmon.locale.site_display_name(site, format) },
         direction = "horizontal" }
 
-    root.add { type = "textfield", name = "new_name" }.text = site.name_tag
+    root.add { type = "textfield", name = "new_name" }.text = site.name_tag or ""
     root.add { type = "button", name = "YARM_rename_cancel", caption = { "YARM-site-rename-cancel" }, style = "back_button" }
     root.add { type = "button", name = "YARM_rename_confirm", caption = { "YARM-site-rename-confirm" }, style = "confirm_button" }
 

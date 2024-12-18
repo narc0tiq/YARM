@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.1
+  Bugfixes:
+    - fix crash when renaming a site without a name tag (e.g., new site)
+  Changes:
+    - create sites with an empty string as a name tag instead of nil
+---------------------------------------------------------------------------------------------------
 Version: 1.0.0
 Date: 2024-12-18
   Bugfixes:
