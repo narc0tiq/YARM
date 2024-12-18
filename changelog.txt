@@ -1,4 +1,8 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.3
+  Bugfixes:
+    - fix the aforementioned crash stemming from summary sites not having a force (they have one now)
+---------------------------------------------------------------------------------------------------
 Version: 1.0.2
   Bugfixes:
     - maybe fix a crash where a site doesn't have a site.force (this should not have been possible)

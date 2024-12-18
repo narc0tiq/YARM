@@ -110,6 +110,7 @@ function types_module.new_summary_site_from(site, summary_id)
     ---@class summary_site: yarm_site
     local summary = {
         name = "Total " .. summary_id,
+        force = site.force,
         ore_type = site.ore_type,
         ore_name = site.ore_name,
         initial_amount = 0,
