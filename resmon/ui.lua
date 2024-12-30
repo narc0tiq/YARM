@@ -107,6 +107,11 @@ end
 ---@param player LuaPlayer Whose filters are we updating?
 function ui_module.update_filter_buttons(player)
     local player_data = storage.player_data[player.index]
+    -- In extreme cases, the `player_data.ui` might not have been initialized yet (e.g., scenario from an old version)
+    if not player_data.ui then
+        return -- We cannot proceed in this case
+    end
+
     if not player_data.ui.active_filter then
         player_data.ui.active_filter = ui_module.FILTER_WARNINGS
     end
