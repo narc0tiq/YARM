@@ -46,7 +46,7 @@ local migrations = {
 function migrations_module.default_versions()
     ---@type {[string]: number}
     local default_versions = {
-        force_data = 3,
+        force_data = 4,
         ore_tracker = 2,
         player_data = 1,
         versions = 1,
@@ -134,5 +134,22 @@ function migrations.force_data.v2()
     end
     return 3
 end
+
+---2024-12-30, YARM v1.0.4:<br>
+--- - Create site.scanned_ore_per_minute if missing
+function migrations.force_data.v3()
+    for _, force in pairs(game.forces) do
+        local force_data = storage.force_data[force.name]
+        if force_data and force_data.ore_sites then
+            for _, site in pairs(force_data.ore_sites) do
+                if not site.scanned_ore_per_minute then
+                    site.scanned_ore_per_minute = site.ore_per_minute
+                end
+            end
+        end
+    end
+    return 4
+end
+
 
 return migrations_module
