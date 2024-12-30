@@ -1,4 +1,12 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.4
+Date: 2024-12-30
+  Bugfixes:
+    - fix migrating from old Factorio versions where the filter buttons would be made invisible
+    - fix migrating from old YARM versions where the toggle buttons for background, surface split, and/or lite mode did not exist
+    - fix migrating from old YARM versions where site.scanned_ore_per_minute did not exist
+    - fix migrating a scenario from old YARM versions where player_data.ui does not exist when the player is created but player_data does
+---------------------------------------------------------------------------------------------------
 Version: 1.0.3
   Bugfixes:
     - fix the aforementioned crash stemming from summary sites not having a force (they have one now)
