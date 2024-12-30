@@ -72,6 +72,7 @@ function ui_module.get_or_create_hud(player)
             tooltip = { "YARM-tooltips.filter-warnings" } }
         buttons.add { type = "button", name = "YARM_filter_" .. ui_module.FILTER_ALL, style = "YARM_filter_all",
             tooltip = { "YARM-tooltips.filter-all" } }
+        -- TODO: Refactor how all these buttons are created: we should not need to change two places if the below change style or something
         buttons.add { type = "button", name = "YARM_toggle_bg", style = "YARM_toggle_bg",
             tooltip = { "YARM-tooltips.toggle-bg" } }
         buttons.add { type = "button", name = "YARM_toggle_surfacesplit", style = "YARM_toggle_surfacesplit",
@@ -195,16 +196,37 @@ end
 ---@param player LuaPlayer Whose data are we updating?
 function ui_module.migrate_player_data(player)
     local player_data = storage.player_data[player.index]
+    local root = ui_module.get_or_create_hud(player)
+    local buttons = root.buttons
 
-    -- v0.12.0: player UI data moved into own namespace
+    -- v1.0.4: migrating from an old YARM, or old Factorio, may set some buttons to invisible; unhide them:
+    for _, button in pairs(buttons.children) do
+        button.visible = true
+    end
+
+    -- v1.0.4: migrating from an old YARM may not contain these buttons; create them:
+    -- TODO: Refactor how these buttons are created: we should not need to change two places if these change style or something
+    if not buttons.YARM_toggle_bg then
+        buttons.add { type = "button", name = "YARM_toggle_bg", style = "YARM_toggle_bg",
+            tooltip = { "YARM-tooltips.toggle-bg" } }
+    end
+    if not buttons.YARM_toggle_surfacesplit then
+        buttons.add { type = "button", name = "YARM_toggle_surfacesplit", style = "YARM_toggle_surfacesplit",
+            tooltip = { "YARM-tooltips.toggle-surfacesplit" } }
+    end
+    if not buttons.YARM_toggle_lite then
+        buttons.add { type = "button", name = "YARM_toggle_lite", style = "YARM_toggle_lite",
+            tooltip = { "YARM-tooltips.toggle-lite" } }
+    end
+
+    -- v1.0.0: player UI data moved into own namespace
     if not player_data.ui then
-        local root = ui_module.get_or_create_hud(player)
         ---@class player_data_ui
         player_data.ui = {
             active_filter = ui_module.FILTER_WARNINGS,
             enable_hud_background = root.style == "YARM_outer_frame_no_border_bg",
-            split_by_surface = root.buttons.YARM_toggle_surfacesplit.style.name:ends_with("_on"),
-            show_compact_columns = root.buttons.YARM_toggle_lite.style.name:ends_with("_on"),
+            split_by_surface = buttons.YARM_toggle_surfacesplit.style.name:ends_with("_on"),
+            show_compact_columns = buttons.YARM_toggle_lite.style.name:ends_with("_on"),
         }
     end
 
