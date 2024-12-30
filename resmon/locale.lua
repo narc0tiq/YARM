@@ -94,6 +94,9 @@ end
 function locale_module.format_number(n)
     -- credit http://richard.warburton.it
     local left, num, right = string.match(n, '^([^%d]*%d)(%d*)(.-)$')
+    if not left or not num or not right then
+        return tostring(n)
+    end
     return left .. (num:reverse():gsub('(%d%d%d)', '%1,'):reverse()) .. right
 end
 
