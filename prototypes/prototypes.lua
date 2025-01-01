@@ -95,8 +95,6 @@ default_gui.YARM_button_with_icon = {
     type = 'button_style',
     parent = 'slot_button',
 
-    scalable = true,
-
     top_padding = 1,
     right_padding = 1,
     bottom_padding = 1,
@@ -229,14 +227,12 @@ default_gui.YARM_buttons_h = {
     type = 'horizontal_flow_style',
     parent = 'horizontal_flow',
     horizontal_spacing = 1,
-    vertical_spacing = 5,
     top_padding = 4,
 }
 
 default_gui.YARM_buttons_v = {
     type = 'vertical_flow_style',
     parent = 'vertical_flow',
-    horizontal_spacing = 1,
     vertical_spacing = 5,
     top_padding = 4,
 }
