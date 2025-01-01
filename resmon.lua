@@ -537,6 +537,10 @@ function resmon.smooth_clamp_diff(diff)
     return 0.1 * diff
 end
 
+local function isnan(n)
+    return type(n) == "number" and n ~= n
+end
+
 ---Update the site ore counts and depletion rate/time
 ---@param site yarm_site
 function resmon.finish_deposit_count(site)
@@ -551,14 +555,21 @@ function resmon.finish_deposit_count(site)
         local delta_ore_since_last_update = site.last_modified_amount - site.amount
         if delta_ore_since_last_update ~= 0 then
             -- only store the amount and tick from last update if it actually changed
-            site.last_modified_tick = site.last_ore_check                                            --
-            site.last_modified_amount = site.amount                                                  --
+            site.last_modified_tick = site.last_ore_check
+            site.last_modified_amount = site.amount
         end
-        local delta_ore_since_last_change = (site.update_amount - site.last_modified_amount)         -- use final amount and tick to calculate
-        local delta_ticks = game.tick - site.last_modified_tick                                      --
-        local new_ore_per_minute = (delta_ore_since_last_change * 3600 / delta_ticks)                -- ease the per minute value over time
-        local diff_step = resmon.smooth_clamp_diff(new_ore_per_minute - site.scanned_ore_per_minute) --
-        site.scanned_ore_per_minute = site.scanned_ore_per_minute + diff_step                        --
+        local delta_ore_since_last_change = (site.update_amount - site.last_modified_amount)
+        local delta_ticks = game.tick - site.last_modified_tick
+        if delta_ticks > 0 then
+            -- we don't want a nan to gum up the works
+            local new_ore_per_minute = (delta_ore_since_last_change * 3600 / delta_ticks)
+            local diff_step = resmon.smooth_clamp_diff(new_ore_per_minute - site.scanned_ore_per_minute)
+            site.scanned_ore_per_minute = site.scanned_ore_per_minute + diff_step
+        end
+        if isnan(site.scanned_ore_per_minute) then
+            -- but if a nan happened to get in, fix it
+            site.scanned_ore_per_minute = 0
+        end
     end
 
     local entity_prototype = prototypes.entity[site.ore_type]
