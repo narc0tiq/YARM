@@ -84,9 +84,9 @@ function types_module.new_site(player, entity)
         scanned_ore_per_minute = 0,
         lifetime_ore_per_minute = 0,
         etd_is_lifetime = true,
-        last_ore_check = nil,       -- used for ETD easing; initialized when needed,
-        last_modified_amount = nil, -- but I wanted to _show_ that they can exist.
-        last_modified_tick = nil,   -- essentially the same as last_ore_check
+        last_ore_check = nil,       -- tick when the site last finished counting its deposits
+        last_modified_amount = nil, -- last amount when the site was modified
+        last_modified_tick = nil,   -- last tick when the site changed amount (may be older than last_ore_check if the site has not been mining)
         etd_minutes_delta = 0,
         ore_per_minute_delta = 0, ---@type integer The change in ore-per-minute since the last time we updated the site
         finalizing = false,        -- true after finishing on-tick scans while waiting for player confirmation/cancellation
