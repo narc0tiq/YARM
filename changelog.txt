@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.5
+Date: 2025-01-01
+  Bugfixes:
+    - guard against a `nan` being created in a very unlikely situation (#194)
+    - repair a site where a `nan` had been created already
+    - stop a crash when trying to format as number a string that has no digits
+---------------------------------------------------------------------------------------------------
 Version: 1.0.4
 Date: 2024-12-30
   Bugfixes:
