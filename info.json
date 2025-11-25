@@ -1,15 +1,17 @@
 {
     "name": "YARM",
-    "version": "1.0.5",
-    "factorio_version": "2.0",
     "title": "YARM - Resource Monitor",
+    "description": "This mod helps you to keep track of your mining sites, with useful data such as the percent mined, and estimated time to depletion.\n\nOriginal author: Octav 'narc' Sandulescu, based on work by drs, jorgenRe, and L0771",
+
     "author": "Mithaldu (current maintainer) and Narc",
     "homepage": "https://github.com/narc0tiq/YARM",
+
+    "version": "1.0.6",
+    "factorio_version": "2.0",
     "dependencies": [
         "? aai-programmable-vehicles",
         "? angelsrefining",
         "? omnimatter",
         "? dqol-resource-monitor"
-    ],
-    "description": "This mod helps you to keep track of your mining sites, with useful data such as the percent mined, and estimated time to depletion.\n\nOriginal author: Octav 'narc' Sandulescu, based on work by drs, jorgenRe, and L0771"
+    ]
 }
